@@ -68,7 +68,7 @@ def resolve_dates(
     final_url: str | None,
     candidates: list[DateCandidate],
 ) -> PageMeta:
-    cands = apply_rules(_dedupe(candidates), fetched_at)
+    cands = apply_rules(_dedupe(candidates), fetched_at, lambda cs: choose(cs, "published"))
     picked: dict[str, Any] = {}
     for kind, field in (
         ("modified", "date_modified"),

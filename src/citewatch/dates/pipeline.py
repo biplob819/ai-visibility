@@ -82,8 +82,8 @@ def build_page_meta(
             outcome = "fetch_error"
         fetched_at = _ts((rec or {}).get("fetched_at"))
         status = (rec or {}).get("status")
-        metas.append(
-            resolve_dates(
+        try:
+            meta = resolve_dates(
                 url,
                 outcome=outcome if fetched_at or outcome != "ok" else "fetch_error",
                 status=status,
@@ -91,7 +91,15 @@ def build_page_meta(
                 final_url=(rec or {}).get("final_url"),
                 candidates=cands,
             )
-        )
+        except ValueError:  # one odd page never stops the stage: it keeps no chosen dates
+            meta = PageMeta(
+                url=url,
+                fetched_at=fetched_at,
+                outcome="fetch_error" if outcome == "ok" and not fetched_at else outcome,  # type: ignore[arg-type]
+                status=status,
+                final_url=(rec or {}).get("final_url"),
+            )
+        metas.append(meta)
     return metas
 
 

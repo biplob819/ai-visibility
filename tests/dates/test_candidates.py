@@ -26,7 +26,7 @@ HTML = """<html><head>
 </head><body>
 <div itemscope itemtype="https://schema.org/Article">
 <meta itemprop="dateModified" content="2025-01-15"></div>
-<p>Page last reviewed: 12 March 2024<br>Next review due: 12/03/2027</p>
+<p>Page last reviewed: 12 March 2024<br>Next review due: 12 March 2027</p>
 <p>Last updated 3 June 2024</p><p>Published 1 February 2020</p>
 <script>var x = "Last updated 1 January 2001";</script>
 </body></html>"""

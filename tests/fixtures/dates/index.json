@@ -123,7 +123,7 @@
     "fetched_at": "2026-11-15T20:42:30.769293+00:00",
     "final_url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)",
     "last_modified": "Sun, 15 Nov 2026 17:24:22 GMT",
-    "note": "JSON-LD date field transcribed from the first fetch's snapshot (the builder then dropped entities; fixed)",
+    "note": "JSON-LD transcribed from the first fetch's snapshot with its original shape (no @context, no top-level @type), text fields dropped",
     "url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)"
   }
 }

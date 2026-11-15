@@ -33,7 +33,7 @@ META_PROPS = {
     "dcterms.issued": "published",
 }
 _DATE_WORDS = (
-    r"(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?,?\s+\d{4}"
+    r"((?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\s+)?\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?,?\s+\d{4}"
     r"|[A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}"
     r"|\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})"
 )
@@ -51,21 +51,36 @@ _AGO = re.compile(r"^\s*(a|an|\d+)\s+(day|week|month|year)s?\s+ago\s*$", re.I)
 _UNIT_DAYS = {"day": 1, "week": 7, "month": 30, "year": 365}
 
 
+_NUMERIC = re.compile(r"^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$")
+
+
 def parse_date(text: str, *, dayfirst: bool = False) -> dt.date | None:
-    """A calendar date from an ISO string, a datetime or prose; None when it is not one."""
+    """A calendar date as the page states it; None when it is not a full, unambiguous date.
+
+    ISO strings keep their own time zone (never shifted to UTC). A numeric date whose day and
+    month could be swapped (05/10/2024) is ambiguous and dropped; so is a date with no day or
+    no year ("June 2024", "2019"): nothing is invented (A2.3 v1 M3). `dayfirst` is kept for
+    callers; month names make prose unambiguous."""
     s = (text or "").strip()
     if not s or len(s) > 80 or not re.search(r"\d", s):
         return None
     try:
         if re.match(r"^\d{4}-\d{2}-\d{2}", s):
-            value = dparser.isoparse(s)
-        else:
-            value = dparser.parse(s, dayfirst=dayfirst, fuzzy=False, default=dt.datetime(1, 1, 1))
+            return dparser.isoparse(s).date()
+        m = _NUMERIC.match(s)
+        if m:
+            a, b, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if a <= 12 and b <= 12 and a != b:
+                return None
+            day, month = (a, b) if a > 12 or a == b else (b, a)
+            return dt.date(y, month, day)
+        one = dparser.parse(s, fuzzy=False, default=dt.datetime(1, 1, 1))
+        two = dparser.parse(s, fuzzy=False, default=dt.datetime(2, 2, 2))
     except (ValueError, OverflowError, TypeError):
         return None
-    if value.year < 1000:
-        return None
-    return value.date()  # the date as the page states it, in its own time zone (not UTC)
+    if one.date() != two.date() or one.year < 1000:
+        return None  # a part of the date was missing and would have been invented
+    return one.date()
 
 
 def page_age_date(page_age: str, answered_at: dt.datetime) -> dt.date | None:
@@ -88,14 +103,55 @@ def _ev(text: str) -> str:
     return (t[:117] + "...") if len(t) > 120 else (t or "?")
 
 
-def _walk(node: Any) -> Iterator[Mapping[str, Any]]:
-    if isinstance(node, Mapping):
-        yield node
-        for v in node.values():
-            yield from _walk(v)
-    elif isinstance(node, list):
-        for v in node:
-            yield from _walk(v)
+def _walk(node: Any, limit: int = 100_000) -> Iterator[Mapping[str, Any]]:
+    """Every mapping, iteratively (deep nesting never raises RecursionError)."""
+    stack = [node]
+    while stack and limit > 0:
+        limit -= 1
+        cur = stack.pop()
+        if isinstance(cur, Mapping):
+            yield cur
+            stack.extend(reversed(list(cur.values())))
+        elif isinstance(cur, list):
+            stack.extend(reversed(cur))
+
+
+_PAGE_SUFFIXES = ("Page", "Article")
+_PAGE_TYPES = frozenset({"BlogPosting", "Report", "HealthTopicContent", "SocialMediaPosting"})
+
+
+def _is_page(obj: Mapping[str, Any]) -> bool:
+    types = obj.get("@type", obj.get("type"))
+    names = [types] if isinstance(types, str) else [x for x in types or [] if isinstance(x, str)]
+    names = [n.rsplit("/", 1)[-1] for n in names]
+    return any(n.endswith(_PAGE_SUFFIXES) or n in _PAGE_TYPES for n in names)
+
+
+def page_objects(data: Any) -> list[Mapping[str, Any]]:
+    """The objects whose dates are the page's own: top-level objects and `@graph` members that
+    are a page or article (or untyped), and their `mainEntity`. Never an image, comment,
+    citation, author, publisher or the WebSite (A2.3 v1 M2)."""
+    tops: list[Any] = data if isinstance(data, list) else [data]
+    found: list[Mapping[str, Any]] = []
+    queue = list(tops)
+    while queue:
+        obj = queue.pop(0)
+        if isinstance(obj, list):
+            queue.extend(obj)
+            continue
+        if not isinstance(obj, Mapping):
+            continue
+        if "@graph" in obj:
+            queue.extend(obj["@graph"] if isinstance(obj["@graph"], list) else [obj["@graph"]])
+        untyped = "@type" not in obj and "type" not in obj
+        if _is_page(obj) or (untyped and "@graph" not in obj):
+            found.append(obj)
+            for k in ("mainEntity", "mainEntityOfPage"):
+                sub = obj.get(k)
+                for s in sub if isinstance(sub, list) else [sub]:
+                    if isinstance(s, Mapping) and _is_page(s):
+                        found.append(s)
+    return found
 
 
 def _values(v: Any) -> Iterable[str]:
@@ -119,7 +175,12 @@ def structured(html: str, url: str) -> list[DateCandidate]:
         return []
     out: list[DateCandidate] = []
     for syntax, source in (("microdata", "microdata"), ("rdfa", "microdata")):
-        for obj in _walk(data.get(syntax) or []):
+        objs = (
+            page_objects(data.get(syntax) or [])
+            if syntax == "microdata"
+            else list(_walk(data.get(syntax) or []))
+        )
+        for obj in objs:
             for key, raw in obj.items():
                 prop = key.rsplit("/", 1)[-1].rsplit("#", 1)[-1]
                 if syntax == "rdfa" and "schema.org" not in key:
@@ -141,11 +202,16 @@ def json_ld(blocks: list[str]) -> list[DateCandidate]:
     `@context` still counts (WHO's pages have none, and extruct drops them)."""
     out: list[DateCandidate] = []
     for raw in blocks:
+        text = raw.strip().removeprefix("<!--").removesuffix("-->").strip()
+        text = re.sub(r"^(?://\s*)?<!\[CDATA\[|(?://\s*)?\]\]>$", "", text).strip()
         try:
-            data = json.loads(raw.strip().removeprefix("<!--").removesuffix("-->"), strict=False)
-        except ValueError:
-            continue
-        for obj in _walk(data):
+            data = json.loads(text, strict=False)
+        except (ValueError, RecursionError):
+            try:  # a trailing comma is a common slip; nothing else is repaired
+                data = json.loads(re.sub(r",\s*([}\]])", r"\1", text), strict=False)
+            except (ValueError, RecursionError):
+                continue
+        for obj in page_objects(data):
             for key, v in obj.items():
                 kind = SCHEMA_PROPS.get(key) if isinstance(key, str) else None
                 if kind is None:
@@ -178,7 +244,7 @@ class _Page(HTMLParser):
             name = (a.get("property") or a.get("name") or a.get("http-equiv") or "").lower()
             if name in META_PROPS and a.get("content"):
                 self.metas.append((name, a["content"]))
-        if tag == "script" and a.get("type", "").strip().lower() == "application/ld+json":
+        if tag == "script" and a.get("type", "").strip().lower().startswith("application/ld+json"):
             self._ld = []
         elif tag in self.SKIP:
             self._skip += 1

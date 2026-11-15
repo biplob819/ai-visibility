@@ -4,5 +4,5 @@
 **DAT-02** The four plausibility rules reject exactly the candidates they should, naming the rule, and a rejected candidate stays in the list.
 **DAT-03** Precedence picks the chosen value and source per kind as §7.3 states; the effective date is reviewed, else modified, else published; every candidate is kept; output validates as `PageMeta`.
 **DAT-04** The 20-page test set (trimmed snapshots with owner-confirmed labels, stored as fixtures) passes: chosen reviewed, modified and published dates match the labels.
-**DAT-05** Sitemaps are read only from robots.txt `Sitemap:` lines, through the polite client (robots, rate, budget, log), streamed with a 10 MB decoded cap, without XML entity expansion, one index level at most, cached per host; only needed URLs' `lastmod` is kept.
+**DAT-05** Sitemaps are read only from robots.txt `Sitemap:` lines, through the polite client (robots, rate, budget, log), streamed with a 10 MB decoded cap, without XML entity expansion, one index level at most, each host's `loc -> lastmod` map (capped at 200,000) cached in the store so later runs never fetch it again (D-45); a temporary failure is not cached.
 **DAT-06** `review_due` is captured from "Next review due" text and kept with the page's dates.

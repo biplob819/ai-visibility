@@ -47,14 +47,20 @@ def sitemap_urls(store: RawStore, origin: str) -> list[str]:
 
 
 def _decode(body: bytes) -> bytes | None:
-    if body[:2] == b"\x1f\x8b":
+    if body[:2] != b"\x1f\x8b":
+        return body
+    out = bytearray()
+    rest = body
+    while rest[:2] == b"\x1f\x8b":  # every member of a multi-member gzip file
         d = zlib.decompressobj(16 + zlib.MAX_WBITS)
         try:
-            out = d.decompress(body, MAX_SITEMAP_BYTES + 1)
+            out += d.decompress(rest, MAX_SITEMAP_BYTES + 1 - len(out))
         except zlib.error:
             return None
-        return None if len(out) > MAX_SITEMAP_BYTES else out
-    return body
+        if len(out) > MAX_SITEMAP_BYTES or d.unconsumed_tail:
+            return None  # over the 10 MB decoded cap
+        rest = d.unused_data
+    return bytes(out)
 
 
 def _local(tag: str) -> str:
@@ -96,6 +102,7 @@ def host_lastmods(client: Any, store: RawStore, origin: str) -> dict[str, str]:
     found: dict[str, str] = {}
     queue = [(u, 0) for u in sitemap_urls(store, origin)]
     seen: set[str] = set()
+    transient = False
     while queue and len(seen) < MAX_CHILD_SITEMAPS:
         url, depth = queue.pop(0)
         if url in seen:
@@ -103,6 +110,8 @@ def host_lastmods(client: Any, store: RawStore, origin: str) -> dict[str, str]:
         seen.add(url)
         r = client.get(url, "sitemap")
         if r.outcome != "ok" or not r.body:
+            if not (r.status in (404, 410) or r.outcome in ("robots_disallowed", "blocked")):
+                transient = True  # a 5xx or a timeout: try again on a later run
             continue
         entries, children = parse_sitemap(r.body)
         for loc, lastmod in entries.items():
@@ -114,7 +123,8 @@ def host_lastmods(client: Any, store: RawStore, origin: str) -> dict[str, str]:
                 found.setdefault(c, lastmod)
         if depth == 0:
             queue.extend((c, 1) for c in children)  # one index level at most
-    store.put("sitemap", key, {"origin": origin, "sitemaps": sorted(seen), "lastmod": found})
+    if not transient:  # a temporary failure is never cached as "no sitemap" (A2.3 v1 low)
+        store.put("sitemap", key, {"origin": origin, "sitemaps": sorted(seen), "lastmod": found})
     return found
 
 
