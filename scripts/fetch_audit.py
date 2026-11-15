@@ -55,10 +55,12 @@ DEFAULT_PORTS = {"http": 80, "https": 443}
 
 
 def log_files(root: Path) -> list[Path]:
-    data = root / "data"
-    if not data.is_dir():
-        return []
-    return sorted({*data.rglob("fetch_log*.jsonl"), *data.rglob("fetch_log*.jsonl.gz")})
+    """Fetch logs under data/ and under every study's folder (D-33)."""
+    found: set[Path] = set()
+    for base in (root / "data", root / "studies"):
+        if base.is_dir():
+            found |= {*base.rglob("fetch_log*.jsonl"), *base.rglob("fetch_log*.jsonl.gz")}
+    return sorted(found)
 
 
 def norm_host(host: str) -> str:

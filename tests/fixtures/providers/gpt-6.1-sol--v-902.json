@@ -1,0 +1,376 @@
+{
+  "answer": {
+    "answer_text": "It’s most likely **delayed-onset muscle soreness (DOMS)**—especially if the run was longer, faster or hillier than usual. The extra load causes microscopic muscle damage, followed by repair processes that leave your legs tender and stiff. Downhill running is particularly likely to trigger it. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness))\n\nDOMS typically appears **24–72 hours after exercise** and settles over the next few days. ([leicspart.nhs.uk](https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/?utm_source=openai))\n\n**What helps:** gentle walking, easy movement and a break from hard running until the soreness eases. Increase future distances gradually. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness))\n\n**Get checked** if pain is sharp, localised, worsening or lasts beyond a week, rather than gradually improving. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness)) Seek urgent medical help if you develop unusually severe muscle pain, marked weakness or tea/cola-coloured urine—these can indicate a rare but serious muscle breakdown condition. ([cdc.gov](https://www.cdc.gov/niosh/rhabdo/signs-symptoms/))",
+    "cached_in": 4472,
+    "continuations": 0,
+    "model": "gpt-6.1-sol",
+    "model_snapshot": "gpt-6.1-sol",
+    "raw": [
+      {
+        "access_programs": {
+          "cyber": "standard"
+        },
+        "background": false,
+        "billing": {
+          "payer": "developer"
+        },
+        "completed_at": 1794746519.0,
+        "conversation": null,
+        "created_at": 1794746506.0,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "id": "resp_05927685d9cb0403006af9a88aead087d28ff726d710dd5cd6",
+        "image": {
+          "context_compression": "disabled"
+        },
+        "incomplete_details": null,
+        "input_transformations": [],
+        "instructions": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+        "max_output_tokens": null,
+        "max_tool_calls": 3,
+        "metadata": {},
+        "model": "gpt-6.1-sol",
+        "moderation": null,
+        "object": "response",
+        "output": [
+          {
+            "action": {
+              "queries": [
+                "site.nhs.uk delayed onset muscle soreness exercise",
+                "site.nhs.uk rhabdomyolysis dark urine muscle pain exercise"
+              ],
+              "query": "site.nhs.uk delayed onset muscle soreness exercise",
+              "sources": [
+                {
+                  "type": "url",
+                  "url": "https://www.cdc.gov/niosh/rhabdo/signs-symptoms/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://nhsinform-22072020-0700.azurewebsites.net/healthy-living/keeping-active/before-and-after-exercise/pain-and-injuries"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.newcastle-hospitals.nhs.uk/services/newcastle-occupational-health-service/information-for-staff/physiotherapy/self-help-leaflets/exercise-and-your-health-a-guide-to-getting-started/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://guidance.nattrauma.org/media/yrnhyuwv/hprc_whec_clinical_practice_guideline_for_managing_er_101320.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://agsd.org.uk/wp-content/uploads/2018/12/GSD7_Card.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13627368/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://northerncanceralliance.nhs.uk/wp-content/uploads/2025/09/My-Prehab-Guide-Your-guide-through-treatment.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://healthdata.gov/NIH/Time-course-of-muscle-soreness-following-different/2j78-w6cx"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.ncbi.nlm.nih.gov/books/NBK448168/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://movementfoundations.org.uk/resource-hub/muscle-soreness"
+                },
+                {
+                  "type": "url",
+                  "url": "https://bestpractice-bmj-com.bibliotheek.ehb.be/topics/en-gb/167/pdf/167/Rhabdomyolysis.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.vistawellbeing.org.uk/wp-content/uploads/2023/10/PTA016_-Principles-of-Exercise-Fitness-and-Health-Manual.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://stsft.nhs.uk/patients-and-visitors/advice-and-support/cancer-information-hub/prehabilitation/wellbeing"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.allinahealth.org/-/media/allina-health/files/health-conditions-and-treatments/health-library/patient-education/allina-health-weight-management-medical-program.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.hprc-online.org/physical-fitness/injury-prevention/reduce-delayed-onset-muscle-soreness-after-workouts"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.boots.com/healthhub/fitness-exercise/myths-about-muscle-soreness"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Delayed_onset_muscle_soreness"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Rhabdomyolysis"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Acute_muscle_soreness"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.fitandwell.com/exercise/is-this-normal-soreness-from-exercise-or-do-i-need-to-see-someone-a-sports-medicine-physician-explains-what-to-look-out-for/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.womanandhome.com/health-wellbeing/fitness/how-to-recover-from-running/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Metabolic_myopathy"
+                },
+                {
+                  "type": "url",
+                  "url": "https://time.com/7013374/sore-muscles-rest-or-work-out/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.techradar.com/health-fitness/exercise-equipment/forget-cold-showers-after-a-workout-according-to-an-exercise-scientist-the-evidence-to-support-that-in-terms-of-muscle-regeneration-is-really-lacking"
+                },
+                {
+                  "type": "url",
+                  "url": "https://time.com/7364570/strength-training-how-to-start/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.cyclingweekly.com/fitness/i-completed-this-12-week-strength-training-program-for-cyclists-and-heres-how-it-improved-my-peak-power"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Exertional_rhabdomyolysis"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Myoglobinuria"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/rhabdo_survivors/comments/1kyrher"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/bodyweightfitness/comments/1h5irhz/if_you_work_out_beware_of_rhabdo/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/rhabdo_survivors/comments/1x7x5tc/could_this_be_rhabdo_or_doms/"
+                }
+              ],
+              "type": "search"
+            },
+            "id": "ws_05927685d9cb0403006af9a88cbbb087d2bddafae04787ca06",
+            "status": "completed",
+            "type": "web_search_call"
+          },
+          {
+            "action": {
+              "type": "open_page",
+              "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+            },
+            "id": "ws_05927685d9cb0403006af9a890b85087d2b5381f96612230a4",
+            "status": "completed",
+            "type": "web_search_call"
+          },
+          {
+            "content": [
+              {
+                "annotations": [
+                  {
+                    "end_index": 398,
+                    "start_index": 294,
+                    "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                    "type": "url_citation",
+                    "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+                  },
+                  {
+                    "end_index": 636,
+                    "start_index": 490,
+                    "title": "MSK FAQs - Leicestershire Partnership NHS Trust",
+                    "type": "url_citation",
+                    "url": "https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/?utm_source=openai"
+                  },
+                  {
+                    "end_index": 881,
+                    "start_index": 777,
+                    "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                    "type": "url_citation",
+                    "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+                  },
+                  {
+                    "end_index": 1099,
+                    "start_index": 995,
+                    "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                    "type": "url_citation",
+                    "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+                  },
+                  {
+                    "end_index": 1340,
+                    "start_index": 1279,
+                    "title": "Signs and Symptoms of Rhabdomyolysis | Rhabdomyolysis | CDC",
+                    "type": "url_citation",
+                    "url": "https://www.cdc.gov/niosh/rhabdo/signs-symptoms/"
+                  }
+                ],
+                "logprobs": [],
+                "text": "It’s most likely **delayed-onset muscle soreness (DOMS)**—especially if the run was longer, faster or hillier than usual. The extra load causes microscopic muscle damage, followed by repair processes that leave your legs tender and stiff. Downhill running is particularly likely to trigger it. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness))\n\nDOMS typically appears **24–72 hours after exercise** and settles over the next few days. ([leicspart.nhs.uk](https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/?utm_source=openai))\n\n**What helps:** gentle walking, easy movement and a break from hard running until the soreness eases. Increase future distances gradually. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness))\n\n**Get checked** if pain is sharp, localised, worsening or lasts beyond a week, rather than gradually improving. ([my.clevelandclinic.org](https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness)) Seek urgent medical help if you develop unusually severe muscle pain, marked weakness or tea/cola-coloured urine—these can indicate a rare but serious muscle breakdown condition. ([cdc.gov](https://www.cdc.gov/niosh/rhabdo/signs-symptoms/))",
+                "type": "output_text"
+              }
+            ],
+            "id": "msg_05927685d9cb0403006af9a892b77087d2ba3a8c4d84c49eb2",
+            "phase": "final_answer",
+            "role": "assistant",
+            "status": "completed",
+            "type": "message"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt": null,
+        "prompt_cache_diagnostics": null,
+        "prompt_cache_key": null,
+        "prompt_cache_options": null,
+        "prompt_cache_retention": "24h",
+        "reasoning": {
+          "context": "all_turns",
+          "effort": "medium",
+          "generate_summary": null,
+          "mode": "standard",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "status": "completed",
+        "store": true,
+        "temperature": 1.0,
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "tool_choice": "auto",
+        "tool_usage": {
+          "image_gen": {
+            "cached_tokens": null,
+            "cached_tokens_details": null,
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "image_tokens": 0,
+              "text_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "image_tokens": 0,
+              "text_tokens": 0
+            },
+            "total_tokens": 0
+          },
+          "web_search": {
+            "num_requests": 1
+          }
+        },
+        "tools": [
+          {
+            "external_web_access": null,
+            "filters": null,
+            "return_token_budget": "default",
+            "search_content_types": [
+              "text"
+            ],
+            "search_context_size": "medium",
+            "type": "web_search",
+            "user_location": {
+              "city": "London",
+              "country": "GB",
+              "region": "England",
+              "timezone": "Europe/London",
+              "type": "approximate"
+            }
+          }
+        ],
+        "top_logprobs": 0,
+        "top_p": 0.98,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 15004,
+          "input_tokens_details": {
+            "cache_write_tokens": 16,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 16
+            },
+            "cached_tokens": 4472
+          },
+          "output_tokens": 372,
+          "output_tokens_details": {
+            "reasoning_tokens": 119
+          },
+          "total_tokens": 15376
+        },
+        "user": null
+      }
+    ],
+    "refusal": false,
+    "refusal_category": null,
+    "request": {
+      "include": [
+        "web_search_call.action.sources"
+      ],
+      "input": "Why do my legs ache the day after a long run?",
+      "instructions": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+      "max_tool_calls": 3,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "web_search",
+          "user_location": {
+            "city": "London",
+            "country": "GB",
+            "region": "England",
+            "timezone": "Europe/London",
+            "type": "approximate"
+          }
+        }
+      ]
+    },
+    "search_actions": [
+      "search",
+      "open_page"
+    ],
+    "search_errors": [],
+    "searches": 1,
+    "stop_reason": "completed",
+    "tokens_in": 15004,
+    "tokens_out": 372
+  },
+  "answered_at": "2026-11-15T12:42:00Z",
+  "config_hash": "b1ef32199d482e7d",
+  "cost_usd": 0.035231200000000004,
+  "latency_ms": 13992,
+  "model": "gpt-6.1-sol",
+  "prompt_hash": "d6cbf2f2f80771ab",
+  "question_id": "v-902",
+  "run": 0,
+  "schema_version": "1.0"
+}

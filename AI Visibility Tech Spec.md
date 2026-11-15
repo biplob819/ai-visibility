@@ -470,7 +470,7 @@ The question is the user turn. No system persona, no domain hints.
 
 **Claude Sonnet 5.5** (`claude-sonnet-5-5`, Messages API):
 
-- Tool `{"type": "web_search_20260209", "name": "web_search", "max_uses": 3, "user_location": {"type": "approximate", "country": "GB", "city": "London", "region": "England", "timezone": "Europe/London"}}`. This version filters results with code execution internally, so `code_execution` is not declared separately.
+- Tool `{"type": "web_search_20260209", "name": "web_search", "max_uses": 3, "allowed_callers": ["direct"], "user_location": {"type": "approximate", "country": "GB", "city": "London", "region": "England", "timezone": "Europe/London"}}`. `allowed_callers: ["direct"]` turns off dynamic filtering: with it on, the first real calls showed the model reading results through code execution and returning answers with **no citations** (D-34). `code_execution` is not declared.
 - `output_config: {"effort": cfg.effort}`; thinking left at its default (adaptive); no `temperature`, `top_p` or `top_k` (non-default values are rejected on Sonnet 5.5); no `fallbacks` (D-8).
 - `stop_reason` handled: `end_turn`; `pause_turn` (continue); `refusal` (record `stop_details.category`); `max_tokens` (record, keep the answer).
 - Citations: `text` blocks carry `citations` of type `web_search_result_location` with `url`, `title`, `cited_text`. Consulted sources: `web_search_tool_result` blocks whose `content` is a list of `web_search_result` (`url`, `title`, `page_age`). An error result's `content` is an object, not a list.
@@ -505,7 +505,7 @@ Appendix C lists the provider facts to confirm against live docs at N1.2 before 
 3. Meta tags: `article:modified_time`, `article:published_time`, `og:updated_time`, `DC.date.modified`, `DC.date.issued`, `last-modified`.
 4. Visible text: "Page last reviewed: <date>", "Next review due: <date>" (NHS pattern), "Last updated <date>", "Updated on <date>", parsed day-first (UK).
 5. Sitemap `lastmod` for the exact canonical URL, only from sitemaps listed in robots.txt (DAT-05).
-6. Claude's `page_age` for that URL from any consulted search result (no fetch needed; covers blocked pages).
+6. Claude's `page_age` for that URL from any consulted search result (no fetch needed; covers blocked pages). Real responses give it **relative to the request** ("198 days ago"), not as a date, so the resolver converts it with the answer's `answered_at` (D-35).
 7. HTTP `Last-Modified`.
 
 **Plausibility rules** (a rejected candidate stays in the list with the rule named):

@@ -44,7 +44,7 @@ from harness_lib import (
     unpack,
 )
 
-AUDITED_DIRS = ("data", "results")
+AUDITED_DIRS = ("data", "results", "studies")  # each study keeps data/ and results/ (D-33)
 # "<" may also appear JSON-escaped as \u003c or HTML-escaped as &lt;
 LT = rb"(?:<|\\u003c|&lt;|&#0*60;|&#x0*3c;)"
 HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html|body)(?=[\s>/]|\Z)", re.I)

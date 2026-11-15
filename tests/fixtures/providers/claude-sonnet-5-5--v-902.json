@@ -1,0 +1,287 @@
+{
+  "answer": {
+    "answer_text": "Your legs most likely ache because of delayed onset muscle soreness (DOMS). It's caused by over-exertion, where micro-damage to the muscle triggers an inflammatory response. It isn't lactic acid. The body clears lactic acid from the muscles within a few hours.\n\n- **Timing:** Muscle pain sets in one to three days after intense exercise.\n- **Triggers:** DOMS usually follows a new activity or a workout harder than you're used to. Downhill running is a common cause, because the muscle is working as it lengthens.\n- **Relief:** A warm bath after training can reduce DOMS. Gentle movement may also help.\n\nIt's usually harmless. If the pain is sharp, severe or persistent, get it checked out. The same goes for swelling in a leg. In the UK, you can call NHS 111 or see your GP.",
+    "cached_in": 0,
+    "continuations": 0,
+    "model": "claude-sonnet-5-5",
+    "model_snapshot": "claude-sonnet-5-5",
+    "raw": [
+      {
+        "container": null,
+        "content": [
+          {
+            "caller": null,
+            "id": "srvtoolu_019NLJbd5odUHASTvakcdyDb",
+            "input": {
+              "query": "why do legs ache day after run DOMS NHS"
+            },
+            "name": "web_search",
+            "type": "server_tool_use"
+          },
+          {
+            "caller": {
+              "type": "direct"
+            },
+            "content": [
+              {
+                "encrypted_content": "EoIKCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDGGt0cjL0Z/0dpCg7RoM6LrumXt/aP4kxBKjIjAdiQBoh0CcN+aD+RtrBJJxLC1ckNm11fN7zwSnI2K6tmnam5KVKKtr8I6J48ySFxoqhQkOjlUESjTJvHFY26isX40BZp374bYXYw8XDTqNCXRTat2qzuvVXQzsMUqldafpWtrH5NsWEEdPAvjpQW5jH7dQgIY71STyGRx8mmPGjT6h32XejMXPlKs4Y2CFEk4NvzCgOQR7fBqL6SJ9Oo96mCjX3rfuucfMk0CyINmDqbEhq2PdR419gp5lQF2/ukWkhAjBlJkOAhAgFtPxLcyiWe/ZiCXUPCkh10K+vfPdp/oGT+zACdTZxL6pUZbqU/xsvhQXBimDy1hS3DFNN2YpH4+Rl3yXXWVM+FIb7hcsSWCPLDm+Wdr0j8LTDQ6E4YTTD8nxfxiP0gOXchx/JZnquSQiWcvxX+KWGe9UPkjB+jysrHIagyLVhIHOmEoeNAtfVeL6gyLi3h6ntoykwW2pe/6KL2f5mA4huseXsYSd5gVOGWD0qXJbL4KXHuQYjGY1ZxGvRRbu27KT5HSuatQXDn3DLIkHX8EwvI7oFbR5ZPPvBNMF5cQ3O3HjARlmiPVBEkWLihekc8m95g/rBdp0AtjEDBxFKSAPBBk+G36hZygK4l5Icx8dSPQ+xQtBJrpUD5usycmj4xnrOYOmITFJDQL5KCf2xjFcwWH/ADt+BzR2MEwfYh4D2Aswey5dbculcJKezL1SwG24tGww2IGSdm8o8V0wE7Xs5elrOiXGWnMMo8EBQgbYCmR99MQFKPoRTfmIug9RJl6BCsswREO+F+irHb2sZ0DiNfGPiJUXm8uTjSnlFctllKcvBjZdEi410H3s9YWr7BBIeyRSD9OXxREdmOl7M9tmgOq/+2TO3Auw0M2tWjn/l3246OMkKVtvtfUudodVRGlZgB5qM9cTOvytxuiD71ksN0kIZeCO67VZY26h8e6heF7KXhhTmMVFuwIGHI1q3fDfuhI04Zz14WNHQSgviKN1kXP1ksf8eLPVTXhFfKP0xMKas4dkVAmjqzM7E1XrBN5PllIuQA4AeO/JYc9MoSkw1FDh7z7kHQW+GRnf00SAH1DmF8Xuv21gIyMpqnBmeJ9iVY7EM4jh2Gbm3GbTm19SdRudxCz0DkM8hBQz85V3RdymdJ1kwCNAxaMdgt+ctJqvSViqNw3GtM6JDKaIgg4ZjHs5JyHDONu7rlLG9t/VxHq5q1wfcYoTTDe2WWwlfWAYn8wJec3ordBcDXK4pfSctSKPoP3dCnodTSN69oZtw5EKs3kzulRv/sIR2LnyCwfwZ7GtwYVWNvcFxxrDW0MPbFltpzB7YsJkrGLv5kags7iWE/+7cDe6mZTnImS3MwIgbT/7WoSkXSUiVqRQDcsJ76vvSjQTgXrocy2sfB3+E5iWsobcw1CuL8tfgohsuc0WziOIts2gORIt6wO3/ex8xIyqFOPhG99uOrfRuBg5sgh+PBvAgl33+wCWXPYGtt6YmOiqckzU/M46wfPvVPzS/1GUkGxthi+E1ZF5ZZ4RurAOT7PnQDFiGQG8Ci24o09RwIBgmqEFjECX1/8EL6z2t/jpTafvMXl3dT2VbCUIMqfzXM9xTOtLtsiFddQF7hgD",
+                "page_age": "660 days ago",
+                "title": "Why oh why do my legs hurt for days after a long walk or run?",
+                "type": "web_search_result",
+                "url": "https://www.countryfile.com/health/legs-hurt-after-exercise-doms"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "24 days ago",
+                "title": "Running With Sore Legs: What The DOMS Research Says",
+                "type": "web_search_result",
+                "url": "https://marathonhandbook.com/running-with-sore-legs/"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "305 days ago",
+                "title": "Legs Ache After Running",
+                "type": "web_search_result",
+                "url": "https://rundreamachieve.com/running-and-injuries/calf-pain-from-running/legs-ache-after-running/"
+              },
+              {
+                "encrypted_content": "EoAKCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDLC/kUAecmHyhdi+nRoMEGyQQ9rG2mqTieTPIjCEolGlmekH4ChuYPTIXpXRCjkxIh/nqcHMX5imEb53G0ZZS/Q18+m6jtookmC1QukqgwlQxsq7nwlzq4RBpcJDjczzz4hbvAZ+ULJj6QPaGcba+5e934vbG46arrOkW9fkjnxFvKV9Bx1D9EAhkv2oxXvskwG0oxi2FifqwJF5vt0N14KHW3AeXm/kiLQgvOu0XiMCB5IdiAlXvs53giQL3W8nlKKsWRO6PLliOu2M04ArnZTO5OSoTSPTNguETpqZ1vfRaJvdgWalBnlrmcMvr1aaYIxnFIeXmry8T527QkIw+XlyypCkCFYgbH2gStSO91BQntjYt8UqxeowE8F76Tegb5RMPnJEnrqMV0iHaCfUeWF0RBdTUGp9462XF5EsLRwHFtPYfK9bhRVo5f9w3Co3s+Tivu8aDdX4sHQBDpPAUynx8jSie1F7EnjJgsGct4VI4fEdBdVbESxISPaWSsTx7/lBaPQ5pCZqQkKeVpEC+QYb9P4wF4ABdXV960P5rIuBYabfWemD6NHDoLQj/hb6qySYiB8yBathYOa9rBAVE/oZtq426VRo+qrn901AvNMWQynn1MekT2uHUFcN9YPUUCZJguIROBdMrjBR9vF5fy6ebPMFpWDmnA8sd2uDgHoiagrrfCHmZQCRitY8G8rcCjPKAoW1SjdWFzILzZJFu5TaJeXhe8Ugfi0AU0kHuIgMq8WPtqZ6EELK0Br1NeQHs23/SGKcxoof8bLsyCg/baDyox6yOYvwufPL6s9kIxHMPe4EYS+N7r72Ykx+u5DnOtElMKxTaIObTyt2lHw2mVdQgCePJDJHbb3qOd2BQA0i59qo5Q6ZuSH95POB0qVG2qxj+N4J3A+RCzLAKELauK6MgwpOjRYXqTOdWgEZiOvUKfDx3UCNdWafZoV1ExqPd//kCjCkQKGMbpjqFV3G/6TQ0J6aiEFQRBjDw58avlL/4+qYsXPuvj1tRQ4aQHbHZw2lxsAAZlz0Hl5kL0joYG8vNbIzFMZQtke1jWPDlVV77bSCcqzRv/2tyb55uDYbfG2Zpn4lc+hiMllbTaaP6hfhRU6y51Yu+fL+Cd966V+FQZlGm0LF7g/EYtK4yCBykTjzQsJcG+dTgZ3kxLvmrymjktIWgx3nTkLVyxZs1n5nB+0nbzMcFrbdW1NYYpUMK6jzbCwks4SpinPSOI61Q4TudQdY6lHXIV0Eb7rIHoXQCygVJ6wu5r08K325j5YmaiG42sL3O5X5AZKEZkSSnhU4DHHLbaBC/ltFMmXDd0fzlZjRExbcPdwWFLbgTiWt+NK1EEy3Zor2Mq/ePvrV3OZqXh4ILYajpdf2dJaeHL/Hxn+NbDdAX+J8MqT95wWhDAf/TMcMA44FWUDUsQe6jd3QALsmjdPWxZZZXUwwqCZ+gb+fnxluP5NPPKNGn89udEMQ0qAx/wA9S9qrRKCLvLyG4pE/ZhimfKz8/40qEXNrYrfrnX2dR+tHcyDSQ1sgd05122WxDfc/N/U3pUpVhUbQULFcMdHl0ZBB1ITxkWkmYOzRn8hKUDQQ9CfWLjhDnAgAUWszlxwrv1fcfa44PjQWmekNP9Phrfulu9WTN2AldX0YAw==",
+                "page_age": "24 days ago",
+                "title": "Sore Legs After Running? Try These 4 Effective Recovery Techniques",
+                "type": "web_search_result",
+                "url": "https://marathonhandbook.com/sore-legs-after-running/"
+              },
+              {
+                "encrypted_content": "EsAJCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDOoF9uAP9u9E44Da3RoMiMsU+ApiGO4npSegIjCItx7+8Q6TYl+lGa17bVz7TYzhkDtRCftqJKGm+3XIhGvbbHBYtvenWbCA5xFAc6Qqwwi2g1Y4wh4qsq25IxJvWQjNvWGj43PsdSv1MhlKwR7uCSBOzbLWILmFko361l+ZsLevLedBiNJmkEU1Dc/7Mtgxijfo4VS4m6h+FsDhCrR7dRWzAHH/vTcb2if4YNK353wxVF3rdysD5+6gJ41BK2CPEViZnVCSQwHa167IO3rIzvOtR84XcjnMWGyHot6sF1PKp8u/kRgfKEEJ+6U3sbsv294CR9LXtjBadHJFuLpyfzFqmb+J8/nPtWGr1KbjgxE7GHnpvS5ZgDin2BnOSHE5mQ9j7TFtFo37uQj1zHkht/a9Td8toHAlqCkC07gyVg0psyTGCli3OP6BycnnZY7vHKVKhxosjKVpzu5mDrPP/Vf08jnZdUTcTMD4HmiGrcudOkLi0uGZUjNeb0m+SeJg9F8avRaYeAHA8sdCjmdqkSrfnPjcN83kbAKo6wrNHXfQnZdh3v+xfxinF5iazKB/rAcdvcGEb/5gXhF4FYTTCxxK1kmw4sUKXi47JBiDIAt2a2ZlpHnTtR6unUs2FQl3EFWnJxyKTMrZjdbSsbs41xnflh6ENTBsRBHFNlPG0ybH3we6T9DF9+UdnRWzlNn29yCeLQZp2NtbIuMknrQAFLMtkNqxSE5AzdZTxY9HIk6EBdnd7Zo7QaRUioRyXpUSx8j7G0GP+j7yGjBGliosLv4+fIWOR1epxPCRd6/TDJB9zCBOGEcC3Z6oU5Uz7K7S3Y1Df72ASitxMr3ynmw6va1jRsp6kSdrhBuF8j3oRjTVVFM4HE6njfwVEW3Pwl2IiC6iHawXCLNzH5ADqJu/ovPaqHqILePy7GHdHtty7M/m/J3LTA6ZVL/FFBRsxJKGJ/odXIcBLQnwO284gDJ1/VvbRLVR9KMf7KPLFYfJ1ahV5na/OJJKQmHPGSUgGWHVotTBbnoHWZ+E/J0RyoGrYQkN/xGM7BUub0SsU81b9u7qMkXxtyvr6OBkg89BrY+Rezc5WwkT+b7anQE30hnswvkY6Y9F1jQueNwBMN+rG4SePNeWs7S7OGwnSWm599uo62vmd7/cpyR1oahSL3LKf8mg+bxB//PNB0zhsAPo5jT7oXwQqqhcKSXsfbn3HESNW3cUPaBdZPxxepfj5FZH6O1VimPqdZpLF0MoPkuV9GHp9r8OAFoJj7NBi92hX6UY7eZArIhXvsMVp/HQfcbY76j/kpSYTvX0+jhQKUD6asfxOb1hfKQmyQoqypYlTME1/P9VtAE2xljCWGnBK190QI89F599QxQCRDJZg0vrEHqpLaq7Gl++b1ejMwA8/4df+LactMygxaptM/30Sq0aYlzkVh48lxuoWnZJtYNIXFqIMwO1MS/mH8BKiYl6C70ac3EIi8rYSzkbMh/wZS8zaOuuZLFq9NbEwcjgvuOhCa22/PrrAqd1jFWOuf1EqOuhB0dm++H593oPp13p6G4A76f/wRgD",
+                "page_age": "1366 days ago",
+                "title": "Explainer",
+                "type": "web_search_result",
+                "url": "https://www.scmp.com/sport/outdoor/how-guides/article/3210538/what-delayed-onset-muscle-soreness-why-does-it-happen-and-how-can-you-stop-it-hurting-days-after-you"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "1591 days ago",
+                "title": "Should you run with sore legs? And how to avoid muscle soreness ...",
+                "type": "web_search_result",
+                "url": "https://www.advnture.com/features/sore-legs-running"
+              },
+              {
+                "encrypted_content": "EsELCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDJMqHZRHaW/Bi3ES0BoMCGWn97D+1dgQBbg/IjB3+I8pJiCKKQiKpkFxhp5HT7AiNiCdCepFXfzbNPe9E3250sLp7lxZ6fHUSqLz0zoqxAoyQ4bmt9IQUK2Yf6hvVXsCOvlbNaRc10PlMkL3F2BJfne4OP88DwiUEoTgd8ce1ERkXqSfm5sbnXYkj2iE58YuollKYabd5QGrYRY5U01oBd5721+ECXE4SOMB/dQSG/3U99ToqDWH/pE3eWyrtz6Ii/z1MLhjDVpJZCKPaY4wuiSv8wqN5bq+0303QotosyS0ogYVsKjj+SgYclrZyH0MM+Cybbg4fupnEfbnYvZY4B0U+LZqd+b8oTabMATYXp9BqrsE/+vbYLcYn/GWI6QAxPmMDnNn9bghP3CdHroxwPQWdq2n6Q3mSKc5Frfws9Nq9b9ye1QxJxGjS0JAJ9TYM+BVRXurUkGWCOLmR44+wj1LphUFzHC42fFfsRNpV30N/1ptuW0H9kMQEpqicaFlRKpEjseVaXF+vmUy/RL6OFz4WovlhiMgJ8Ra8EQt+tuJj3hChrhocAvTC+LJf9fyU3lmOyG2TpqG+V5Nsu47NHRrZngb/P+k9b+QoH9NB7YJD6GWpbIP2UNEWaCrah7KYLknqMak67U0uNrAzpVgy7Y0Tp4TGBbOupynBen0NFy/uOKNGI9JpD/nRerIkX13Z/5nfJ5EjpdyvfXAikiwTOvRbXPUPQtRYHebLYIH3TsXbMQXe4MiebGAwb4huQ+iEevnavnnApnJOkNAM4lSRSMRaz9up6tq55Pk2AjsvQiss+dloubFQUqpuzoDjs0aVOjBOKx1njBe4X2+nz3QRZjOYdLbxYpiROk71OkvD4XWDlpnQ/z4sv576CAaMaRHVUaF/0skWzF0Lj88K0We5Lase7g65yUMSD2l95Ufy5tkWBALKEHHsNkahRvZEWVYT41p5ThMqgPerWmpGDwr3v3vQYnqBIEbNnUGQqvQp+spolocnIaQcc23B6IPkOv2Gy9+5hdb2i4eWnDTfhImaOCHYzMGGd2U8YASp5XyGcJHc1vLnDgKhiBnN4HfIIPz38gwhMxSCYPefnlpGRcgixMUtxXeWMQSZ7RsTc/sQfpUwXiYajRVSPg7GZoVmTRckgsepzoDTv0Xur3lYBUbKipAQWdlFVRp9AWIH2C1MXfJpSh1rYEUqFoWxnH1fZZknBX/KMgeujXibjYY6/EmKL3Gdmibvc3bEkxWr7jp3FofV8OU2EPtS/tBqFXikPBsql0fWMRrKvXWRKloBHALtqnP1HxnfllLBug32gdsEF3NPFKfOa0m00+cZ6eHLxB8xKoNzdlq2fmHWNfKOZXyz3Kzq6/EnvXb99L8CMAQWZr4Z8hzPZnG++QUsRLibz0yCgCQnnxaqpvC3knhL0ZDnIbjfNo8EVpPnLjkFze4iia2/BGFxPPHlM42a8awvDft3ozjLDXmnl/Euh4vTOjkmr0VQp1mvE+54Pc/satMkTbQvj0R0q3FIMCq/VZBOTC5dFzNEVeiAuZzkFxiZ4OGpQF0cs98IqDeWEMvuy3BzE7wDBN22d0Rwjmmv04GhqfPxaXDTvufWz5k6Wws8z1mYqFGfRtFjLNFQKdJO0LwN73M8ZV9eXxMNvBLWe5VLTMwiSrJZDd0zAIs+jmDh4eMO19pi9bja8NXJUBFk5r0xCfO7Vmpblyx23O5OMHA5n7ScTvb2et2quQe1CTMpaGGvJFL3a14YHU2tmuHILsPtKndPwZZz8KU9GOLXTY5cE3+yvb+BJdn1+JvwzKLEP/1zvDYxe6bFyeq3dKPmaHZHV1G7ZQTxxoJF8wtsbnxVp2a1r4sSl2UAS6MfownP90k5u8aExr79cst+kbSPglv1HyG1xgZGAM=",
+                "page_age": "607 days ago",
+                "title": "Can You Run With DOMS? - The Running Channel",
+                "type": "web_search_result",
+                "url": "https://therunningchannel.com/can-you-run-with-doms/"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "261 days ago",
+                "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                "type": "web_search_result",
+                "url": "https://my.clevelandclinic.org/health/diseases/delayed-onset-muscle-soreness"
+              },
+              {
+                "encrypted_content": "EoILCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDMgsLMrucrmpNGseEBoMbw5q0BNJm+ZezcntIjBRtBQpY5V2wwv7W11cxvINe+wK27LNSjCM2tL+3tJTBK4qmmHOCPHnBUVhdHpGZHIqhQqvaUp+LdZazx7RlVOIhVOFtTlKxE7haACqIaXXIng1sLijNFIee44MkAU0GRZX3Y9J9t9a32LFB/9vhH84owCNXV1SEfCo5ishWowtOYw4ISxQocigraDe4X4MbzvwfXFVNcOUviYQMhijqDdeHHH97hRGwOvsjjEIJ//KaqjUIMTGukxpUwdEOZulZJ4uDTGd3Q9xDBwV5avcdAcqxP1FiVBPl6e1XZxXJEICDjF44GqzlebG3zJkhKY7yDZSYxxOnoT/glcZlbieDW8KliLz/8l86f/4IZPbPQ3fhYDQyqFTE3N2tYmmAM2t6kASdUIgHRipZcFxwqPI8O8aKSjbdLTsB50JNCXgDkERR+rJS3oZRyH3qJUjlds/pMNabsSdWk30Tv9tkgerFWQAIAksmT+mqAx8KafKvT8El4Dd1IUz2f+fBr1pMEWelhdbkjYYxhQPvBm07c4xM1FkIdbxM7/BJAB0TW4wFexL/aOCug+a/+N5hvXUxXT9S3LLwBu/4MU+4q6RjftDNQTTdSwNYMjfGFju9mepIzYvFInoK53PVdUmxBgjntDiFiIrzLd0KmM7qQ/IYazljFQtec/QkYMXtug929JKbXngxkDh1LzDuleavGZcvLXMX/JIMxzrjXLGU6yBukVj64KqEJ88NLBn6DMDIh9VaKNyNTsyjQzsLv9UbHNTSt5tjrQj5ZFDA2AMP2FQ2Urks7i5wE+UbNASOKm5fnc1Okzr6jQx4dlPy0uNtrP9iFx2dtWv0FbOMsE5hW6cSIOsOcXpUSIemLn+nwuTtsXP3XCBmHzIxri6RAvKP0IIqXGb0Q3oPdZgtsD5UXMIeNk/F4TkXN0gRpMOAg1dICSJaNSBeaDYiUsW0yS5O18ZAGncZaATafJT+z3B5EAQAyPL5p1VhmE0PjmwnWGhoEC8wGH+jFZanc6fVEwQ0Lrjr1NMpHyPk/Axr42nnKPgRDw3XOG42azsmeUPSM7pzDAK9Zx8UMHcUSCs/DXZkkGusJffo3+lWHduFB+9n4yO2ZDLcHealPjcXQOHi7IUaSP1PLA9v6NZJ9ZaHdwlfonvaTWwt4sqAiEBnGBOIBkldKlRM1tIMxvF0dlAdTbMoRFFPrrhvGo8ETcdRNsyEzm5SfhB8yUoZ0YjzNZYvmql7d95nvaQqlZati6AHg5cu1RkE8VljdAcg66FGPD4QOvtfELrn87F4WjwGsDoLGfNG1qvby8IwKV5/qd3mKvFiWmUeARbk8qwOW22IzYt2+i7L9WwKPlzcwGSEsBRPdxaEG6GLFM4yx2d5FG3eq+qnKSyY+hO83q5QTb+jb+o82NkiCXNg5ozITwWSP5o+xF480HasdYbUSbvKz0sm0sDA4mIQMv3XFmHwdLUeWM2hBXFlNBDOP0Kk1Zrq90JAflEBbn7fYSxaR4GqbVLgvR88HKaUpLbjgORiH7hrS7YtOGmr+TsgM9m62A23ySdDBOf2XA0Nu5AvB1ToUz7TFXBMeSNX6aSsmZEf4/5NlrPYiDvm9agpG8REUbz37RnxKqm5i74uH1nUgQNESrz//4KTURXSCIJQ2fPL/SoAWw65BDgPPKSPrdkF+RQBxfqaRgf6SmE8Vo12i8jRD/XAfLM2Qg+Y6SLrLWsSGtBWC+9MUtiosmqDWmvZXCVZRcIUZocqv5R/mB65EYKpYak2O28aITWz/9KZ9Yzb5G1nFKnGAM=",
+                "page_age": "1912 days ago",
+                "title": "The Runner's guide to muscle soreness - Recover Athletics",
+                "type": "web_search_result",
+                "url": "https://recoverathletics.com/soreness-from-running-what-causes-it-and-how-to-fix-it/"
+              }
+            ],
+            "tool_use_id": "srvtoolu_019NLJbd5odUHASTvakcdyDb",
+            "type": "web_search_tool_result"
+          },
+          {
+            "citations": null,
+            "text": "Your legs most likely ache because of delayed onset muscle soreness (DOMS). ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "DOMS is common and caused by over-exertion whereby micro-damage to the muscle results in an inflammatory response. ",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDDZffKuRym2e51ymZBoM60zOrU/UHfwM2i6JIjBWmjWiI/+efcQBl4ypcX8JsTIJtG47hqHyOpCRtvqHhgg9LeTJTFg5fLUTeg3aRBYqEzbSz4p7dC7Cbesgnti5XXu2dgQYBA==",
+                "title": "Why oh why do my legs hurt for days after a long walk or run?",
+                "type": "web_search_result_location",
+                "url": "https://www.countryfile.com/health/legs-hurt-after-exercise-doms"
+              }
+            ],
+            "text": "It's caused by over-exertion, where micro-damage to the muscle triggers an inflammatory response",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": ". It isn't lactic acid. ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "The body moves lactic acid out of the muscles within a few hours, and even though acid sounds like it’d leave a sore and painful residue, it’s not the...",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDCkojqmwZuGQb3XtvRoMg9FWFW2216n7ftXWIjBHxBIiG1TsOi/9XMo4SRDATWbV1LlstW+FIIbAnN1gdpwY0ea0cGOqZT+QRxwPq5MqE1CvYlKQC1sGn21Q/mjNBwlMDEcYBA==",
+                "title": "The Runner's guide to muscle soreness - Recover Athletics",
+                "type": "web_search_result_location",
+                "url": "https://recoverathletics.com/soreness-from-running-what-causes-it-and-how-to-fix-it/"
+              }
+            ],
+            "text": "The body clears lactic acid from the muscles within a few hours.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n\n- **Timing:** ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "Muscle pain sets in one to three days after intense exercise. ",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDPpsiKv0gqx/Wt5MEhoMZbktWh18GjmOXidEIjDYGA4WYE7qtwAegvD28Qi+Cg7g54AxB4UatXL8S0YvJT3YZZ2bLahh8d24kPogO+AqE8+kSkfMYEsjGyQ9179AcY206WQYBA==",
+                "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                "type": "web_search_result_location",
+                "url": "https://my.clevelandclinic.org/health/diseases/delayed-onset-muscle-soreness"
+              }
+            ],
+            "text": "Muscle pain sets in one to three days after intense exercise.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n- **Triggers:** ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "DOMS usually happens after you try a new activity, kind of training or a workout that’s more intense than you’re used to.\n\n",
+                "encrypted_index": "EpABCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDA7DRXI9EZeSswCD6BoMsXU4Xr6JBgbHLnQ1IjAwmITwWR5D4pyXjQB/81qkmIQqlGTB7eizOMoNCOttL9NuyTccQYth1o3RhQijDLEqFCTp/Yg0+tFKppvWpxA3hDd8UR/RGAQ=",
+                "title": "Delayed Onset Muscle Soreness (DOMS): What It Is & Treatment",
+                "type": "web_search_result_location",
+                "url": "https://my.clevelandclinic.org/health/diseases/delayed-onset-muscle-soreness"
+              }
+            ],
+            "text": "DOMS usually follows a new activity or a workout harder than you're used to.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": " Downhill running is a common cause, because the muscle is working as it lengthens.\n- **Relief:** ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "Having a warm bath after training can reduce DOMS.\n\n",
+                "encrypted_index": "EpABCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDCF/Ufi/CwN53fvL8hoMTTgSJI30a9YQqx6GIjBLCISyXWWkGRI/NJsnoPHc5iUQQu9/IGXNuN3tfAnrkSRW3gMDTtc2kBHht5Y9josqFERFPiBqwJscwmwnQZPhsgMGb8iPGAQ=",
+                "title": "Explainer",
+                "type": "web_search_result_location",
+                "url": "https://www.scmp.com/sport/outdoor/how-guides/article/3210538/what-delayed-onset-muscle-soreness-why-does-it-happen-and-how-can-you-stop-it-hurting-days-after-you"
+              }
+            ],
+            "text": "A warm bath after training can reduce DOMS.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": " Gentle movement may also help.\n\nIt's usually harmless. ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "If the pain is sharp, serve or persistent, then you should probably get checked out.\n\n",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDDKSY1Iot2LkoQEEMBoMMlyE4b+tMRGY16VfIjBiH/6IHJ5XbLZQBVOK4gmlZgE1jiZj5OTeAellU12KhYLWkuSRO0eDQJ8Bx0HzCLoqExtDGcQ3vS30SWJYqC0AIKhF788YBA==",
+                "title": "Explainer",
+                "type": "web_search_result_location",
+                "url": "https://www.scmp.com/sport/outdoor/how-guides/article/3210538/what-delayed-onset-muscle-soreness-why-does-it-happen-and-how-can-you-stop-it-hurting-days-after-you"
+              }
+            ],
+            "text": "If the pain is sharp, severe or persistent, get it checked out.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": " The same goes for swelling in a leg. In the UK, you can call NHS 111 or see your GP.",
+            "type": "text"
+          }
+        ],
+        "diagnostics": null,
+        "id": "msg_011Ch4jYeoRshjqSz32Bq6kx",
+        "model": "claude-sonnet-5-5",
+        "role": "assistant",
+        "stop_details": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "type": "message",
+        "usage": {
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "inference_geo": "global",
+          "input_tokens": 13298,
+          "output_tokens": 453,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_fetch_requests": 0,
+            "web_search_requests": 1
+          },
+          "service_tier": "standard",
+          "speed": "standard"
+        }
+      }
+    ],
+    "refusal": false,
+    "refusal_category": null,
+    "request": {
+      "max_tokens": 8000,
+      "messages": [
+        {
+          "content": "Why do my legs ache the day after a long run?",
+          "role": "user"
+        }
+      ],
+      "output_config": {
+        "effort": "medium"
+      },
+      "system": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+      "tools": [
+        {
+          "allowed_callers": [
+            "direct"
+          ],
+          "max_uses": 3,
+          "name": "web_search",
+          "type": "web_search_20260209",
+          "user_location": {
+            "city": "London",
+            "country": "GB",
+            "region": "England",
+            "timezone": "Europe/London",
+            "type": "approximate"
+          }
+        }
+      ]
+    },
+    "search_actions": [
+      "search"
+    ],
+    "search_errors": [],
+    "searches": 1,
+    "stop_reason": "end_turn",
+    "tokens_in": 13298,
+    "tokens_out": 453
+  },
+  "answered_at": "2026-11-15T12:44:08Z",
+  "config_hash": "b1ef32199d482e7d",
+  "cost_usd": 0.041126,
+  "latency_ms": 5424,
+  "model": "claude-sonnet-5-5",
+  "prompt_hash": "d6cbf2f2f80771ab",
+  "question_id": "v-902",
+  "run": 0,
+  "schema_version": "1.0"
+}

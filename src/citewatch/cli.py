@@ -11,16 +11,25 @@ import math
 import sys
 from importlib.resources import files
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, NoReturn
 
 import typer
 
 from citewatch import __version__
-from citewatch.env import key_status, load_dotenv
-from citewatch.schemas import ConfigError, load_study_config, provider_of
+from citewatch.cost import PriceError, estimate_run, load_prices, price_age_days, record_spend
+from citewatch.env import MissingKeyError, key_status, load_dotenv
+from citewatch.ledger import Ledger
+from citewatch.schemas import (
+    ConfigError,
+    StudyConfig,
+    load_questions,
+    load_study_config,
+    provider_of,
+)
+from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
-NOT_BUILT = {"ask": "N1.2", "extract": "A2.1", "fetch": "A2.2", "score": "M3.1", "report": "B4.1"}
+NOT_BUILT = {"extract": "A2.1", "fetch": "A2.2", "score": "M3.1", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -47,7 +56,7 @@ def _emit(as_json: bool, payload: dict[str, Any], text: str) -> None:
         typer.echo(text)
 
 
-def _fail(as_json: bool, command: str, message: str, code: int = EXIT_ERROR) -> None:
+def _fail(as_json: bool, command: str, message: str, code: int = EXIT_ERROR) -> NoReturn:
     _emit(
         as_json,
         {"ok": False, "command": command, "error": message},
@@ -56,7 +65,7 @@ def _fail(as_json: bool, command: str, message: str, code: int = EXIT_ERROR) -> 
     raise typer.Exit(code)
 
 
-def _not_built(command: str, as_json: bool) -> None:
+def _not_built(command: str, as_json: bool) -> NoReturn:
     _fail(as_json, command, f"not built yet (node {NOT_BUILT[command]})")
 
 
@@ -90,19 +99,39 @@ def main_options(
 @app.command()
 def init(
     folder: Annotated[Path, typer.Argument(help="Folder for the new study.")] = Path("."),
+    contact: Annotated[
+        str | None,
+        typer.Option("--contact", help="A project page or email site owners can reach you at."),
+    ] = None,
     as_json: JsonOpt = False,
 ) -> None:
     """Write study.yaml, a questions template, a rubric and .env.example. Never overwrites."""
     targets = {name: folder / name for name in TEMPLATES}
-    existing = sorted(str(p) for p in targets.values() if p.exists())
+    # is_symlink catches a dangling link that exists() would miss
+    existing = sorted(str(p) for p in targets.values() if p.exists() or p.is_symlink())
     if existing:
         _fail(as_json, "init", f"refusing to overwrite {', '.join(existing)}")
+    agent = None
+    if contact is not None:
+        agent = f"citewatch/{__version__} ({'+' if contact.startswith('http') else ''}{contact})"
+        try:
+            StudyConfig._names_tool_and_contact(agent)  # same rule as study.yaml (D-25)
+        except ValueError as exc:
+            _fail(as_json, "init", f"--contact: {exc}")
     folder.mkdir(parents=True, exist_ok=True)
     for name, path in targets.items():
-        path.write_text(
-            files("citewatch.templates").joinpath(TEMPLATES[name]).read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
+        text = files("citewatch.templates").joinpath(TEMPLATES[name]).read_text(encoding="utf-8")
+        if name == "study.yaml" and agent:
+            text = text.replace(
+                '"citewatch/0.1.0 (+https://example.org/your-study)"', json.dumps(agent)
+            )
+            lines = text.splitlines(keepends=True)
+            text = "".join(ln for ln in lines if "Replace the placeholder" not in ln)
+        try:
+            with path.open("x", encoding="utf-8") as fh:  # exclusive create: never overwrite
+                fh.write(text)
+        except FileExistsError:
+            _fail(as_json, "init", f"refusing to overwrite {path}")
     created = sorted(str(p) for p in targets.values())
     _emit(
         as_json,
@@ -158,7 +187,111 @@ def ask(
 ) -> None:
     """Ask every question on every model with web search on."""
     _check_cap(max_cost, as_json, "ask")
-    _not_built("ask", as_json)
+    path = _study_file(study)
+    try:
+        cfg = load_study_config(path)
+        qs = load_questions(path.parent / cfg.questions_path, cfg)
+        prices = load_prices()
+    except (ConfigError, PriceError) as exc:
+        _fail(as_json, "ask", str(exc))
+    if questions:
+        wanted = [x.strip() for x in questions.split(",") if x.strip()]
+        unknown = sorted(set(wanted) - {q.id for q in qs})
+        if unknown:
+            _fail(as_json, "ask", f"unknown question ids: {', '.join(unknown)}")
+        qs = [q for q in qs if q.id in wanted]
+    try:
+        est = estimate_run(len(qs), cfg.models, prices)
+    except PriceError as exc:
+        _fail(as_json, "ask", str(exc))
+    cap = max_cost if max_cost is not None else cfg.max_cost_usd
+    plan = {
+        "run": run,
+        "questions": len(qs),
+        "models": list(cfg.models),
+        "estimate": est,
+        "cap_usd": cap,
+        "prices_age_days": price_age_days(prices),
+    }
+    if dry_run:
+        lines = [f"run {run}: {len(qs)} questions x {len(cfg.models)} models, no calls made"]
+        lines += [
+            f"  {m}: {v['calls']} calls, about ${v['usd']:.2f}" for m, v in est["per_model"].items()
+        ]
+        lines.append(
+            f"  total about ${est['total_usd']:.2f}"
+            + (f" (cap ${cap:.2f})" if cap else " (no cap)")
+        )
+        _emit(as_json, {"ok": True, "command": "ask", "dry_run": True, **plan}, "\n".join(lines))
+        raise typer.Exit(EXIT_OK)
+    if cap is not None and est["total_usd"] > cap:
+        _fail(
+            as_json,
+            "ask",
+            f"estimated ${est['total_usd']:.2f} is over the cap ${cap:.2f}; nothing was asked. "
+            "Raise --max-cost or max_cost_usd, or ask fewer questions.",
+            EXIT_CAP,
+        )
+    load_dotenv(path.parent / ".env")
+    load_dotenv(Path(".env"))
+    from citewatch.runners import make_runner
+    from citewatch.runners.schedule import ask_run
+
+    try:
+        runners = {m: make_runner(m) for m in cfg.models}
+    except MissingKeyError as exc:
+        _fail(as_json, "ask", str(exc))
+    except ImportError as exc:
+        _fail(
+            as_json,
+            "ask",
+            f"{exc}; install the provider SDKs with `pip install 'citewatch[anthropic,openai]'`",
+        )
+    base = path.parent
+    res = ask_run(
+        qs,
+        cfg,
+        run=run,
+        runners=runners,
+        store=RawStore(base),
+        ledger=Ledger(base / "data" / "runs" / f"run-{run}"),
+        prices=prices,
+        cap_usd=cap,
+    )
+    order_file = base / "data" / "runs" / f"run-{run}" / "order.json"
+    order_file.write_text(
+        json.dumps({"seed": cfg.seeds["order"], "run": run, "order": res.order}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    if res.spent_usd:
+        record_spend(
+            base / "data" / "spend-ledger.jsonl",
+            kind="ask",
+            run_id=f"{cfg.name}:run-{run}",
+            spent_usd=res.spent_usd,
+            note=f"{res.asked} answers",
+        )
+    summary = {
+        "ok": not res.stopped_at_cap,
+        "command": "ask",
+        **plan,
+        "asked": res.asked,
+        "cached": res.cached,
+        "errors": res.errors,
+        "stopped_at_cap": res.stopped_at_cap,
+        "spent_usd": res.spent_usd,
+    }
+    text = (
+        f"run {run}: asked {res.asked}, already stored {res.cached}, "
+        f"transport errors {len(res.errors)}, spent ${res.spent_usd:.2f}"
+    )
+    if res.stopped_at_cap:
+        text += (
+            f"; stopped at the cap with {res.skipped_for_cap} left. "
+            "Rerun with a higher cap to resume."
+        )
+    _emit(as_json, summary, text)
+    raise typer.Exit(EXIT_CAP if res.stopped_at_cap else EXIT_OK)
 
 
 @app.command()

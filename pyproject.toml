@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6",
-    "typer>=0.12",
+    "typer>=0.28",  # TyperException and the exit-code behaviour cli.main relies on
 ]
 keywords = ["llm", "web-search", "citations", "freshness", "provenance", "ai-search", "research"]
 classifiers = [
@@ -31,6 +31,14 @@ Issues = "https://github.com/biplob819/ai-visibility/issues"
 
 [project.scripts]
 citewatch = "citewatch.cli:entry"
+
+[project.optional-dependencies]
+anthropic = [
+    "anthropic>=1",
+]
+openai = [
+    "openai>=2",
+]
 
 [dependency-groups]
 dev = [

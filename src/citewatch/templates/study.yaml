@@ -19,4 +19,5 @@ seeds:
   bootstrap: 4
 max_cost_usd: 5
 # Names the tool and how site owners can reach you. Must start with citewatch/<version>.
+# Replace the placeholder: doctor refuses example.org until you name a real page or address.
 user_agent: "citewatch/0.1.0 (+https://example.org/your-study)"

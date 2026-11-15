@@ -20,6 +20,12 @@ from ._iso import COUNTRIES, HINTS
 from .study import StudyQuestion
 
 REQUIRED_SEEDS = ("order", "support_sample", "hand_sample", "bootstrap")
+# example.org/.com/.net, localhost and the reserved test TLDs are never real contacts
+PLACEHOLDER = re.compile(
+    r"(?:^|[/@.])(?:example\.(?:org|com|net)|localhost)(?:$|[/:])"
+    r"|\.(?:example|test|invalid|localhost)(?:$|[/:])",
+    re.I,
+)
 # a URL with a real host, or an email address
 CONTACT = re.compile(
     r"https?://[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}"
@@ -84,9 +90,15 @@ class StudyConfig(Model):
             )
         if not re.match(r"^citewatch/\S+ ", v):
             raise ValueError("must start with 'citewatch/<version> ' so sites can see the tool")
-        if not CONTACT.search(v):
+        m = CONTACT.search(v)
+        if not m:
             raise ValueError(
                 "must name a contact: a URL with a host (https://...) or an email address"
+            )
+        if PLACEHOLDER.search(m.group(0)):
+            raise ValueError(
+                f"{m.group(0)!r} is a placeholder; name a real project page or address that "
+                "site owners can use to reach you"
             )
         return v
 

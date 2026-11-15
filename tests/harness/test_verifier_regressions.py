@@ -556,3 +556,12 @@ def test_pipe_separated_headers_count_and_txt_prose_does_not(tmp_path):
     assert sa.audit(tmp_path, tmp_path / "none", IDLE) == []
     (tmp_path / "data" / "t.psv").write_text("ref|body\nv-1|x\n", encoding="utf-8")
     assert any("t.psv" in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))
+
+
+def test_audits_cover_each_studys_own_data_folder(tmp_path):
+    study = tmp_path / "studies" / "mine" / "data"
+    study.mkdir(parents=True)
+    (study / "page.html").write_text("<html>", encoding="utf-8")
+    assert any("page.html" in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))
+    (study / "fetch_log.jsonl").write_text(fa._line(robots="disallowed") + "\n", encoding="utf-8")
+    assert fa.log_files(tmp_path) == [study / "fetch_log.jsonl"]

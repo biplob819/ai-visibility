@@ -1,0 +1,19 @@
+# USD, first-party list prices. Tokens are per 1M; search is per 1,000 searches or calls.
+# Check against the provider pages before each paid run (`citewatch doctor` warns after 7 days).
+claude-sonnet-5-5:
+  input: 2.00
+  output: 10.00
+  cached_input: 0.10
+  search_per_1k: 10.00
+  checked_on: 2026-11-15
+  source: "platform.claude.com pricing and web-search-tool pages; claude-api skill model table"
+gpt-6.1-sol:
+  input: 2.00
+  output: 10.00
+  cached_input: 0.10
+  long_threshold: 272000
+  long_input: 4.00
+  long_output: 15.00
+  search_per_1k: 10.00
+  checked_on: 2026-11-15
+  source: "developers.openai.com/api/docs/pricing.md (web search: reasoning models row)"

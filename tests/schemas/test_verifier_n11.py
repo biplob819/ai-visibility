@@ -59,7 +59,7 @@ def test_country_must_be_an_assigned_iso_code(tmp_path, code, hint):
         "citewatch/0.1 (+https://)",
         "citewatch/0.1 (+https://x)",
         "Mozilla/5.0 (Windows NT 10.0) Chrome/120 https://x.io",
-        "citewatch/0.1 (+https://example.org)\r\nX-Injected: 1",
+        "citewatch/0.1 (+https://github.com/me/x)\r\nX-Injected: 1",
         "citewatch/0.1 (contact: me)",
     ],
 )
@@ -71,7 +71,7 @@ def test_user_agent_names_the_tool_and_a_real_contact(tmp_path, agent):
 def test_user_agent_accepts_a_url_or_an_email(tmp_path):
     for agent in (
         "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)",
-        "citewatch/0.1.0 (study@example.org)",
+        "citewatch/0.1.0 (study@examplehealth.org)",
     ):
         assert load_study_config(_cfg_file(tmp_path, user_agent=agent)).user_agent == agent
 

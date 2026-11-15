@@ -36,8 +36,6 @@ def test_help_lists_every_command(capsys):
 @pytest.mark.parametrize(
     ("argv", "node"),
     [
-        (["ask"], "N1.2"),
-        (["ask", "--dry-run"], "N1.2"),
         (["extract"], "A2.1"),
         (["fetch", "--dry-run"], "A2.2"),
         (["score"], "M3.1"),
@@ -129,9 +127,18 @@ def test_init_creates_a_valid_study_and_refuses_to_overwrite(
         "RUBRIC.md",
         ".env.example",
     }
-    from citewatch.schemas import load_questions, load_study_config
+    from citewatch.schemas import ConfigError, load_questions, load_study_config
 
-    cfg = load_study_config(target / "study.yaml")
+    with pytest.raises(ConfigError, match="placeholder"):  # the template must be edited first
+        load_study_config(target / "study.yaml")
+    y = target / "study.yaml"
+    y.write_text(
+        y.read_text(encoding="utf-8").replace(
+            "https://example.org/your-study", "https://github.com/me/my-study"
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_study_config(y)
     assert len(load_questions(target / "questions.jsonl", cfg)) == 2
     (target / "questions.jsonl").write_text("mine\n", encoding="utf-8")
     code, out, _ = run(["init", str(target)], capsys)

@@ -1,0 +1,264 @@
+{
+  "answer": {
+    "answer_text": "An NHS prescription in England costs **£9.90 per item**. That charge stays the same for the 2026/27 financial year, the government has announced.\n\nIf you need a lot of medicines, a prepayment certificate (PPC) can save you money:\n- A 3-month PPC costs £32.05, and a 12-month PPC costs £114.50.\n- An HRT PPC is £19.80 a year.\n- A 3-month PPC saves money if you need 4 or more items in 3 months. A 12-month PPC saves money at 12 or more items in a year.\n\nMany people are exempt and pay nothing. Charges also only apply in England: Wales, Scotland and Northern Ireland have free prescriptions.",
+    "cached_in": 0,
+    "continuations": 0,
+    "model": "claude-sonnet-5-5",
+    "model_snapshot": "claude-sonnet-5-5",
+    "raw": [
+      {
+        "container": null,
+        "content": [
+          {
+            "caller": null,
+            "id": "srvtoolu_01Rhz3XoKBsDsjmDzrGnEhMn",
+            "input": {
+              "query": "NHS prescription charge England 2026"
+            },
+            "name": "web_search",
+            "type": "server_tool_use"
+          },
+          {
+            "caller": {
+              "type": "direct"
+            },
+            "content": [
+              {
+                "encrypted_content": "EqoGCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDC/OK8bNYjMfhSANxhoM+RL6tQj4CVxz5RkTIjCaIXuMaXEv+Mx5/NEtclhaqwy2fPEtP5AFQkO6FD7cWgNb2MAbfEQ+OCv8S2cmP1IqrQXehtOKT1VMvAmPUe/AHwT0YQmGXVHoBXddECDnshECQ0gQYEnnyMYtx+pXDmfa7uNbdihCHXHJmjSfyP9VE/CRJAhxndFWOw9wqJ4T+CeCwrbuV9EUwJRF5Sqj+WuiOOPt/MrZHisH+aF3QXzfyh2wuvTehBzHMXwjp5add95CKCT7pI5QjotG+CGsljv/geVL3OsnhzEgXxGv63bx0j2FMo/F6JT3L2z1lygIBdG5KtUbAB8YHRa5hLc6jEyCTK9pz3xwlQgBw8F3l8TRK+GwZe4aYPhsicjrC5I2UaRFpl6n9Vj6T+gvsZLJHnbh988NJt8K8NkTGexl0oDotRxoC5X8UdElc3ueRwo7hQ5sh9xTQEhHnP/C3uaSyK4M+FhlBixtSCGuphETRrvqjX1g2aseo4jj9RWaMLxTt6O8L6mz74A7lDZ4cbtJGjOJz/LfPgjR0+F216oZPEM2VHhCbyYJfS+1bxw/KXCWH7Mk0YH8tj8B5MkStTkf/da5V4tkZBybLBNLa7ft+oW1HHHnePXPwxXo2jBRDlAwZPyzCmCEa3n+s3ZprHUz5zxb380jCZVWRhaIayw7tqqFEvWlKmEK8iZfcfHwv/rPbWpQOlFhsexYQk+4hptyxkwGzGi5smYzQ/w/atOa1mgyet+kTSrae+3N8O4IrEO1B8WGwARlu9kp1g9YyEDQYz1ZLHv4oEZx8lnMVvT6GWnQEEPMEGRVuaqxavh9x4ZDThUvA4QnkXR6ZeDbdqCvJ4zwneWB5vE0yP2lG3SSeT0haNFeDwjc9ILjPyq5zD5UF/N9FbSbPAjX5uctPxmJvnKbqOmsDwh7exYyZ3oLIO+rPgH7/e4yOjuPIvX8eKo0XyqtZvuC4RbNNQCxD9VX8HdOQzwXOFKcqEBbCWdtEb8HGAM=",
+                "page_age": "198 days ago",
+                "title": "NHS prescription charges remain at £9.90 - Community Pharmacy England",
+                "type": "web_search_result",
+                "url": "https://cpe.org.uk/our-news/nhs-prescription-charges-to-remain-at-9-90/"
+              },
+              {
+                "encrypted_content": "EtICCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDBVftAry1jbg04UX2xoMaP7KP4+Pkj5xbg/FIjCN8zNA4gWI6Xun4rGdqhqNtRFnnp25vshJlAVIroU5ZGy9C7w1cxyuho/Pi7MD01Qq1QEYgjJoyGOLM7N1PI18LdmBeTXkA5P2KB3FjJYSwKGnAGWHPgLItPWaIeiQVZsXanilzKTPGnemz4HcrV7Nk87z/BOzqwLQyJaR4Il+a4rtAXTa/b4uCTlyRwPK+7ur/s4AZiJ6sICRgoxzzWiMZqimeCyle/JHV7Z/hsgs0W21406vBeYM4HbJUVGVblfIh7+mVyx8ePHP2M9WEaPjMmQJRFHcXwfNFvBUHjigHTtf/EFYJ27DW/vxk9/zAfwD61T5dnOeGzMORaVzzjZUWHqqY6K9XeQYAw==",
+                "page_age": "259 days ago",
+                "title": "The NHS Prescription Charge for 2026/27 remains at £9.90 per item",
+                "type": "web_search_result",
+                "url": "https://cpe.org.uk/wp-content/uploads/2026/03/Prescription-Charge-Card-2026-May.pdf"
+              },
+              {
+                "encrypted_content": "EpUICioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDPLSh7Wzjd2SiBmgEhoMPt2SwIlsPhLSaVx6IjB/kmaGdWLByYJJpxKVE8K5lUxat7ykxhm8D4otRLdW5vqgPA6ZnJaKsVhNhjpLJdwqmAfo99KTWzCpN24ywivzUlmQn3cTvCyJYHZTy+GaJlpm2NwokNeceOVMNCsUyNXOvnLEHdwR7qUT2zSjZ6v8KKgAjV6tO+BXR1knwW9dvEqvwsyMQ6m/0Ri9Qo8U6NxSivwfZN9Bo8WycRPGtF5+0cRON/QJvzh26a5AyC//oQfveD+2cjIAhBi4ICLNJLap55wfWpjCImH771c0TjrBsfRpWeV7QprWLwO4P9ZKUBwPxqtn+tfZy94s3+HfN28sIgk6C6/aDSHwgmDnKEkcw9SZp3y9bscNPc9YHujdSaR8bLsG1f++hD5hCiVMTHwj8AX8cGLGMd9RhGQp8qLf+QsAW6EpWYVbicb98jQ7EHmFbx+xrwRFb2aPMY3q35gbCc4xq6S+KYn8/pVkfo+whZ7qppMjZbXanDFWsBxN+a2UCqGuqMyWOFmT4Kwg3cI0BGFXI8g6n2MM5QNz6I57Th89iOySeJtBNfLp6JwiYwIlX5ST1TR6PJtIZ1gIChCLD/X+f5IyfVzx+5meIQ+sCSkv+uoCyNo9cjUSHxJ2Bfd/ezKusfVTHMgnDyr8tmxvwD+jfrPZrdkYC9LDPVD1tiM0XEYjRGkCeEkgoVAc0jOw9qan/b5K1zdTc0evnLnmunB4yDEihRoCKMG+IDo8EPxRqqlpFY43u6A2/xFtqrPxfeKLUOkQvEYj6ANF5ZbZ+mZFX3qUf2D4+fDkjIdkgUWqttsWMFaDpwazcnlaXtt42v+Xv1xed2pc37mbG/ciXg+tL49DS9xtJn6Da7abzsOzT68ExhGjPrVbHOLHflf4ijKB8rQ+SZwNhc/zdCcVjnrScKxZ2qxqcG3VXihLHNldU788OVJGOTLBdi4/8EzrAWVr+Bz+LhnTsUf2dulqp+87i3o5yQ5WhbtqtJWKGaa/C1W80hwTzL2KMp0GqpJd/0H/e43I0jX4RfaIt/bi97ZSAKznzWbj5RUKdn77Z+K8YD3FBe8pxRD8fQ1SxSLKKFkX5vV1Yg1lGJjLamNkEgNMXS6Ay++/dRwvXxDBobWU9EPEqIQpBp/JhiNAORrLBgD01v7KREWUj2/6NRrW0RxT1+iixAkv39uhwJciKTZyUsqPS8Sv1VgOaMNSFyMbPLTpuf+xYDAsV1nJf+VDLvDfhzLaUWEpxpaMYH+5a8RH7Ht9QIIO60xjhpboLb7FViOlR1yaD9hhrPSfC912WBc/AwCRxqvdlBgD",
+                "page_age": "355 days ago",
+                "title": "NHS prescription charges frozen for second year in a row - The ...",
+                "type": "web_search_result",
+                "url": "https://pharmaceutical-journal.com/article/news/nhs-prescription-charges-frozen-for-second-year-in-a-row"
+              },
+              {
+                "encrypted_content": "EpwFCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDNEIemGqUQKABOy+GRoMLQsz30ZNXEkgs2kBIjD7ZQhPqn+pRyEfAtWLls1oHzU4Rjim6tQ1XBuFIK5sGqYDrmBPmBhK1VjXTVYleq0qnwSNQvWpcEDsVa8Sy7qMx2/PIyYBVCq0kA9V1yA1J35zvJjBc3gObzagD5WcysJNM/rVmBzuEJlNQyprzqUti8EhIL7UQauLawwyHWIRtf0fdIrZCeWvq5xmDoMoR5O3Bwp7rfyR0b9E1UVik8XAFEJTZIY17myfC6beSrkatdkKpdS/cDqYMwzYpJuMD7CSMR6+i1/VkN5rgZO+PtnFL17tpEgg1u+/5zhOiYby9xCaf7QloF49k0EjP0IsLeASo0Zq/8YeAg2CAZ3z8ig8gVPWxs1Hv5BHWNhDFatsBkd6lOtyJITTS+z+JnjiW/ZJtH1CJeEMPNq6JPfGSDx60bW+FkJ73wio0sBjNf0sD/9PY8ySPs8XIQ1XRRwEhOyo06+sIlv01H8WByMlHS4gZDVtx/veY/6npgF8ki1r4DV0/hxe+zTfIuUzmKXPrOZVk3lfWykrWu6UA/Wbmz7LeRnquiHfKZ4aTmEin/QCzNHWlouRy0S9BO86TaaldICitZl4ykEvT6BYxXLn/1NS2aXOsywFwG4ONHi9+KMNty52msHt4ubGyitDim7WSGRHUGnbgeTtpRTRA7Or/BW9svVi2VhSKq0aiQqcZj8zNoBdjjLoqB63+FEJhqKIk0aBovYx5f0f8V/Xsmszefm1VZEDUAYYkSpuVUv+6q8ukpzr0AlJPeEcLpmNs7NFNKAlJt1RcNUBBtrQ358ou3MQYXUYAw==",
+                "page_age": "1 days ago",
+                "title": "NHS prescription charges in England - House of Commons Library",
+                "type": "web_search_result",
+                "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10671/"
+              },
+              {
+                "encrypted_content": "EtcHCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDGg/gvYnx3eMGCozExoMnj5JErq4wz/TP28dIjDQhCFEMsgR6xVy3IMaMAONZqs4J9++0Mc4Nz2SkUvE0Rb1NS7B3gKhoqQAcRFyKP8q2gbgCB9xX7b+OML/lRCBun7pA8DB0SzfGFK2cNRHpPU+ByPQ1W+N173iba82kYESeu4ayK5ToiFwPH8d92hGxOgW/Gqr3SKn/afWOQ/faQ+zEo3dcf0ONs+4zP+MbFbqwGtQ/+WmfJx0TyceE1bmsnaV+A7Vt+YX8ZqXfnlgJYLJGgrhus64cdmZDi/f3MxiB6/wJWzpy/v7JvxRHiczWpv2NVsE6gJhDtOTRIqi1yLio4CPK0cHbnYcd+KeQNqmTF7Iy1SK3DPjHeZ1hQcgV0Ou2hiXYVS5f0AGayzWN93ZonsQ2At7Ta0/H2KTa3hCm/upL3vagl5vWL6eRtZgaLG/p8Tp3xOYSKVlQv13YFFPs5Y6UEh66k40/l0xk8dUrCtM1wXEDB1b81ex/+BkkXokddHugg35DmO9jt/3VQI+94fmDv+bj7oL924V8LR+jJmu0Wgp3sEvbWRD8btT4O8YNSxBEWeohu10LFYygzPg1wA+GqAOPDM6lr0I8gd7CpCx8mUkVoIDDcGXOC+NMDj79OLkOxpTD4SCv+ibZK+tlUgrIvwxH2m4lUpTQx+Y3rSYXxZft+LpoXgxMeOnvNPs0n4xZEFr2817L3xVNys2fMhL7fmzLyuI2rrRtMhUTByhoiM2YscjBY+0OvYMCZFzxn3Xc8I6DcMVGivkTACvtLizNpuQbHtHKqWbJ5/c96UR7fsWKIEN46SV3lEvhof1LQHaHbOVZxE3GDhGklK3oqI79X8DuoL+Tp9seiRrGrOdSFJ+3RtGIuYgtHGgE74CG62G3VRwdfTt2wF3zyJKq1j01fVw/aVM5rC0TnUqrDM0g0n1qvyBTNlTqtLOyn+K+hSh4HJXfIoBwb79NcgWrUaUO8EycfwpIMmS+pxDDQ6v61NsgYpk6kRr/VQL29FwrvVWrURvDizKtDfIEup8QXk7+sR/BTP8u5qrUO+wrMWz2U2yVr1BxjkKdneYICunEd1+JrAfJJvU026JWbnOXzoCyZwO+nXeaQ50BM26Gm/Z+Wm4jLkTlXOAxeW7Svtbu7yZlGXrvDMTxmEXXvCKmrogPdig8I7f7k1Ai+M6FFHP1dtiDWq4evJHQGY7DmQHvc+IQq3jJc3xDqUYogyBtGu+MtNS7C6ta0UYAw==",
+                "page_age": "564 days ago",
+                "title": "No increase in NHS prescription fees for the first time in three ...",
+                "type": "web_search_result",
+                "url": "https://pharmaceutical-journal.com/article/news/no-increase-in-nhs-prescription-fees-for-the-first-time-in-three-years"
+              },
+              {
+                "encrypted_content": "EpoHCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDNKJmn4UlyThCeHLDBoMhhhYqkptCCIfaRrZIjCbySb+W6jNU8Cr/AmJfcQWDRTm8jyoRKFh6auEK6WLUBF/xw20mq6y+bglFMyCVO4qnQZXuThxl5yEIRlFIlzA7P5T65gUKijBUysNr9QWxgrgLy2j5Ehit1Uqbk3Ny3wHoCXPhknGMdmIsCDGQhZB+cO0NQxR9xoEcer4yDE8rXUnMhSOZ8JNgVsi3a3KLpVt6bG9owRO0yeIcUOu4hIPZ+/rbe9zSD45uyd28gEGmNl7dbAQSBoJBeLwITVem8/1kbmUKzuSm+YCVVSNwe/gWU2KxyxX5/J3fwq/gy6wVUnxBnzLFhNZ2dyTrRHFCJhBTFNRJFICv6kWTMYV0Sgy88JbqTRvysPMqSaC1w+wfts85L6+zAw5IHHcNUyE+fgv9ssHlWvKcZy5E7HeiVBl+yMFAtqCMI5mPTA0mnFGOcYm3Jholoqigiv1P6+PtnDbuPszPLED9rRriJVUn6UJ9SopGtTQ3l+LlyCj0COW6h9xPNCIEC5IRlTQSXqTu3D5gTyD1jFqJXl2wO188hgfy4Vl9HOCO1XIoHajc2/Ke3PjPxjjo0lDFqHno5Je0GtcIDCPzvw07M7jbj7YOPSi4Jin4QPiXJql1tiLNPXlmD8V6aQ6cb4hiA5zpxSdEhE3UK6BwREuN9melNQJ+r4t2ey/1vJEX4yS3z4OcUt5mW9hei3FhcCKVbbsaMT5Uqg5aFPaNaOrEciyNC6MbKzzl9EmRWcxny+PqTsi7+USZ7F8IkY4CTKyP366VbY5y5sHnje564n/vlnhVqomzMnNayVOJ60bTRy9oPIYf7GlFvEBimmRwIId9pYEGLDIgEqYf/Us782fjIiduQpWHlH2O+AQb6uVWVbUERqXYFyJTKqc1rpgK75CyFm/VycTHOUrGnbzcefBLFi0XLEPsyh5fHeA4kKh9ozm21zMGaEu3615bJjwmV7xRifZLuYtpwMO1cusO1NSvnaNQalNh1R5D89p6GXRsu8vkI2lhjCI3gi0nFRZyf8qHT/EiCDKyUqmZPwmd4+cdoopGokJkqJ5BW9uz2uSDpDFWtr9A+XmEQ2fCVDFl7RdOtArp4JKJx7zXbZxgKzvbMajQOzQ1rvQ3BpWMjbdcjYqL67FaiGOLhgD",
+                "page_age": "359 days ago",
+                "title": "NHS prescription charges frozen for the second year running - ...",
+                "type": "web_search_result",
+                "url": "https://cpe.org.uk/our-news/nhs-prescription-charges-frozen-for-the-second-year-running/"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": null,
+                "title": "Prescription charges",
+                "type": "web_search_result",
+                "url": "https://en.wikipedia.org/wiki/Prescription_charges"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "223 days ago",
+                "title": "NHS Prescription Costs, Exemptions and Charges Explained (2026) ...",
+                "type": "web_search_result",
+                "url": "https://movingtotheuk.co.uk/healthcare/nhs-prescription-costs-exemptions-charges"
+              },
+              {
+                "encrypted_content": "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",
+                "page_age": "215 days ago",
+                "title": "NHS Prescription Charges 2026: Who Pays £9.90, Who Pays Nothing ...",
+                "type": "web_search_result",
+                "url": "https://www.findpharmacy.co.uk/blog/nhs-prescription-charges-by-nation-2026"
+              }
+            ],
+            "tool_use_id": "srvtoolu_01Rhz3XoKBsDsjmDzrGnEhMn",
+            "type": "web_search_tool_result"
+          },
+          {
+            "citations": null,
+            "text": "An NHS prescription in England costs **£9.90 per item**. ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "The NHS prescription charge in England will remain at £9.90 for the 2026/2027 financial year, the government has announced. ",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDA9mJFACUDY14czjThoMP15yZwTFSy9Cdx7/IjC78CrJQfaRKUvun3TEyfUcpQvgfjzjzydJr3wSP6gYJ3rl51AmgaN73Vc0mC8WYBgqEyCxpEeRkkgizu8frrDMCqhiHgkYBA==",
+                "title": "NHS prescription charges frozen for second year in a row - The ...",
+                "type": "web_search_result_location",
+                "url": "https://pharmaceutical-journal.com/article/news/nhs-prescription-charges-frozen-for-second-year-in-a-row"
+              }
+            ],
+            "text": "That charge stays the same for the 2026/27 financial year, the government has announced.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n\nIf you need a lot of medicines, a prepayment certificate (PPC) can save you money:\n- ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "NHS charges for · 2026/27\nSingle prescription charge · £9.90\nPPC 3-month · £32.05\nPPC 12-month · £114.50\nHRT PPC · £19.80",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDH4DPSw639Zl5Q18GBoM4h0aLWwZTpPuv8NbIjC0hmMCvvkP7jHR3oVgndqNpDRV1Z2xRix3YzOM7MOii31U94QLkcb6FWlCsuKbpmAqE08G+2c80pPm6Ba3/3l6BRs8GP0YBA==",
+                "title": "NHS prescription charges remain at £9.90 - Community Pharmacy England",
+                "type": "web_search_result_location",
+                "url": "https://cpe.org.uk/our-news/nhs-prescription-charges-to-remain-at-9-90/"
+              }
+            ],
+            "text": "A 3-month PPC costs £32.05, and a 12-month PPC costs £114.50.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n- ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "… HRT PPCs will be set at £19.80 per year. ",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDLoXuZjO8223mRQO6BoMHRC9kPnBCCxYYIUyIjDPsefu2FyOGQdk5Mt5r9zzT+XOzG9jzk6bdqjWHgCAA0HrEhLGdz0bZRmKWNtv0s4qE+kbg1CXFvrbZfbSlZtEDvby9nsYBA==",
+                "title": "NHS prescription charges frozen for second year in a row - The ...",
+                "type": "web_search_result_location",
+                "url": "https://pharmaceutical-journal.com/article/news/nhs-prescription-charges-frozen-for-second-year-in-a-row"
+              }
+            ],
+            "text": "An HRT PPC is £19.80 a year.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n- ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "… Further help with prescription costs: A 3-month PPC costs £32.05 (saving an individual money if they need 4 or more prescribed items in 3 months)\n\n#...",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDHYpj64Fnl9lTV2AHxoMIDlhjlJYwkn0AaqqIjC9nP0SQIxjjd3HjWaf7PJah2Fq8+wqiX8Xy/+Bug0/fq3yo+/mtKM7XXHDcooCW7EqE2yKV8Ap2HHdQLiSMwleopiA7tQYBA==",
+                "title": "NHS prescription charges in England - House of Commons Library",
+                "type": "web_search_result_location",
+                "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10671/"
+              }
+            ],
+            "text": "A 3-month PPC saves money if you need 4 or more items in 3 months. A 12-month PPC saves money at 12 or more items in a year.",
+            "type": "text"
+          },
+          {
+            "citations": null,
+            "text": "\n\nMany people are exempt and pay nothing. Charges also only apply in England: ",
+            "type": "text"
+          },
+          {
+            "citations": [
+              {
+                "cited_text": "NHS prescription charges in 2026: England £9.90 per item, Wales, Scotland and NI free.\n\n",
+                "encrypted_index": "Eo8BCioIFRgCIiQ1YzJlMTJjOC0xOTgzLTQ2NmEtYjc2Yy04NTBlYjNiZmE0NGMSDPvxou4Uf/7y5nn5KxoMPOOp1mpAEuGNnTjYIjB/5QdFa0NZqPKZEXLqfmvNOZYp+596lk++rI+oeJa2Ok+whmy6ur4STW3zuHYH/dkqEwPQxXUpt0b2s5CZpVDxWx8m3zYYBA==",
+                "title": "NHS Prescription Charges 2026: Who Pays £9.90, Who Pays Nothing ...",
+                "type": "web_search_result_location",
+                "url": "https://www.findpharmacy.co.uk/blog/nhs-prescription-charges-by-nation-2026"
+              }
+            ],
+            "text": "Wales, Scotland and Northern Ireland have free prescriptions.",
+            "type": "text"
+          }
+        ],
+        "diagnostics": null,
+        "id": "msg_011Ch4jYF89GhKzWwWFAxqK8",
+        "model": "claude-sonnet-5-5",
+        "role": "assistant",
+        "stop_details": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "type": "message",
+        "usage": {
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "inference_geo": "global",
+          "input_tokens": 11120,
+          "output_tokens": 381,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_fetch_requests": 0,
+            "web_search_requests": 1
+          },
+          "service_tier": "standard",
+          "speed": "standard"
+        }
+      }
+    ],
+    "refusal": false,
+    "refusal_category": null,
+    "request": {
+      "max_tokens": 8000,
+      "messages": [
+        {
+          "content": "How much does an NHS prescription cost in England?",
+          "role": "user"
+        }
+      ],
+      "output_config": {
+        "effort": "medium"
+      },
+      "system": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+      "tools": [
+        {
+          "allowed_callers": [
+            "direct"
+          ],
+          "max_uses": 3,
+          "name": "web_search",
+          "type": "web_search_20260209",
+          "user_location": {
+            "city": "London",
+            "country": "GB",
+            "region": "England",
+            "timezone": "Europe/London",
+            "type": "approximate"
+          }
+        }
+      ]
+    },
+    "search_actions": [
+      "search"
+    ],
+    "search_errors": [],
+    "searches": 1,
+    "stop_reason": "end_turn",
+    "tokens_in": 11120,
+    "tokens_out": 381
+  },
+  "answered_at": "2026-11-15T12:44:03Z",
+  "config_hash": "b1ef32199d482e7d",
+  "cost_usd": 0.03605,
+  "latency_ms": 5739,
+  "model": "claude-sonnet-5-5",
+  "prompt_hash": "d6cbf2f2f80771ab",
+  "question_id": "v-901",
+  "run": 0,
+  "schema_version": "1.0"
+}

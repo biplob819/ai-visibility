@@ -1,0 +1,373 @@
+{
+  "answer": {
+    "answer_text": "An **NHS prescription in England currently costs £9.90 per item**, unless you qualify for free prescriptions. The charge is **per medicine, not per prescription form**—so two different medicines usually cost £19.80. ([nhs.uk](https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai))\n\nSome items, including contraception, are always free. If you regularly pay for prescriptions, a **prescription prepayment certificate (PPC)** may work out cheaper. ([nhs.uk](https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai))",
+    "cached_in": 0,
+    "continuations": 0,
+    "model": "gpt-6.1-sol",
+    "model_snapshot": "gpt-6.1-sol",
+    "raw": [
+      {
+        "access_programs": {
+          "cyber": "standard"
+        },
+        "background": false,
+        "billing": {
+          "payer": "developer"
+        },
+        "completed_at": 1794746505.0,
+        "conversation": null,
+        "created_at": 1794746497.0,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "id": "resp_0382c27764ccaf08006af9a88189bc87d29cd61f327f75f14d",
+        "image": {
+          "context_compression": "disabled"
+        },
+        "incomplete_details": null,
+        "input_transformations": [],
+        "instructions": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+        "max_output_tokens": null,
+        "max_tool_calls": 3,
+        "metadata": {},
+        "model": "gpt-6.1-sol",
+        "moderation": null,
+        "object": "response",
+        "output": [
+          {
+            "action": {
+              "queries": [
+                "site.nhs.uk NHS prescription charges England £9.90 2026",
+                "site.gov.uk prescription charges frozen 2026 2027 England"
+              ],
+              "query": "site.nhs.uk NHS prescription charges England £9.90 2026",
+              "sources": [
+                {
+                  "type": "url",
+                  "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.nhsbsa.nhs.uk/help-nhs-prescription-costs"
+                },
+                {
+                  "type": "url",
+                  "url": "https://cpe.org.uk/our-news/nhs-prescription-charges-to-remain-at-9-90/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://faq.nhsbsa.nhs.uk/knowledgebase/article/KA-01375/en-us"
+                },
+                {
+                  "type": "url",
+                  "url": "https://cpe.org.uk/dispensing-and-supply/prescription-processing/receiving-a-prescription/patient-charges/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://questions-statements.parliament.uk/written-statements/1856002"
+                },
+                {
+                  "type": "url",
+                  "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10671/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html"
+                },
+                {
+                  "type": "url",
+                  "url": "https://cpe.org.uk/dispensing-and-supply/prescription-processing/receiving-a-prescription/patient-charges/prescription-charge-card/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://assets.publishing.service.gov.uk/media/6a992bc45a0c25165ae46825/nhs-england-annual-report-and-accounts-2025-2026.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.nhsbsa.nhs.uk/sites/default/files/2026-04/HC12%20%28V24%29%2004.2026.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.nhsbsa.nhs.uk/sites/default/files/2025-12/Drug%20Tariff%20January%202026.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://commonslibrary.parliament.uk/research-briefings/CBP-10671/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.moneysavingexpert.com/family/cheap-prescriptions/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://cpe.org.uk/our-news/nhs-prescription-charges-frozen-for-the-second-year-running/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://qna.files.parliament.uk/qnadailyreports/Written-Questions-Answers-Statements-Daily-Report-Commons-2025-11-24.pdf"
+                },
+                {
+                  "type": "url",
+                  "url": "https://commonsbusiness.parliament.uk/Document/99513/Pdf?subType=Standard"
+                },
+                {
+                  "type": "url",
+                  "url": "https://hansard.parliament.uk/pdf/commons/2025-11-24"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Private_prescription"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1xas5at/titration_what_are_the_nhs_cost/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Drug_Tariff"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/hellobill/comments/1va9bif/if_you_pay_for_prescriptions_every_month_stop/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/National_Health_Service_%28England%29"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1rp8hot/how_does_prescription_costs_work/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/nhs/comments/1wknsfy/i_havent_been_paying_for_my_prescriptions/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/November_2025_United_Kingdom_budget"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Prescription_drug"
+                },
+                {
+                  "type": "url",
+                  "url": "https://en.wikipedia.org/wiki/Prescription_charges"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/AskUK/comments/1nnhsl9/how_do_prescriptions_work_in_the_uk/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1mh9k61/nhs_medication_way_to_save_some_on_prescription/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/AskUK/comments/1qc6w3q/what_do_prescription_costs_actually_pay_for/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1vs2990/medication_cost_how_much_am_i_looking_at_paying/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://moneyweek.com/personal-finance/april-money-changes-bills-energy-premium-bonds"
+                },
+                {
+                  "type": "url",
+                  "url": "https://moneyweek.com/economy/uk-economy/key-money-dates-next-year"
+                },
+                {
+                  "type": "url",
+                  "url": "https://moneyweek.com/economy/budget/autumn-budget-2025-announcements"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1vprztj/psa_you_can_pre_pay_for_prescriptions_ppc_with/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/ADHDUK/comments/1gxzmcp"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/AskUK/comments/1j2iw6k/have_repeat_prescriptions_really_gone_up_by_100/"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.reddit.com/r/uknews/comments/1knx5sx"
+                },
+                {
+                  "type": "url",
+                  "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai"
+                }
+              ],
+              "type": "search"
+            },
+            "id": "ws_0382c27764ccaf08006af9a8838c2c87d2a77631bc42e72575",
+            "status": "completed",
+            "type": "web_search_call"
+          },
+          {
+            "content": [
+              {
+                "annotations": [
+                  {
+                    "end_index": 317,
+                    "start_index": 216,
+                    "title": "NHS prescription charges - NHS",
+                    "type": "url_citation",
+                    "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai"
+                  },
+                  {
+                    "end_index": 584,
+                    "start_index": 483,
+                    "title": "NHS prescription charges - NHS",
+                    "type": "url_citation",
+                    "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai"
+                  }
+                ],
+                "logprobs": [],
+                "text": "An **NHS prescription in England currently costs £9.90 per item**, unless you qualify for free prescriptions. The charge is **per medicine, not per prescription form**—so two different medicines usually cost £19.80. ([nhs.uk](https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai))\n\nSome items, including contraception, are always free. If you regularly pay for prescriptions, a **prescription prepayment certificate (PPC)** may work out cheaper. ([nhs.uk](https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/?utm_source=openai))",
+                "type": "output_text"
+              }
+            ],
+            "id": "msg_0382c27764ccaf08006af9a8877bcc87d2ade3204d41c93f84",
+            "phase": "final_answer",
+            "role": "assistant",
+            "status": "completed",
+            "type": "message"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt": null,
+        "prompt_cache_diagnostics": null,
+        "prompt_cache_key": null,
+        "prompt_cache_options": null,
+        "prompt_cache_retention": "24h",
+        "reasoning": {
+          "context": "all_turns",
+          "effort": "medium",
+          "generate_summary": null,
+          "mode": "standard",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "status": "completed",
+        "store": true,
+        "temperature": 1.0,
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "tool_choice": "auto",
+        "tool_usage": {
+          "image_gen": {
+            "cached_tokens": null,
+            "cached_tokens_details": null,
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "image_tokens": 0,
+              "text_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "image_tokens": 0,
+              "text_tokens": 0
+            },
+            "total_tokens": 0
+          },
+          "web_search": {
+            "num_requests": 1
+          }
+        },
+        "tools": [
+          {
+            "external_web_access": null,
+            "filters": null,
+            "return_token_budget": "default",
+            "search_content_types": [
+              "text"
+            ],
+            "search_context_size": "medium",
+            "type": "web_search",
+            "user_location": {
+              "city": "London",
+              "country": "GB",
+              "region": "England",
+              "timezone": "Europe/London",
+              "type": "approximate"
+            }
+          }
+        ],
+        "top_logprobs": 0,
+        "top_p": 0.98,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 12946,
+          "input_tokens_details": {
+            "cache_write_tokens": 4486,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 4486
+            },
+            "cached_tokens": 0
+          },
+          "output_tokens": 169,
+          "output_tokens_details": {
+            "reasoning_tokens": 54
+          },
+          "total_tokens": 13115
+        },
+        "user": null
+      }
+    ],
+    "refusal": false,
+    "refusal_category": null,
+    "request": {
+      "include": [
+        "web_search_call.action.sources"
+      ],
+      "input": "How much does an NHS prescription cost in England?",
+      "instructions": "Answer for a reader in the UK in under 150 words. Use web search to find current sources and cite them.",
+      "max_tool_calls": 3,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "web_search",
+          "user_location": {
+            "city": "London",
+            "country": "GB",
+            "region": "England",
+            "timezone": "Europe/London",
+            "type": "approximate"
+          }
+        }
+      ]
+    },
+    "search_actions": [
+      "search"
+    ],
+    "search_errors": [],
+    "searches": 1,
+    "stop_reason": "completed",
+    "tokens_in": 12946,
+    "tokens_out": 169
+  },
+  "answered_at": "2026-11-15T12:41:46Z",
+  "config_hash": "b1ef32199d482e7d",
+  "cost_usd": 0.037582,
+  "latency_ms": 11203,
+  "model": "gpt-6.1-sol",
+  "prompt_hash": "d6cbf2f2f80771ab",
+  "question_id": "v-901",
+  "run": 0,
+  "schema_version": "1.0"
+}

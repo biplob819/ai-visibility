@@ -58,15 +58,26 @@ from harness_lib import (
     spec_dir,
 )
 
-# Commands run inside the clean venv by gate 10. N1.3 adds `report --example` and `ask --dry-run`.
-# (command, expected exit code); run with no provider keys in the environment.
-# The list grows with the nodes: N1.3 adds --help, init and doctor (exit 2 with no keys);
-# N1.2 adds `ask --dry-run`; B4.1 adds `report --example`.
+# Commands run inside the clean venv by gate 10, as (command, expected exit code), with every
+# provider credential removed. The list grows with the nodes: --version (W0.1); --help, a usage
+# error, init and doctor (exit 2 with no keys) (N1.3); `ask --dry-run` (N1.2);
+# `report --example` (B4.1).
 SMOKE_COMMANDS: list[tuple[list[str], int]] = [
     (["citewatch", "--version"], 0),
     (["citewatch", "--help"], 0),
-    (["citewatch", "init", "smoke-study"], 0),
+    (["citewatch", "ask", "--run", "9"], 2),
+    (
+        [
+            "citewatch",
+            "init",
+            "smoke-study",
+            "--contact",
+            "https://github.com/biplob819/ai-visibility",
+        ],
+        0,
+    ),
     (["citewatch", "doctor", "--study", "smoke-study"], 2),
+    (["citewatch", "ask", "--run", "0", "--dry-run", "--study", "smoke-study"], 0),
 ]
 PYTEST_UNIT_MARKERS = "not golden and not polite and not safety"
 NA_MIN_REASON = 10

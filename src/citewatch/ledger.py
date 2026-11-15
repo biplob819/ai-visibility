@@ -23,6 +23,9 @@ def check_money(value: float, what: str = "cost_usd") -> float:
     return float(value)
 
 
+RESERVED = {"at", "stage", "key", "cache_hit", "latency_ms", "cost_usd", "error"}
+
+
 class Ledger:
     """Appends to `<run_dir>/run.log`. Safe to call from many threads: one lock, one write per
     line, so lines never interleave."""
@@ -43,6 +46,12 @@ class Ledger:
         error: str | None = None,
         **extra: Any,
     ) -> dict[str, Any]:
+        clash = sorted(set(extra) & RESERVED)
+        if clash:
+            raise LedgerError(f"extra fields cannot replace {clash}")
+        for name, value in extra.items():
+            if name.endswith("_usd") and value is not None:
+                check_money(value, name)
         if isinstance(latency_ms, bool) or not isinstance(latency_ms, int) or latency_ms < 0:
             raise LedgerError(f"latency_ms must be a non-negative integer, got {latency_ms!r}")
         row = {

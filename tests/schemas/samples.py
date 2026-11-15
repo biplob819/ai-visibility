@@ -274,6 +274,6 @@ def config(**over: Any) -> dict[str, Any]:
         "stale_days": 365,
         "seeds": {"order": 1, "support_sample": 2, "hand_sample": 3, "bootstrap": 4},
         "max_cost_usd": 25.0,
-        "user_agent": "citewatch/0.1.0 (+https://example.org)",
+        "user_agent": "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)",
     }
     return {**d, **over}
