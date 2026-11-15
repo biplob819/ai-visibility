@@ -31,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"extract": "A2.1", "score": "M3.1", "report": "B4.1"}
+NOT_BUILT = {"score": "M3.1", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -365,7 +365,33 @@ def ask(
 @app.command()
 def extract(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
     """Rebuild citations and consulted sources from the raw store."""
-    _not_built("extract", as_json)
+    from citewatch.extract import run_extract, unique_cited_urls
+
+    path = _study_file(study)
+    try:
+        cfg = load_study_config(path)
+    except ConfigError as exc:
+        _fail(as_json, "extract", str(exc))
+    res = run_extract(path.parent, cfg)
+    unique = unique_cited_urls(res.citations)
+    summary = {
+        "ok": not res.problems,
+        "command": "extract",
+        "answers": len(res.answers),
+        "citations": len(res.citations),
+        "unique_cited_urls": sum(len(v) for v in unique.values()),
+        "consulted": len(res.consulted),
+        "skipped_urls": sum(res.skipped_urls.values()),
+        "problems": res.problems,
+    }
+    text = (
+        f"{len(res.answers)} answers, {len(res.citations)} citations "
+        f"({summary['unique_cited_urls']} unique per answer), {len(res.consulted)} consulted"
+    )
+    if res.problems:
+        text += f"; {len(res.problems)} envelopes could not be read"
+    _emit(as_json, summary, text)
+    raise typer.Exit(EXIT_ERROR if res.problems else EXIT_OK)
 
 
 def fetch_logs_for(base: Path) -> list[Path]:
