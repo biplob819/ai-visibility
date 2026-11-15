@@ -8,6 +8,8 @@ license-files = ["LICENSE"]
 authors = [{ name = "Biplob Chakraborty" }]
 requires-python = ">=3.11"
 dependencies = [
+    "httpx>=0.28",
+    "protego>=0.4",
     "pydantic>=2.7",
     "pyyaml>=6",
     "typer>=0.28",  # TyperException and the exit-code behaviour cli.main relies on

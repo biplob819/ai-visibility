@@ -37,7 +37,6 @@ def test_help_lists_every_command(capsys):
     ("argv", "node"),
     [
         (["extract"], "A2.1"),
-        (["fetch", "--dry-run"], "A2.2"),
         (["score"], "M3.1"),
         (["report", "--example"], "B4.1"),
     ],

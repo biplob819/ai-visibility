@@ -20,6 +20,7 @@ from citewatch.cost import PriceError, estimate_run, load_prices, price_age_days
 from citewatch.env import MissingKeyError, key_status, load_dotenv
 from citewatch.ledger import Ledger
 from citewatch.schemas import (
+    Citation,
     ConfigError,
     StudyConfig,
     load_questions,
@@ -30,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"extract": "A2.1", "fetch": "A2.2", "score": "M3.1", "report": "B4.1"}
+NOT_BUILT = {"extract": "A2.1", "score": "M3.1", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -363,7 +364,82 @@ def fetch(
     as_json: JsonOpt = False,
 ) -> None:
     """Fetch cited pages politely and resolve their dates."""
-    _not_built("fetch", as_json)
+    import math as _math
+    from collections import Counter
+
+    from citewatch.fetch import FetchLog, PageHistory, PoliteClient, fetch_key, fetch_pages
+    from citewatch.fetch.keys import host_of
+
+    path = _study_file(study)
+    try:
+        cfg = load_study_config(path)
+    except ConfigError as exc:
+        _fail(as_json, "fetch", str(exc))
+    base = path.parent
+    cites = base / "data" / "citations.jsonl"
+    if not cites.is_file():
+        _fail(as_json, "fetch", f"{cites} not found; run `citewatch extract` first")
+    urls: list[str] = []
+    for n, line in enumerate(cites.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            urls.append(Citation.model_validate_json(line).url)  # canonical URLs only (FET-05)
+        except ValueError as exc:
+            _fail(as_json, "fetch", f"{cites}:{n}: not a citation row ({exc})")
+    store = RawStore(base)
+    todo = [u for u in dict.fromkeys(urls) if not store.has("fetch", fetch_key(u))]
+    hosts = Counter(host_of(u) for u in todo)
+    # one robots.txt per new host plus its pages, 1 s apart; at most 8 hosts at once
+    per_host = [n + 1 for n in hosts.values()]
+    min_s = max(max(per_host, default=0), _math.ceil(sum(per_host) / 8))
+    plan = {
+        "urls": len(dict.fromkeys(urls)),
+        "to_fetch": len(todo),
+        "hosts": len(hosts),
+        "min_seconds": min_s,
+        "top_hosts": dict(hosts.most_common(10)),
+    }
+    if dry_run:
+        lines = [f"{len(todo)} of {plan['urls']} cited URLs to fetch on {len(hosts)} hosts"]
+        lines += [f"  {h}: {c}" for h, c in hosts.most_common(10)]
+        lines.append(f"  at least {min_s} s at 1 request per second per host, 8 hosts at once")
+        _emit(as_json, {"ok": True, "command": "fetch", "dry_run": True, **plan}, "\n".join(lines))
+        raise typer.Exit(EXIT_OK)
+    sample = base / "data" / "support_sample.jsonl"
+    keep: frozenset[str] = frozenset()
+    if sample.is_file():
+        keep = frozenset(
+            json.loads(x)["url"] for x in sample.read_text(encoding="utf-8").splitlines() if x
+        )
+    log_path = base / "data" / "fetch_log.jsonl"
+    client = PoliteClient(
+        cfg.user_agent,
+        FetchLog(log_path),
+        history=PageHistory.from_logs(sorted((base / "data").glob("fetch_log*.jsonl"))),
+        store=store,
+    )
+    try:
+        res = fetch_pages(todo, client=client, store=store, keep_text=keep)
+    finally:
+        client.close()
+    summary = {
+        "ok": not res.interrupted and not res.errors,
+        "command": "fetch",
+        **plan,
+        "fetched": res.fetched,
+        "cached": res.cached,
+        "outcomes": dict(res.outcomes),
+        "errors": res.errors,
+        "interrupted": res.interrupted,
+    }
+    text = f"fetched {res.fetched}, already stored {res.cached}: " + ", ".join(
+        f"{k} {v}" for k, v in sorted(res.outcomes.items())
+    )
+    if res.interrupted:
+        text += "; interrupted. Rerun to resume."
+    _emit(as_json, summary, text)
+    raise typer.Exit(EXIT_ERROR if res.interrupted or res.errors else EXIT_OK)
 
 
 @app.command()
