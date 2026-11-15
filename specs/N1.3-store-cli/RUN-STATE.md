@@ -1,6 +1,6 @@
 # N1.3 run state
 
-**Now:** pass 1 fixes in; converging, then verifier pass 2.
+**Now:** pass 2 fixes in; converging, then verifier pass 3.
 
 ## History
 - 2026-11-15 — spec and criteria written.
@@ -9,7 +9,7 @@
 
 ## Known limits (D-26, low) — each with the test that would close it
 - A crash can leave `.tmp-*` files in the store; `keys()` ignores them. Closing test: a `citewatch doctor` check that lists and offers to remove stale temp files (not written).
-- No fallback where hard links are unsupported (exFAT, some network shares): `put` raises there. Closing test: a store test on a filesystem without `link` (not available in CI).
 - `1` and `1.0` give different store keys; units are built by code, never typed by people. Closing test: `test_keys_are_stable_under_dict_order...` extended if a caller ever builds keys from parsed JSON numbers.
 - Usage errors print plain text even with `--json`. Closing test: a `--json` usage-error case in `test_cli.py` (not written).
 - `Ledger.rows()` raises on a torn line (one writer per run makes this unlikely). Closing test: a torn-line fixture in `test_ledger.py` (not written).
+- 2026-11-15 — verifier pass 2 CONFIRMED STO-01..04; two medium: a store failure after a paid call (e.g. no hard links on exFAT) lost the spend record, and doctor did not check `prices.yaml` age. Fixed: atomic-rename fallback without hard links; spend written per call before storing (D-37); doctor checks prices (age > 7 days, missing models) and a study may carry its own `prices.yaml`; lows: whole-string key/stage matching, -0.0 written as 0.0, JSON output for unexpected errors in `--json` mode, cap message precision, cap test with a real study.

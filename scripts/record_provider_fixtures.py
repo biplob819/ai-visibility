@@ -19,8 +19,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from citewatch.cost import answer_cost, load_prices, record_spend  # noqa: E402
 from citewatch.env import load_dotenv  # noqa: E402
-from citewatch.runners import make_runner  # noqa: E402
-from citewatch.runners.schedule import envelope  # noqa: E402
+from citewatch.runners import anthropic_runner, make_runner, openai_runner  # noqa: E402
 from citewatch.schemas import StudyQuestion, load_study_config  # noqa: E402
 
 QUESTIONS = [
@@ -52,8 +51,12 @@ def main() -> int:
         runner = make_runner(model)
         for q in QUESTIONS:
             start = time.monotonic()
-            answer = runner.ask(q, cfg)
+            rc = runner.call(q, cfg)
             latency = int((time.monotonic() - start) * 1000)
+            if model.startswith("claude"):
+                answer = anthropic_runner.parse(model, rc.responses, rc.request)
+            else:
+                answer = openai_runner.parse(model, rc.responses[0], rc.request)
             cost = answer_cost(
                 prices[model],
                 tokens_in=answer.tokens_in,
@@ -62,17 +65,20 @@ def main() -> int:
                 searches=answer.searches,
             )
             total += cost
-            env = envelope(
-                answer,
-                run=0,
-                question=q,
-                cost_usd=cost,
-                latency_ms=latency,
-                answered_at=dt.datetime.now(dt.UTC)
+            from dataclasses import asdict
+
+            env = {
+                "schema_version": "1.0",
+                "run": 0,
+                "question_id": q.id,
+                "model": model,
+                "answered_at": dt.datetime.now(dt.UTC)
                 .isoformat(timespec="seconds")
                 .replace("+00:00", "Z"),
-                cfg=cfg,
-            )
+                "latency_ms": latency,
+                "cost_usd": cost,
+                "answer": asdict(answer),
+            }
             path = out / f"{model}--{q.id}.json"
             path.write_text(
                 json.dumps(env, indent=2, sort_keys=True, ensure_ascii=False) + "\n",

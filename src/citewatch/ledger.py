@@ -20,7 +20,7 @@ def check_money(value: float, what: str = "cost_usd") -> float:
         raise LedgerError(f"{what} must be a finite number, got {value!r}")
     if value < 0:
         raise LedgerError(f"{what} cannot be negative, got {value!r}")
-    return float(value)
+    return float(value) + 0.0  # -0.0 becomes 0.0
 
 
 RESERVED = {"at", "stage", "key", "cache_hit", "latency_ms", "cost_usd", "error"}

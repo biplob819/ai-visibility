@@ -16,7 +16,7 @@ from typing import Annotated, Any, NoReturn
 import typer
 
 from citewatch import __version__
-from citewatch.cost import PriceError, estimate_run, load_prices, price_age_days, record_spend
+from citewatch.cost import PriceError, estimate_run, load_prices, price_age_days
 from citewatch.env import MissingKeyError, key_status, load_dotenv
 from citewatch.ledger import Ledger
 from citewatch.schemas import (
@@ -29,6 +29,7 @@ from citewatch.schemas import (
 from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
+PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
 NOT_BUILT = {"extract": "A2.1", "fetch": "A2.2", "score": "M3.1", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
@@ -67,6 +68,12 @@ def _fail(as_json: bool, command: str, message: str, code: int = EXIT_ERROR) -> 
 
 def _not_built(command: str, as_json: bool) -> NoReturn:
     _fail(as_json, command, f"not built yet (node {NOT_BUILT[command]})")
+
+
+def _study_prices(folder: Path) -> Path | None:
+    """A study may carry its own prices.yaml, which replaces the packaged one."""
+    p = folder / "prices.yaml"
+    return p if p.is_file() else None
 
 
 def _study_file(study: Path) -> Path:
@@ -158,6 +165,32 @@ def doctor(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
         checks.append({"check": "study", "ok": True, "detail": f"{path} ({cfg.name})"})
         checks.append({"check": "user agent", "ok": True, "detail": cfg.user_agent})
         providers = sorted({provider_of(m) for m in cfg.models})
+        try:
+            prices = load_prices(_study_prices(path.parent))
+            missing = [m for m in cfg.models if m not in prices]
+            age = price_age_days(prices)
+            src = "study prices.yaml" if _study_prices(path.parent) else "packaged prices.yaml"
+            if missing:
+                checks.append(
+                    {"check": "prices", "ok": False, "detail": f"no price for {', '.join(missing)}"}
+                )
+            elif age > PRICE_MAX_AGE_DAYS:
+                checks.append(
+                    {
+                        "check": "prices",
+                        "ok": False,
+                        "detail": (
+                            f"{src} was checked {age} days ago; re-check the provider pricing "
+                            "pages and update checked_on, or put a prices.yaml in the study folder"
+                        ),
+                    }
+                )
+            else:
+                checks.append(
+                    {"check": "prices", "ok": True, "detail": f"{src}, checked {age} days ago"}
+                )
+        except PriceError as exc:
+            checks.append({"check": "prices", "ok": False, "detail": str(exc)})
     except ConfigError as exc:
         hint = " (run `citewatch init` to create one)" if not path.exists() else ""
         checks.append({"check": "study", "ok": False, "detail": f"{exc}{hint}"})
@@ -191,7 +224,7 @@ def ask(
     try:
         cfg = load_study_config(path)
         qs = load_questions(path.parent / cfg.questions_path, cfg)
-        prices = load_prices()
+        prices = load_prices(_study_prices(path.parent))
     except (ConfigError, PriceError) as exc:
         _fail(as_json, "ask", str(exc))
     if questions:
@@ -205,6 +238,12 @@ def ask(
     except PriceError as exc:
         _fail(as_json, "ask", str(exc))
     cap = max_cost if max_cost is not None else cfg.max_cost_usd
+    age = price_age_days(prices)
+    if age > PRICE_MAX_AGE_DAYS and not as_json:
+        typer.echo(
+            f"warning: prices were checked {age} days ago; estimates and the cap may be low",
+            err=True,
+        )
     plan = {
         "run": run,
         "questions": len(qs),
@@ -228,7 +267,7 @@ def ask(
         _fail(
             as_json,
             "ask",
-            f"estimated ${est['total_usd']:.2f} is over the cap ${cap:.2f}; nothing was asked. "
+            f"estimated ${est['total_usd']:.4g} is over the cap ${cap:.4g}; nothing was asked. "
             "Raise --max-cost or max_cost_usd, or ask fewer questions.",
             EXIT_CAP,
         )
@@ -248,50 +287,54 @@ def ask(
             f"{exc}; install the provider SDKs with `pip install 'citewatch[anthropic,openai]'`",
         )
     base = path.parent
+    from citewatch.runners.schedule import question_order
+
+    run_dir = base / "data" / "runs" / f"run-{run}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    order = [q.id for q in question_order(qs, cfg.seeds["order"], run)]
+    (run_dir / "order.json").write_text(  # written before any call
+        json.dumps({"seed": cfg.seeds["order"], "run": run, "order": order}, indent=2) + "\n",
+        encoding="utf-8",
+    )
     res = ask_run(
         qs,
         cfg,
         run=run,
         runners=runners,
         store=RawStore(base),
-        ledger=Ledger(base / "data" / "runs" / f"run-{run}"),
+        ledger=Ledger(run_dir),
         prices=prices,
         cap_usd=cap,
+        spend_ledger=base / "data" / "spend-ledger.jsonl",  # one line per paid call (D-19)
     )
-    order_file = base / "data" / "runs" / f"run-{run}" / "order.json"
-    order_file.write_text(
-        json.dumps({"seed": cfg.seeds["order"], "run": run, "order": res.order}, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    if res.spent_usd:
-        record_spend(
-            base / "data" / "spend-ledger.jsonl",
-            kind="ask",
-            run_id=f"{cfg.name}:run-{run}",
-            spent_usd=res.spent_usd,
-            note=f"{res.asked} answers",
-        )
     summary = {
-        "ok": not res.stopped_at_cap,
+        "ok": not (res.stopped_at_cap or res.interrupted),
         "command": "ask",
         **plan,
         "asked": res.asked,
         "cached": res.cached,
         "errors": res.errors,
         "stopped_at_cap": res.stopped_at_cap,
+        "interrupted": res.interrupted,
+        "cancelled": res.cancelled,
         "spent_usd": res.spent_usd,
     }
     text = (
         f"run {run}: asked {res.asked}, already stored {res.cached}, "
-        f"transport errors {len(res.errors)}, spent ${res.spent_usd:.2f}"
+        f"errors {len(res.errors)}, spent ${res.spent_usd:.2f}"
     )
+    if res.errors:
+        kinds = sorted({e["error"] for e in res.errors})
+        text += f" (errors: {', '.join(kinds)}; rerun to retry them)"
     if res.stopped_at_cap:
         text += (
             f"; stopped at the cap with {res.skipped_for_cap} left. "
             "Rerun with a higher cap to resume."
         )
+    if res.interrupted:
+        text += f"; interrupted, {res.cancelled} calls not made. Rerun to resume."
     _emit(as_json, summary, text)
-    raise typer.Exit(EXIT_CAP if res.stopped_at_cap else EXIT_OK)
+    raise typer.Exit(EXIT_CAP if res.stopped_at_cap else EXIT_ERROR if res.interrupted else EXIT_OK)
 
 
 @app.command()
@@ -351,7 +394,11 @@ def main(argv: list[str] | None = None) -> int:
         typer.echo("citewatch: aborted", err=True)
         return EXIT_ERROR
     except Exception as exc:  # one line, exit 2
-        typer.echo(f"citewatch: unexpected error: {type(exc).__name__}: {exc}", err=True)
+        message = f"unexpected error: {type(exc).__name__}: {' '.join(str(exc).split())}"
+        if "--json" in (argv if argv is not None else sys.argv[1:]):
+            typer.echo(json.dumps({"ok": False, "error": message}))
+        else:
+            typer.echo(f"citewatch: {message}", err=True)
         return EXIT_ERROR
     # without standalone mode the framework returns an Exit's code instead of raising it
     return rv if isinstance(rv, int) and not isinstance(rv, bool) else EXIT_OK

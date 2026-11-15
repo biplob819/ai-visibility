@@ -7,7 +7,7 @@ from typing import Any
 from citewatch.env import key_for
 from citewatch.schemas import StudyConfig, StudyQuestion
 
-from .base import Answer, instruction, with_retries
+from .base import Answer, RawCall, TransportError, Usage, instruction, with_retries
 
 TOOL_TYPE = "web_search_20260209"  # D-32
 MAX_CONTINUATIONS = 3
@@ -36,6 +36,26 @@ def build_request(question: StudyQuestion, cfg: StudyConfig) -> dict[str, Any]:
         # no temperature/top_p/top_k (Sonnet 5.5 rejects non-default values) and no `fallbacks`:
         # a refused request is recorded, never rerouted to another model (D-8, H9)
     }
+
+
+def _int(v: Any) -> int:
+    return v if isinstance(v, int) and not isinstance(v, bool) and v >= 0 else 0
+
+
+def usage(responses: list[dict[str, Any]]) -> Usage:
+    """Tokens and billed searches summed over every response, read defensively: the cost of a
+    paid call must be known even when the rest of the response is unexpected."""
+    t_in = t_out = cached = searches = 0
+    for r in responses:
+        u = r.get("usage") or {}
+        cache_read = _int(u.get("cache_read_input_tokens"))
+        t_in += (
+            _int(u.get("input_tokens")) + cache_read + _int(u.get("cache_creation_input_tokens"))
+        )
+        cached += cache_read
+        t_out += _int(u.get("output_tokens"))
+        searches += _int((u.get("server_tool_use") or {}).get("web_search_requests"))
+    return Usage(t_in, t_out, cached, searches)
 
 
 def parse(model: str, responses: list[dict[str, Any]], request: dict[str, Any]) -> Answer:
@@ -95,20 +115,37 @@ class AnthropicRunner:
         self.client = client
         self._sleep = sleep
 
-    def ask(self, question: StudyQuestion, cfg: StudyConfig) -> Answer:
+    def usage(self, responses: list[dict[str, Any]]) -> Usage:
+        return usage(responses)
+
+    def call(self, question: StudyQuestion, cfg: StudyConfig) -> RawCall:
+        """Ask once, continuing a paused turn at most MAX_CONTINUATIONS times. Never parses.
+        A failure after the first response returns what was paid for, with `error` set."""
         request = build_request(question, cfg)
         messages = list(request["messages"])
         responses: list[dict[str, Any]] = []
         kwargs = {"sleep": self._sleep} if self._sleep else {}
         for _ in range(MAX_CONTINUATIONS + 1):
             body = {**request, "messages": messages}
-            resp = with_retries(
-                lambda b=body: self.client.messages.create(model=self.model, **b), **kwargs
-            )
+            try:
+                resp = with_retries(
+                    lambda b=body: self.client.messages.create(model=self.model, **b), **kwargs
+                )
+            except TransportError:
+                if not responses:
+                    raise
+                return RawCall(
+                    self.model, request, responses, error="transport during continuation"
+                )
             raw = resp.model_dump(mode="json")
             responses.append(raw)
             if raw.get("stop_reason") != "pause_turn":
                 break
             # continue the paused server-tool turn by sending its content back (§3.4)
-            messages = [*messages, {"role": "assistant", "content": raw["content"]}]
-        return parse(self.model, responses, request)
+            messages = [*messages, {"role": "assistant", "content": raw.get("content") or []}]
+        return RawCall(self.model, request, responses)
+
+    def ask(self, question: StudyQuestion, cfg: StudyConfig) -> Answer:
+        """call() then parse(): convenient for scripts and tests; the scheduler stores first."""
+        rc = self.call(question, cfg)
+        return parse(self.model, rc.responses, rc.request)

@@ -53,7 +53,7 @@ def stage_key(
 ) -> str:
     """sha256 over the stage name, its code version, the unit of work, the config hash and the
     prompt hash. For `ask` the unit carries the run number, so run 2 never reuses run 1."""
-    if not STAGE.match(stage):
+    if not STAGE.fullmatch(stage):
         raise StoreError(f"bad stage name {stage!r}")
     body = {
         "stage": stage,
@@ -70,9 +70,9 @@ class RawStore:
         self.base = Path(root) / "data" / "raw"
 
     def path(self, stage: str, key: str) -> Path:
-        if not STAGE.match(stage):
+        if not STAGE.fullmatch(stage):
             raise StoreError(f"bad stage name {stage!r}")
-        if not KEY.match(key):
+        if not KEY.fullmatch(key):
             raise StoreError(f"bad key {key!r} (64 lower-case hex characters)")
         return self.base / stage / key[:2] / f"{key}.json.gz"
 
@@ -96,6 +96,14 @@ class RawStore:
                 os.link(tmp, final)  # atomic and refuses to overwrite: first writer wins
             except FileExistsError:
                 return False
+            except OSError:
+                # no hard links here (exFAT, FAT, some network or VM shares): fall back to an
+                # atomic rename. Still never a partial object; a lost race can overwrite with an
+                # answer to the same key, which loses nothing that was paid for (D-37)
+                if final.exists():
+                    return False
+                os.replace(tmp, final)
+                return True
             return True
         finally:
             Path(tmp).unlink(missing_ok=True)
@@ -109,11 +117,11 @@ class RawStore:
 
     def keys(self, stage: str) -> Iterator[str]:
         d = self.base / stage
-        if not STAGE.match(stage):
+        if not STAGE.fullmatch(stage):
             raise StoreError(f"bad stage name {stage!r}")
         if not d.is_dir():
             return
         for p in sorted(d.glob("??/*.json.gz")):
             k = p.name.removesuffix(".json.gz")
-            if KEY.match(k):
+            if KEY.fullmatch(k):
                 yield k

@@ -60,6 +60,6 @@ def test_a_full_run_with_fake_runners_records_spend_and_order(study, capsys, mon
     assert out["asked"] == 4 and out["spent_usd"] > 0
     assert (study / "data" / "runs" / "run-0" / "order.json").is_file()
     spend = (study / "data" / "spend-ledger.jsonl").read_text(encoding="utf-8").splitlines()
-    assert len(spend) == 1
+    assert len(spend) == 4  # one line per paid call (D-19)
     assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["cached"] == 4

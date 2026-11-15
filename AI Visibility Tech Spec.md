@@ -574,7 +574,7 @@ support       = Σ_judges 50 × (t_ev × p_in_judge + t_v × p_out_judge)   # li
 | Support check (50 claims × 2 judges, ~8k evidence tokens) | ≈ $3 |
 | **Study total** | **≈ $45** (PRD NFR2: about $24) |
 
-Live demo spend is capped separately at $3 a day. Under OWNER D-19, a single run estimated above $25 waits for the owner's go-ahead, and every real dollar is appended to `docs/measurements/spend-ledger.jsonl`.
+Live demo spend is capped separately at $3 a day. Under OWNER D-19, a single run estimated above $25 waits for the owner's go-ahead, and every paid call is appended, as it is paid, to the study's own spend ledger `<study>/data/spend-ledger.jsonl` (D-33, D-37).
 
 ---
 

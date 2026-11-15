@@ -1,7 +1,8 @@
 # N1.2 run state
 
-**Now:** built; converging, then verifier pass 1.
+**Now:** pass 1 fixes in; converging, then verifier pass 2.
 
 ## History
 - 2026-11-15 — spec and criteria written.
 - 2026-11-15 — started; provider facts confirmed from docs and SDK types (D-31, D-32); runners, cost model, scheduler and `citewatch ask` built; real fixtures recorded with `scripts/record_provider_fixtures.py`. The first real calls found that `web_search_20260209` with dynamic filtering returns Claude answers with **no citations**, so the runner forces `allowed_callers: ["direct"]` (D-34, probe: 8 citations); `page_age` is relative ("198 days ago", D-35); OpenAI appends `utm_source=openai` (D-36). Spend: $0.45 in all (fixtures twice, one probe, one wasted re-record when an edit did not apply), in `studies/uk-health/data/spend-ledger.jsonl` (L-26).
+- 2026-11-15 — verifier pass 1 CONFIRMED ASK-01/02/03/07/08; DISPROVED ASK-04 (parse before store; partial pause_turn responses dropped; config edits re-asked everything), ASK-05 (52x not retried), ASK-06 (spend written only on success; circular cost test). High: errors and Ctrl-C did not stop spending (40/40 calls made) and lost the spend record; resume re-paid after a config edit. Medium: cap overrun ($3.00 vs $0.50), unrecorded pricing assumptions. Fixed: runners only `call()` (verbatim) with a defensive `usage()`; the scheduler writes spend per call before storing, stores verbatim before parsing (partials under `ask_partial`), catches per-call errors (a 401/403 stops that model), cancels queued calls on interrupt, reserves adaptively, keys on answer-changing settings only (D-37, D-38, D-39, L-27); every 5xx retried; OpenAI output capped at 8,000 tokens like Claude; cost tests call `answer_cost` on cached tokens.

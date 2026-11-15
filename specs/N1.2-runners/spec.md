@@ -11,7 +11,7 @@ One runner per provider asks a question with the provider's native web search ex
 - One shared instruction string and its `prompt_hash` (ASK-03).
 - Raw response stored through N1.3's `RawStore` before parsing; a resumed run calls only missing keys (ASK-04).
 - Retry and error taxonomy of §3.4: transport, 429, 5xx and overloaded back off up to 6 attempts; refusals never retried and never rerouted (ASK-05).
-- `prices.yaml` with `checked_on` and source per model; `answer_cost()` including per-search fees and search-result input tokens; `estimate_run()` printed before any paid call and aborting over `max_cost_usd`; spend appended to `docs/measurements/spend-ledger.jsonl` (ASK-06, L-7).
+- `prices.yaml` with `checked_on` and source per model; `answer_cost()` including per-search fees and search-result input tokens; `estimate_run()` printed before any paid call and aborting over `max_cost_usd`; every paid call appended at once to `<study>/data/spend-ledger.jsonl` (ASK-06, L-7, D-33, D-37).
 - Interleaved scheduling: both models per question concurrently, question order shuffled per run with a recorded seed; per-provider concurrency and rate limits (ASK-07).
 - The Appendix C provider facts confirmed against live docs and recorded as decisions; test fixtures built from the SDKs' own response models (ASK-08, L-10).
 

@@ -46,3 +46,44 @@ def test_a_missing_key_is_a_configuration_error(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(MissingKeyError, match="ANTHROPIC_API_KEY"):
         AnthropicRunner("claude-sonnet-5-5")
+
+
+@pytest.mark.parametrize("status", [500, 501, 502, 503, 504, 520, 522, 524, 529, 408, 409, 429])
+def test_every_server_error_and_rate_limit_is_retried(status):
+    assert is_transient(StatusError(status))
+
+
+def test_openai_missing_key_names_the_variable(monkeypatch):
+    from citewatch.runners.openai_runner import OpenAIRunner
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with pytest.raises(MissingKeyError, match="OPENAI_API_KEY"):
+        OpenAIRunner("gpt-6.1-sol")
+
+
+def test_usage_readers_match_the_parsers_on_recorded_responses():
+    from citewatch.runners import anthropic_runner, openai_runner
+
+    from .helpers import envelope
+
+    for qid in ("v-901", "v-902"):
+        c = envelope("claude-sonnet-5-5", qid)["answer"]
+        u = anthropic_runner.usage(c["raw"])
+        assert (u.tokens_in, u.tokens_out, u.cached_in, u.searches) == (
+            c["tokens_in"],
+            c["tokens_out"],
+            c["cached_in"],
+            c["searches"],
+        )
+        o = envelope("gpt-6.1-sol", qid)["answer"]
+        v = openai_runner.usage(o["raw"])
+        assert (v.tokens_in, v.tokens_out, v.cached_in, v.searches) == (
+            o["tokens_in"],
+            o["tokens_out"],
+            o["cached_in"],
+            o["searches"],
+        )
+    assert (
+        anthropic_runner.usage([{"usage": {"input_tokens": "x", "output_tokens": -1}}]).tokens_in
+        == 0
+    )

@@ -85,3 +85,10 @@ def test_price_dataclass_is_frozen():
     p = Price("m", 1, 1, 0, 10, dt.date(2026, 11, 15))
     with pytest.raises(AttributeError):
         p.input = 2  # type: ignore[misc]
+
+
+def test_cached_tokens_are_priced_once_at_the_cached_rate():
+    p = load_prices()["claude-sonnet-5-5"]
+    cost = answer_cost(p, tokens_in=10_000, tokens_out=0, cached_in=4_000)
+    assert math.isclose(cost, (6_000 * p.input + 4_000 * p.cached_input) / 1e6)
+    assert cost < answer_cost(p, tokens_in=10_000, tokens_out=0)

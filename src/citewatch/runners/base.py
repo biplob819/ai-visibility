@@ -28,7 +28,7 @@ PLACES = {
     "SG": "Singapore",
     "ZA": "South Africa",
 }
-TRANSIENT_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
+TRANSIENT_STATUS = {408, 409, 429}  # plus every 5xx (is_transient)
 MAX_ATTEMPTS = 6
 T = TypeVar("T")
 
@@ -57,7 +57,7 @@ def is_transient(exc: BaseException) -> bool:
     a bad request or an auth failure is not."""
     status = getattr(exc, "status_code", None)
     if isinstance(status, int):
-        return status in TRANSIENT_STATUS
+        return status in TRANSIENT_STATUS or 500 <= status <= 599
     name = type(exc).__name__
     return name in {"APIConnectionError", "APITimeoutError", "ConnectionError", "TimeoutError"}
 
@@ -106,8 +106,30 @@ class Answer:
     request: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class RawCall:
+    """What one call returns before anything is parsed: the request and every verbatim response
+    (more than one when a paused turn was continued). `error` is set when a continuation failed
+    after some responses were already paid for; those responses are kept (D-2)."""
+
+    model: str
+    request: dict[str, Any]
+    responses: list[dict[str, Any]]
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class Usage:
+    tokens_in: int
+    tokens_out: int
+    cached_in: int
+    searches: int
+
+
 class Runner(Protocol):
     model: str
     provider: str
 
-    def ask(self, question: StudyQuestion, cfg: StudyConfig) -> Answer: ...
+    def call(self, question: StudyQuestion, cfg: StudyConfig) -> RawCall: ...
+
+    def usage(self, responses: list[dict[str, Any]]) -> Usage: ...
