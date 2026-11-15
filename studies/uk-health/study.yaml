@@ -2,6 +2,7 @@
 name: uk-health-2026-11
 questions_path: questions.jsonl
 intents: [symptoms, treatment, nhs_services, fitness, nutrition]
+ts_reasons: [services, eligibility, waiting, prices, guidance]   # RUBRIC.md's time-sensitive clauses
 models: [claude-sonnet-5-5, gpt-6.1-sol]
 effort: medium            # OWNER D-8: the same effort on both models
 user_location:

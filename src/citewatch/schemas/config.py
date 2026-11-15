@@ -16,10 +16,16 @@ import yaml
 from pydantic import Field, StringConstraints, ValidationError, field_validator, model_validator
 
 from ._base import FrozenMap, Model, ModelId, NonBlank, NonNegFloat, Slug
+from ._iso import COUNTRIES, HINTS
 from .study import StudyQuestion
 
 REQUIRED_SEEDS = ("order", "support_sample", "hand_sample", "bootstrap")
-CONTACT = re.compile(r"https?://\S+|[^\s@()]+@[^\s@()]+\.[a-z]{2,}", re.I)
+# a URL with a real host, or an email address
+CONTACT = re.compile(
+    r"https?://[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}"
+    r"|[^\s@()<>]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}",
+    re.I,
+)
 
 
 class ConfigError(ValueError):
@@ -29,6 +35,15 @@ class ConfigError(ValueError):
 class UserLocation(Model):
     type: Literal["approximate"] = "approximate"
     country: Annotated[str, StringConstraints(pattern=r"^[A-Z]{2}$")]  # ISO 3166-1 alpha-2
+
+    @field_validator("country")
+    @classmethod
+    def _assigned(cls, v: str) -> str:
+        if v not in COUNTRIES:
+            hint = f"; use {HINTS[v]!r}" if v in HINTS else ""
+            raise ValueError(f"{v!r} is not an ISO 3166-1 alpha-2 country code{hint}")
+        return v
+
     city: NonBlank | None = None
     region: NonBlank | None = None
     timezone: NonBlank | None = None
@@ -38,6 +53,7 @@ class StudyConfig(Model):
     name: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9\-]*$")]
     questions_path: NonBlank  # relative to the study folder
     intents: tuple[Slug, ...]
+    ts_reasons: tuple[Slug, ...] | None = None  # the rubric's time-sensitive clauses; None = any
     models: tuple[ModelId, ...]
     effort: Literal["low", "medium", "high"]
     user_location: UserLocation
@@ -60,9 +76,16 @@ class StudyConfig(Model):
 
     @field_validator("user_agent")
     @classmethod
-    def _contact(cls, v: str) -> str:
+    def _names_tool_and_contact(cls, v: str) -> str:
+        # D-25 and §7.2: the agent names the tool and a contact; it cannot pose as a browser
+        if any(ord(c) < 32 or ord(c) == 127 for c in v):
+            raise ValueError("must not contain control characters")
+        if not re.match(r"^citewatch/\S+ ", v):
+            raise ValueError("must start with 'citewatch/<version> ' so sites can see the tool")
         if not CONTACT.search(v):
-            raise ValueError("must name a contact: a URL (https://...) or an email address")
+            raise ValueError(
+                "must name a contact: a URL with a host (https://...) or an email address"
+            )
         return v
 
     @model_validator(mode="after")
@@ -101,7 +124,7 @@ def _fmt(path: Path, exc: ValidationError) -> str:
 def load_study_config(path: str | Path) -> StudyConfig:
     path = Path(path)
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8-sig")  # a BOM from Windows editors is fine
     except (OSError, UnicodeDecodeError) as exc:
         raise ConfigError(f"{path}: cannot read ({exc})") from exc
     try:
@@ -122,7 +145,7 @@ def load_questions(path: str | Path, config: StudyConfig) -> list[StudyQuestion]
     """Questions from a JSONL file, each validated, intents declared, ids unique."""
     path = Path(path)
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
     except (OSError, UnicodeDecodeError) as exc:
         raise ConfigError(f"{path}: cannot read ({exc})") from exc
     questions: list[StudyQuestion] = []
@@ -140,6 +163,15 @@ def load_questions(path: str | Path, config: StudyConfig) -> list[StudyQuestion]
             raise ConfigError(
                 f"{path}:{lineno}: intent {q.intent!r} is not declared in the study "
                 f"(intents: {', '.join(config.intents)})"
+            )
+        if (
+            q.ts_reason is not None
+            and config.ts_reasons is not None
+            and q.ts_reason not in config.ts_reasons
+        ):
+            raise ConfigError(
+                f"{path}:{lineno}: ts_reason {q.ts_reason!r} is not in the study's rubric "
+                f"(ts_reasons: {', '.join(config.ts_reasons)})"
             )
         if q.id in seen:
             raise ConfigError(f"{path}:{lineno}: duplicate question id {q.id!r}")

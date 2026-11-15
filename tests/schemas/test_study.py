@@ -20,7 +20,7 @@ def test_valid_records_parse():
     [
         {"time_sensitive": True, "ts_reason": None},
         {"time_sensitive": False, "ts_reason": "prices"},
-        {"ts_reason": "vibes"},
+        {"ts_reason": "Not A Slug!"},
         {"id": "V-17"},
         {"intent": "Not A Slug"},
         {"text": "   "},

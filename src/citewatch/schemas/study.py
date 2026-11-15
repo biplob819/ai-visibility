@@ -21,7 +21,6 @@ from ._base import (
     canonical_problems,
 )
 
-TsReason = Literal["services", "eligibility", "waiting", "prices", "guidance"]
 QuestionId = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9]*-\d{3,}$")]
 
 
@@ -35,7 +34,7 @@ class StudyQuestion(Model):
     text: NonBlank
     intent: Slug  # checked against StudyConfig.intents by load_questions
     time_sensitive: bool
-    ts_reason: TsReason | None = None
+    ts_reason: Slug | None = None  # a clause of the study's rubric; load_questions checks it
 
     @model_validator(mode="after")
     def _reason_iff_time_sensitive(self) -> StudyQuestion:
@@ -51,7 +50,7 @@ class AnswerRecord(Model):
     question_id: QuestionId
     model: ModelId
     model_snapshot: NonBlank
-    raw_key: HexHash
+    raw_key: HexHash | None = None  # None only for a transport error: there was no response
     answer_text: str
     word_count: NonNegInt
     over_length: bool
@@ -75,6 +74,8 @@ class AnswerRecord(Model):
             )
         if self.refusal and self.error is not None:
             raise ValueError("an answer is a refusal or a transport error, not both")
+        if (self.raw_key is None) != (self.error == "transport"):
+            raise ValueError("raw_key is missing exactly when the answer is a transport error")
         return self
 
 
@@ -107,6 +108,10 @@ class Citation(Model):
         _canonical(self.url)
         if urlsplit(self.url).hostname != self.host:
             raise ValueError(f"host {self.host!r} does not match url {self.url!r}")
+        if not (self.host == self.publisher or self.host.endswith("." + self.publisher)):
+            raise ValueError(
+                f"publisher {self.publisher!r} is not the host {self.host!r} or its parent"
+            )
         return self
 
 

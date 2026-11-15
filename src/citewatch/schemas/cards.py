@@ -11,7 +11,10 @@ from ._base import SENTENCE_END, FrozenMap, Model, NonBlank, NonNegFloat, NonNeg
 from .summary import Interval
 
 CitationRef = Annotated[
-    str, StringConstraints(pattern=r"^[0-2]:[a-z][a-z0-9]*-\d{3,}:[a-z0-9][a-z0-9.\-]*:\d+$")
+    str,
+    StringConstraints(
+        pattern=r"^[0-2]:[a-z][a-z0-9]*-\d{3,}:(?:claude|gpt)-[a-z0-9.\-]+:[1-9]\d*$"
+    ),
 ]
 
 
@@ -68,4 +71,6 @@ class HandDateLabel(Model):
             raise ValueError("a label marked not_determinable has no dates")
         if not self.not_determinable and not has_dates:
             raise ValueError("a label needs a date or not_determinable")
+        if self.true_modified and self.true_published and self.true_modified < self.true_published:
+            raise ValueError("true_modified is before true_published")
         return self

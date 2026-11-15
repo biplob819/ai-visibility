@@ -5,6 +5,7 @@
     "symptoms",
     "nutrition"
   ],
+  "ts_reasons": null,
   "models": [
     "claude-sonnet-5-5",
     "gpt-6.1-sol"

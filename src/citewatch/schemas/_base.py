@@ -7,6 +7,8 @@ the moment it is stored to the moment it is read back (EvalKit L-8, L-9).
 
 from __future__ import annotations
 
+import copy
+import datetime as dt
 import re
 from collections.abc import Iterator, Mapping
 from typing import Annotated, Any, NoReturn, TypeVar
@@ -38,6 +40,17 @@ class FrozenDict(dict):
     def __hash__(self) -> int:  # type: ignore[override]
         return hash(frozenset(self.items()))
 
+    # pickle and deepcopy rebuild a dict subclass with __setitem__, which is blocked; rebuild
+    # from a plain dict instead (multiprocessing, caching and model_copy(deep=True) need this)
+    def __reduce__(self) -> tuple[type[FrozenDict], tuple[dict[Any, Any]]]:
+        return (type(self), (dict(self),))
+
+    def __copy__(self) -> FrozenDict:
+        return self
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> FrozenDict:
+        return type(self)({copy.deepcopy(k, memo): copy.deepcopy(v, memo) for k, v in self.items()})
+
     def __iter__(self) -> Iterator[Any]:
         return super().__iter__()
 
@@ -49,14 +62,23 @@ def _freeze_mapping(value: Mapping[Any, Any]) -> FrozenDict:
 # Strict scalars: no bool-as-int, no "5"-as-5, no NaN or infinity.
 NonNegInt = Annotated[int, Field(ge=0, strict=True)]
 PosInt = Annotated[int, Field(ge=1, strict=True)]
-NonNegFloat = Annotated[float, Field(ge=0.0, allow_inf_nan=False)]
-FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
+# strict floats: no bools, no numeric strings (ints are fine)
+NonNegFloat = Annotated[float, Field(ge=0.0, allow_inf_nan=False, strict=True)]
+FiniteFloat = Annotated[float, Field(allow_inf_nan=False, strict=True)]
 NonBlank = Annotated[str, StringConstraints(min_length=1, pattern=r"\S")]
 Slug = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
 HexHash = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{16,64}$")]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Run = Annotated[int, Field(ge=0, le=2, strict=True)]  # 0 = smoke, 1 and 2 = study runs
-Timestamp = AwareDatetime  # naive timestamps are ambiguous across machines
+
+
+def _utc(v: dt.datetime) -> dt.datetime:
+    if v.utcoffset() != dt.timedelta(0):
+        raise ValueError("timestamps must be UTC (offset +00:00 or Z)")
+    return v
+
+
+Timestamp = Annotated[AwareDatetime, AfterValidator(_utc)]  # aware and UTC, so dates agree
 
 V = TypeVar("V")
 FrozenMap = Annotated[dict[str, V], AfterValidator(_freeze_mapping)]
@@ -93,8 +115,10 @@ def canonical_problems(url: str) -> list[str]:
         parts = urlsplit(url)
     except ValueError as exc:
         return [f"not a URL ({exc})"]
-    if parts.scheme not in ("http", "https"):
+    if url.split(":", 1)[0] not in ("http", "https"):  # urlsplit lower-cases the scheme itself
         problems.append("scheme must be http or https, in lower case")
+    if "@" in parts.netloc:
+        problems.append("no user info allowed")
     if not parts.hostname:
         problems.append("no host")
     elif (
@@ -107,7 +131,9 @@ def canonical_problems(url: str) -> list[str]:
     return problems
 
 
-SENTENCE_END = re.compile(r"[.!?][\"')\]]*\s+\S")
+# A sentence end followed by a new sentence (space, then an opening mark or a capital letter), so
+# abbreviations like "U.K. guidance" and "e.g. brisk walking" do not count as two sentences.
+SENTENCE_END = re.compile(r"[.!?][\"')\]]*\s+[\"'(\[]?[A-Z0-9]")
 
 
 class Model(BaseModel):
