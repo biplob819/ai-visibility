@@ -76,8 +76,8 @@ def test_unknown_status_rejected():
 
 def test_live_graph_is_eligible_and_complete():
     nodes, caps = load_graph(), load_catalog()
-    assert len(nodes) == 20
-    assert len(caps) == 96
+    assert len(nodes) == 21
+    assert len(caps) == 104
     assert find_cycle(nodes) is None
     assert eligibility_problems(nodes, caps) == []
     assert all(any(c.node == n for c in caps) for n in nodes), "every node has capability rows"
@@ -151,7 +151,8 @@ SPEC_EDGES = {
     "B4.4": {"B4.2", "B4.3"},
     "D5.1": {"M3.1", "S3.1"},
     "D5.2": {"D5.1", "N1.2"},
-    "D5.3": {"B4.4", "D5.2"},
+    "B4.5": {"B4.4"},
+    "D5.3": {"B4.5", "D5.2"},
 }
 
 

@@ -12,10 +12,10 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 SPEC = ROOT / "AI Visibility Tech Spec.md"
 
 
-def test_decisions_seeded_d1_to_d22():
+def test_decisions_seeded_d1_to_d25():
     text = (ROOT / "docs" / "decisions.md").read_text(encoding="utf-8")
     ids = {int(n) for n in re.findall(r"^\| (?:OWNER )?D-(\d+) \|", text, re.M)}
-    assert set(range(1, 23)) <= ids
+    assert set(range(1, 26)) <= ids
 
 
 def test_lessons_seeded_and_changelog_has_w01():
@@ -84,8 +84,9 @@ def test_ci_workflow_covers_gates_and_matrix():
         "uv build",
     ):
         assert step in ci, step
-    assert '"3.12"' in ci
-    for os_name in ("ubuntu-latest", "macos-latest"):
+    for v in ('"3.11"', '"3.12"', '"3.13"'):
+        assert v in ci
+    for os_name in ("ubuntu-latest", "macos-latest", "windows-latest"):
         assert os_name in ci
 
 
@@ -108,7 +109,14 @@ def test_env_files_are_ignored():
 
 def test_verifier_prompt_sets_the_rules():
     text = (ROOT / "docs" / "harness" / "verifier-prompt.md").read_text(encoding="utf-8")
-    for needle in ("UV_PROJECT_ENVIRONMENT", "CONFIRMED", "DISPROVED", "criteria"):
+    for needle in (
+        "UV_PROJECT_ENVIRONMENT",
+        "CONFIRMED",
+        "DISPROVED",
+        "criteria",
+        "Never spend money",
+        "never push",
+    ):
         assert needle in text, needle
     assert "builder's reasoning" in text
 

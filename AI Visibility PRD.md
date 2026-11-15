@@ -18,6 +18,7 @@ The study shows publishers and AI labs the same thing from two sides: which page
 4. Citation share by domain, freshness lag, stale-answer rate and model overlap.
 5. A one-page spec for a paid freshness and provenance signal.
 6. A demo where a reviewer types a domain and sees its AI visibility.
+7. An open-source tool, `citewatch`, that anyone can run on their own questions, country and models with their own keys; this study is its flagship run.
 
 **Non-goals.** Crawling at scale; advice on gaming AI answers; judging medical correctness; Google's AI search features.
 
@@ -26,6 +27,7 @@ The study shows publishers and AI labs the same thing from two sides: which page
 | Deliverable | What it is | Where it lives |
 | --- | --- | --- |
 | GitHub repo `ai-visibility` | Runner, citation extractor, polite fetcher, date parser, metrics, tests | GitHub, public |
+| Open-source tool `citewatch` | The same pipeline as a package: `pip install citewatch`, `citewatch init`, docs for running your own study | PyPI, MIT licence |
 | Findings dashboard | Domain share, freshness lag, overlap by intent, with counts beside every percentage | Cloudflare Pages |
 | The post | A blog-style write-up with charts | Project page |
 | Signal spec | One page: fields, buyers, delivery, pricing logic | PDF, linked from the project page |

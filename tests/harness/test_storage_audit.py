@@ -53,5 +53,5 @@ def test_ignored_files_are_not_audited(tmp_path):
 
 
 def test_body_cache_env_override(tmp_path, monkeypatch):
-    monkeypatch.setenv("VISIBILITY_BODY_CACHE", str(tmp_path / "c"))
+    monkeypatch.setenv("CITEWATCH_BODY_CACHE", str(tmp_path / "c"))
     assert sa.body_cache_dir() == tmp_path / "c"

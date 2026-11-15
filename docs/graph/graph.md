@@ -3,7 +3,7 @@
 Source of truth for build-node dependencies. Parsed by `scripts/harness_lib.py`.
 A node may start only when every node in its `Depends on` cell is green (all its rows in `catalog.tsv` are green).
 Edge rules: no cycles; a node inherits the constraints of what it depends on; `Verified by` must pass before a node flips green.
-Generated from AI Visibility Tech Spec §12.2 on 2026-11-15; edit here from now on and keep the Tech Spec in sync.
+Generated from AI Visibility Tech Spec §12.2 on 2026-11-15 (B4.5 added by OWNER D-23); edit here from now on and keep the Tech Spec in sync.
 
 
 ## Wave 0 — harness
@@ -52,6 +52,7 @@ Generated from AI Visibility Tech Spec §12.2 on 2026-11-15; edit here from now 
 | **B4.2** | The post and charts | B4.1 | node_converge + verifier | Post with charts generated from `summary.json` | US6 |
 | **B4.3** | Signal spec | M3.1, S3.1 | node_converge + verifier | One-page PDF: fields, buyers, delivery, pricing logic | US6 |
 | **B4.4** | Public repo | B4.2, B4.3 | node_converge + verifier | README, licence, data card, decisions, history audit, repo public | US5, US6 |
+| **B4.5** | Open-source packaging and v0.1.0 | B4.4 | node_converge + verifier | PyPI `citewatch`, `init`, run-your-own-study and responsible-use docs, community files, release workflow, import contract test, tag v0.1.0 | US5, US7 |
 
 ## Wave 5 — demo and portfolio
 
@@ -59,4 +60,4 @@ Generated from AI Visibility Tech Spec §12.2 on 2026-11-15; edit here from now 
 | --- | --- | --- | --- | --- | --- |
 | **D5.1** | Domain cards and lookup | M3.1, S3.1 | node_converge + verifier | `domain_cards.json`, `lookup()` | US7 |
 | **D5.2** | Demo page and live mode | D5.1, N1.2 | node_converge + verifier | Streamlit page in `portfolio-demos`, guarded live mode | US7, US8 |
-| **D5.3** | Project page, video, supporting notes | B4.4, D5.2 | node_converge + verifier | Case study page, 90-second video, how-I-built-it note, one-page PRD | US6 |
+| **D5.3** | Project page, video, supporting notes | B4.5, D5.2 | node_converge + verifier | Case study page, 90-second video, how-I-built-it note, one-page PRD | US6 |

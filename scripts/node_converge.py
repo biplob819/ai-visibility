@@ -30,6 +30,7 @@ import ast
 import datetime as dt
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -50,13 +51,14 @@ from harness_lib import (
     eligibility_problems,
     load_catalog,
     load_graph,
+    mentions,
     parse_catalog,
     parse_graph,
     spec_dir,
 )
 
 # Commands run inside the clean venv by gate 10. N1.3 adds `report --example` and `ask --dry-run`.
-SMOKE_COMMANDS: list[list[str]] = [["visibility", "--version"]]
+SMOKE_COMMANDS: list[list[str]] = [["citewatch", "--version"]]
 PYTEST_UNIT_MARKERS = "not golden and not polite and not safety"
 NA_MIN_REASON = 10
 NA_FORBIDDEN = {"logical"}  # every capability needs at least a real unit test
@@ -115,26 +117,69 @@ def gate_eligibility(ctx: Ctx) -> Result:
 PROOF_RE = re.compile(r'^(?P<path>[^›"]+)›"(?P<test>[^"]+)"$')
 
 
+SKIP_WORDS = ("skip", "xfail")
+RUNTIME_SKIPS = {"skip", "xfail", "importorskip", "fail"}
+
+
+def _marks_skip(nodes: list[ast.expr]) -> bool:
+    return any(w in ast.unparse(d) for d in nodes for w in SKIP_WORDS)
+
+
+def _calls_skip(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """A body that calls pytest.skip/xfail/importorskip/fail never proves anything."""
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Call):
+            f = node.func
+            if (
+                isinstance(f, ast.Attribute)
+                and f.attr in RUNTIME_SKIPS
+                and isinstance(f.value, ast.Name)
+                and f.value.id == "pytest"
+            ):
+                return True
+    return False
+
+
 def _test_functions(path: Path) -> dict[str, bool]:
-    """Map each real test function name to whether it is skipped.
+    """Map each real test function name to whether it is skipped (or can never pass).
 
     Only `def test_*` at module level or inside a `Test*` class count, so names that
-    appear in comments, strings or as prefixes of other names do not.
+    appear in comments, strings or as prefixes of other names do not. A test counts as
+    skipped when its decorators, its class's decorators or a module-level `pytestmark`
+    mention skip or xfail, or when its body calls pytest.skip/xfail/importorskip/fail.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    module_skip = any(
+        isinstance(n, ast.Assign | ast.AnnAssign)
+        and any(
+            isinstance(tg, ast.Name) and tg.id == "pytestmark"
+            for tg in (n.targets if isinstance(n, ast.Assign) else [n.target])
+        )
+        and n.value is not None
+        and _marks_skip([n.value])
+        for n in tree.body
+    )
     found: dict[str, bool] = {}
 
-    def record(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+    def record(fn: ast.FunctionDef | ast.AsyncFunctionDef, inherited: bool) -> None:
         if fn.name.startswith("test"):
-            found[fn.name] = any("skip" in ast.unparse(d) for d in fn.decorator_list)
+            found[fn.name] = (
+                module_skip or inherited or _marks_skip(fn.decorator_list) or _calls_skip(fn)
+            )
 
     for node in tree.body:
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            record(node)
+            record(node, False)
         elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+            class_skip = _marks_skip(node.decorator_list) or any(
+                isinstance(i, ast.Assign)
+                and any(isinstance(tg, ast.Name) and tg.id == "pytestmark" for tg in i.targets)
+                and _marks_skip([i.value])
+                for i in node.body
+            )
             for item in node.body:
                 if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
-                    record(item)
+                    record(item, class_skip)
     return found
 
 
@@ -232,23 +277,53 @@ def gate_pytest(ctx: Ctx) -> Result:
     return _pytest(ctx.root, PYTEST_UNIT_MARKERS, "unit")
 
 
+MIN_PYTHON = "3.11"  # requires-python floor; float and stdlib behaviour can differ (L-13)
+
+
 def gate_golden(ctx: Ctx) -> Result:
-    """Replay recorded responses end to end; Python 3.12 only (D-18), so one interpreter."""
-    return _pytest(ctx.root, "golden", "golden")
+    """Golden replays compare bytes, so run them on this interpreter and on the minimum
+    supported Python (a separate .venv-py311), when uv can provide it."""
+    here = _pytest(ctx.root, "golden", "golden")
+    if (
+        here.status != "PASS"
+        or os.environ.get("CITEWATCH_SKIP_MIN_PYTHON")
+        or not shutil.which("uv")
+    ):
+        return here
+    env = {
+        **os.environ,
+        "UV_PROJECT_ENVIRONMENT": str(ctx.root / f".venv-py{MIN_PYTHON.replace('.', '')}"),
+    }
+    cmd = ["uv", "run", "--python", MIN_PYTHON, "python", "-m", "pytest", "-q", "-m", "golden"]
+    proc = subprocess.run(cmd, cwd=ctx.root, env=env, capture_output=True, text=True, timeout=900)
+    out = (proc.stdout + proc.stderr).strip()
+    if proc.returncode != 0:
+        return Result("FAIL", f"golden on Python {MIN_PYTHON}: " + _tail(out))
+    return Result("PASS", f"{here.detail}; also on Python {MIN_PYTHON}")
+
+
+def _combine(parts: list[tuple[str, Result]]) -> Result:
+    """Every sub-check is reported, so one failure cannot hide another."""
+    failed = [f"{name}: {r.detail}" for name, r in parts if r.status == "FAIL"]
+    if failed:
+        return Result("FAIL", "\n".join(failed))
+    if all(r.status == "SKIP" for _, r in parts):
+        return Result("SKIP", "; ".join(f"{n}: {r.detail}" for n, r in parts))
+    return Result("PASS", "; ".join(f"{n}: {r.detail}" for n, r in parts))
 
 
 def gate_politeness(ctx: Ctx) -> Result:
     """Fetch logs obey the politeness rules, and the politeness tests pass (Tech Spec §7.2)."""
     logs = fetch_audit.log_files(ctx.root)
-    problems = fetch_audit.audit_paths(logs)
-    tests = _pytest(ctx.root, "polite", "polite")
-    if problems:
-        return Result("FAIL", "fetch audit: " + "; ".join(problems[:5]))
-    if tests.status == "FAIL":
-        return tests
-    if not logs and tests.status == "SKIP":
-        return Result("SKIP", "no fetch logs and no politeness tests yet")
-    return Result("PASS", f"{len(logs)} fetch logs clean; {tests.detail}")
+    problems = fetch_audit.audit_paths(logs) if logs else []
+    audit = (
+        Result("FAIL", "; ".join(problems[:5]))
+        if problems
+        else Result("PASS", f"{len(logs)} logs clean")
+        if logs
+        else Result("SKIP", "no fetch logs yet")
+    )
+    return _combine([("fetch audit", audit), ("tests", _pytest(ctx.root, "polite", "polite"))])
 
 
 def gate_safety(ctx: Ctx, cache: Path | None = None) -> Result:
@@ -256,14 +331,19 @@ def gate_safety(ctx: Ctx, cache: Path | None = None) -> Result:
     stored = storage_audit.audit(
         ctx.root, cache if cache is not None else storage_audit.body_cache_dir(), ctx.caps
     )
-    tests = _pytest(ctx.root, "safety", "safety")
-    if hits:
-        return Result("FAIL", "secret scan: " + "; ".join(hits[:5]))
-    if stored:
-        return Result("FAIL", "storage audit: " + "; ".join(stored[:5]))
-    if tests.status == "FAIL":
-        return tests
-    return Result("PASS", f"secret scan and storage audit clean; {tests.detail}")
+    return _combine(
+        [
+            (
+                "secret scan",
+                Result("FAIL", "; ".join(hits[:5])) if hits else Result("PASS", "clean"),
+            ),
+            (
+                "storage audit",
+                Result("FAIL", "; ".join(stored[:5])) if stored else Result("PASS", "clean"),
+            ),
+            ("tests", _pytest(ctx.root, "safety", "safety")),
+        ]
+    )
 
 
 def _venv_bin(venv: Path, exe: str) -> Path:
@@ -367,7 +447,7 @@ def records_problems(node: str, caps: list[Cap], root: Path, specs: Path) -> lis
         return [*problems, f"no spec folder for {node}"]
     criteria = d / "criteria.md"
     text = criteria.read_text(encoding="utf-8") if criteria.is_file() else ""
-    missing = [c.cap_id for c in caps if c.node == node and c.cap_id not in text]
+    missing = [c.cap_id for c in caps if c.node == node and not mentions(text, c.cap_id)]
     if missing:
         problems.append(f"criteria.md misses {', '.join(missing)}")
     if not (d / "RUN-STATE.md").is_file():
@@ -420,7 +500,10 @@ def self_test() -> int:
 
         # 1 claims-work
         r = gate_claims_work(ctx("H-1\tW0.1\tspec\t\t\n"))
-        check("1 claims-work fails when nothing started", r.status == "FAIL")
+        check(
+            "1 claims-work fails when nothing started",
+            r.status == "FAIL" and "no row of W0.1 is building" in r.detail,
+        )
         r = gate_claims_work(ctx("H-1\tW0.1\tbuilding\t\t\n"))
         check("1 claims-work passes when building", r.status == "PASS")
 
@@ -447,7 +530,7 @@ def self_test() -> int:
         )
         r = gate_proofs(ctx(f"H-1\tW0.1\tgreen\t{ok}\t\n"))
         check("3 proofs pass on resolvable proof", r.status == "PASS")
-        bad = {
+        bad = {  # label -> (proof, text the failure must name)
             "empty proof": "",
             "missing dimension": 'logical=tests/test_x.py›"test_real"',
             "unknown test": ok.replace('"test_real"', '"test_ghost"', 1),
@@ -463,9 +546,44 @@ def self_test() -> int:
             ),
             "duplicate key": ok + '; logical=tests/test_x.py›"test_real"',
         }
+        needles = {
+            "empty proof": "no proof",
+            "missing dimension": "missing contract proof",
+            "unknown test": "test_ghost",
+            "name only in a comment": "test_in_comment",
+            "name only in a string": "test_in_string",
+            "prefix of another test": "test_rea",
+            "skipped test": "is skipped",
+            "path outside tests/": "must be a .py file under tests/",
+            "path escaping repo": "must be a .py file under tests/",
+            "short n/a reason": "needs a reason",
+            "logical n/a": "cannot be n/a",
+            "duplicate key": "duplicate proof key",
+        }
         for label, proof in bad.items():
             r = gate_proofs(ctx(f"H-1\tW0.1\tgreen\t{proof}\t\n"))
-            check(f"3 proofs fail on {label}", r.status == "FAIL")
+            check(f"3 proofs fail on {label}", r.status == "FAIL" and needles[label] in r.detail)
+        (tests_dir / "test_y.py").write_text(
+            "import pytest\n\npytestmark = pytest.mark.skip\n\ndef test_mod():\n    pass\n",
+            encoding="utf-8",
+        )
+        (tests_dir / "test_z.py").write_text(
+            "import pytest\n\n@pytest.mark.skip\nclass TestC:\n    def test_cls(self):\n"
+            "        pass\n\ndef test_rt():\n    pytest.skip('x')\n\n"
+            "@pytest.mark.xfail(run=False)\ndef test_xf():\n    pass\n",
+            encoding="utf-8",
+        )
+        for path, name in [
+            ("tests/test_y.py", "test_mod"),
+            ("tests/test_z.py", "test_cls"),
+            ("tests/test_z.py", "test_rt"),
+            ("tests/test_z.py", "test_xf"),
+        ]:
+            proof = ok.replace('tests/test_x.py›"test_real"', f'{path}›"{name}"', 1)
+            r = gate_proofs(ctx(f"H-1\tW0.1\tgreen\t{proof}\t\n"))
+            check(
+                f"3 proofs fail on skipped {name}", r.status == "FAIL" and "is skipped" in r.detail
+            )
 
         # 4 ruff — must name the planted rule, so a missing tool cannot pass for a caught defect
         lint = root / "lint"
@@ -509,17 +627,31 @@ def self_test() -> int:
             "8 politeness fails naming the failing test",
             r.status == "FAIL" and "test_polite_fails" in r.detail,
         )
-        rude = root / "rude"
-        (rude / "data").mkdir(parents=True)
-        (rude / "data" / "fetch_log.jsonl").write_text(
-            fetch_audit._line() + "\n" + fetch_audit._line(robots="disallowed") + "\n",
-            encoding="utf-8",
-        )
-        r = gate_politeness(ctx("H-1\tW0.1\tbuilding\t\t\n", at=rude))
-        check(
-            "8 politeness fails on a fetch log that broke robots and the rate",
-            r.status == "FAIL" and "robots disallowed" in r.detail,
-        )
+        line = fetch_audit._line
+        rude_logs = {
+            "robots": ([line(robots="disallowed")], "although robots disallowed"),
+            "rate": ([line(), line(at="2026-11-15T10:00:00.4+00:00")], "0.400 s apart"),
+            "retry after a block": (
+                [line(status=403, outcome="blocked"), line(at="2026-11-15T10:00:09+00:00")],
+                "after it was blocked",
+            ),
+            "two user agents": (
+                [line(), line(url="https://a.com/", host="a.com", user_agent="Other/1")],
+                "different user agents",
+            ),
+            "unparseable line": (["{oops"], "not JSON"),
+        }
+        for label, (lines, needle) in rude_logs.items():
+            rude = root / f"rude-{label.replace(' ', '-')}"
+            (rude / "data").mkdir(parents=True)
+            (rude / "data" / "fetch_log.jsonl").write_text(
+                "\n".join(lines) + "\n", encoding="utf-8"
+            )
+            r = gate_politeness(ctx("H-1\tW0.1\tbuilding\t\t\n", at=rude))
+            check(
+                f"8 politeness fails on a log breaking {label}",
+                r.status == "FAIL" and needle in r.detail,
+            )
         check(
             "8 politeness reports SKIP with no logs and no tests",
             gate_politeness(ctx("H-1\tW0.1\tbuilding\t\t\n", at=root / "lint")).status == "SKIP",
@@ -555,20 +687,23 @@ def self_test() -> int:
         broken.mkdir()
         (broken / "pyproject.toml").write_text("[project\nname=", encoding="utf-8")
         r = gate_build(Ctx("W0.1", broken, graph, [], specs), smoke=[])
-        check("10 build fails on a broken project", r.status == "FAIL" and "uv build" in r.detail)
+        check(
+            "10 build fails naming the broken pyproject (not a missing uv)",
+            r.status == "FAIL" and "expected `]`" in r.detail and "No such file" not in r.detail,
+        )
 
         # 11 changed-tests
         check(
             "11 fails when only source changed",
-            changed_tests_problem(["src/visibility/x.py"]) is not None,
+            changed_tests_problem(["src/citewatch/x.py"]) is not None,
         )
         check(
             "11 an __init__.py does not count as a test change",
-            changed_tests_problem(["src/visibility/x.py", "tests/__init__.py"]) is not None,
+            changed_tests_problem(["src/citewatch/x.py", "tests/__init__.py"]) is not None,
         )
         check(
             "11 passes when tests changed",
-            changed_tests_problem(["src/visibility/x.py", "tests/test_x.py"]) is None,
+            changed_tests_problem(["src/citewatch/x.py", "tests/test_x.py"]) is None,
         )
         repo = root / "repo"
         repo.mkdir()
@@ -596,13 +731,26 @@ def self_test() -> int:
 
         # 12 records
         cat = parse_catalog(hdr + "H-1\tW0.1\tgreen\t\t\n")
-        check(
-            "12 records fails with no changelog", bool(records_problems("W0.1", cat, root, specs))
-        )
-        (root / "changelog.md").write_text("[FEAT] [W0.1] — harness\n", encoding="utf-8")
-        (specs / "W0.1-harness" / "criteria.md").write_text("H-1\n", encoding="utf-8")
-        (specs / "W0.1-harness" / "RUN-STATE.md").write_text("ok\n", encoding="utf-8")
+        changelog = root / "changelog.md"
+        criteria = specs / "W0.1-harness" / "criteria.md"
+        run_state = specs / "W0.1-harness" / "RUN-STATE.md"
+        changelog.write_text("[FEAT] [W0.1] — harness\n", encoding="utf-8")
+        criteria.write_text("H-1\n", encoding="utf-8")
+        run_state.write_text("ok\n", encoding="utf-8")
         check("12 records passes when complete", records_problems("W0.1", cat, root, specs) == [])
+        for path, broken, needle in [
+            (changelog, "[FEAT] [N1.1] — other\n", "changelog.md has no [W0.1] entry"),
+            (criteria, "H-10\n", "criteria.md misses H-1"),
+            (run_state, None, "RUN-STATE.md missing"),
+        ]:
+            saved = path.read_text(encoding="utf-8")
+            if broken is None:
+                path.unlink()
+            else:
+                path.write_text(broken, encoding="utf-8")
+            problems = records_problems("W0.1", cat, root, specs)
+            check(f"12 records fails naming: {needle}", any(needle in p for p in problems))
+            path.write_text(saved, encoding="utf-8")
     print("self-test", "PASSED" if failures == 0 else f"FAILED ({failures})")
     return 0 if failures == 0 else 1
 

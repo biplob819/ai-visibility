@@ -22,7 +22,7 @@ def test_robots_txt_requests_count_toward_the_rate():
         fa._line(url="https://www.nhs.uk/robots.txt"),
         fa._line(at="2026-11-15T10:00:00.300000+00:00"),
     ]
-    assert any("0.30 s apart" in p for p in fa.audit(lines))
+    assert any("0.300 s apart" in p for p in fa.audit(lines))
 
 
 def test_a_skipped_disallowed_url_is_not_a_request():

@@ -5,7 +5,7 @@ Checks:
   1. Files under data/ and results/ (tracked, or untracked but not ignored; .gz files are
      decompressed) contain no HTML document markers and no JSON keys named body, html or
      page_text.
-  2. The body cache (~/.cache/ai-visibility/bodies/, or $VISIBILITY_BODY_CACHE) is empty
+  2. The body cache (~/.cache/citewatch/bodies/, or $CITEWATCH_BODY_CACHE) is empty
      unless node M3.2 (the support check, the only node allowed to hold page text) is
      building.
 
@@ -19,25 +19,37 @@ Exit 0 when clean, 1 otherwise.
 from __future__ import annotations
 
 import argparse
+import bz2
 import gzip
 import os
 import re
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from harness_lib import CATALOG_TSV, ROOT, Cap, HarnessError, load_catalog, parse_catalog
+from harness_lib import (
+    CATALOG_TSV,
+    ROOT,
+    Cap,
+    HarnessError,
+    git_files,
+    load_catalog,
+    node_status,
+    parse_catalog,
+    unpack,
+)
 
 AUDITED_DIRS = ("data", "results")
-HTML_MARKERS = re.compile(rb"<!doctype\s+html|<html[\s>]|<body[\s>]", re.I)
-BODY_KEYS = re.compile(rb'"(?:body|html|page_text)"\s*:')
+# "<" may also appear JSON-escaped as \u003c or HTML-escaped as &lt;
+LT = rb"(?:<|\\u003c|&lt;)"
+HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html[\s>/]|body[\s>/])", re.I)
+BODY_KEYS = re.compile(rb'"(?:body|html|page_text)"\s*:', re.I)
 BODY_NODE = "M3.2"
 
 
 def body_cache_dir() -> Path:
-    env = os.environ.get("VISIBILITY_BODY_CACHE")
-    return Path(env) if env else Path.home() / ".cache" / "ai-visibility" / "bodies"
+    env = os.environ.get("CITEWATCH_BODY_CACHE")
+    return Path(env) if env else Path.home() / ".cache" / "citewatch" / "bodies"
 
 
 def audited_files(root: Path) -> list[Path]:
@@ -45,26 +57,17 @@ def audited_files(root: Path) -> list[Path]:
     dirs = [d for d in AUDITED_DIRS if (root / d).is_dir()]
     if not dirs:
         return []
-    try:
-        out = subprocess.run(
-            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", *dirs],
-            cwd=root,
-            capture_output=True,
-            check=True,
-        ).stdout
-        names = [n for n in out.decode("utf-8").split("\0") if n]
-        return sorted(root / n for n in names if (root / n).is_file())
-    except (OSError, subprocess.CalledProcessError):
-        return sorted(p for d in dirs for p in (root / d).rglob("*") if p.is_file())
+    files = git_files(root, *dirs)
+    if files is not None:
+        return files
+    return sorted(p for d in dirs for p in (root / d).rglob("*") if p.is_file())
 
 
 def file_problems(path: Path, root: Path) -> list[str]:
     rel = path.relative_to(root) if path.is_relative_to(root) else path
     try:
-        raw = path.read_bytes()
-        if path.suffix == ".gz":
-            raw = gzip.decompress(raw)
-    except (OSError, EOFError, gzip.BadGzipFile) as exc:
+        raw = unpack(path.read_bytes())  # by magic bytes, whatever the file is called
+    except (OSError, HarnessError) as exc:
         return [f"{rel}: cannot read ({exc})"]
     problems = []
     m = HTML_MARKERS.search(raw)
@@ -79,7 +82,7 @@ def file_problems(path: Path, root: Path) -> list[str]:
 def cache_problem(cache: Path, caps: list[Cap]) -> str | None:
     if not cache.is_dir() or not any(cache.iterdir()):
         return None
-    if any(c.node == BODY_NODE and c.status == "building" for c in caps):
+    if node_status(BODY_NODE, caps) == "building":
         return None
     return f"body cache {cache} is not empty and {BODY_NODE} is not building"
 
@@ -127,9 +130,22 @@ def self_test() -> int:
         check("a gzipped body fails", any("raw.json.gz" in p for p in r))
         (root / "data" / "raw.json.gz").unlink()
 
-        (root / "data" / "broken.gz").write_bytes(b"not gzip")
+        (root / "data" / "broken.gz").write_bytes(b"\x1f\x8bnot really gzip")
         check("an unreadable .gz fails", any("cannot read" in p for p in audit(root, cache, idle)))
         (root / "data" / "broken.gz").unlink()
+
+        sneaky = {
+            "UPPER.JSON.GZ": gzip.compress(b'{"Body": "x"}'),
+            "renamed.txt": gzip.compress(b"<html>"),
+            "double.gz": gzip.compress(gzip.compress(b"<body>")),
+            "packed.bz2": bz2.compress(b'{"PAGE_TEXT": 1}'),
+            "escaped.json": b'{"x": "\\u003chtml lang=en>"}',
+        }
+        for name, content in sneaky.items():
+            (root / "data" / name).write_bytes(content)
+            r = audit(root, cache, idle)
+            check(f"{name} fails", any(name in p for p in r))
+            (root / "data" / name).unlink()
 
         cache.mkdir()
         (cache / "page.txt").write_text("page text", encoding="utf-8")

@@ -1,0 +1,7 @@
+# N1.1 acceptance criteria
+
+**SCH-01** `StudyQuestion`, `AnswerRecord`, `Citation` and `ConsultedSource` validate the §4 fields; `word_count` must match the answer text; ids, runs and ordinals reject impossible values; non-canonical citation URLs (upper-case host, fragment) are rejected; every model is frozen, deeply immutable and rejects unknown fields and non-finite floats.
+**SCH-02** `DateCandidate` and `PageMeta` accept only the §4 sources, kinds and outcomes; a chosen date must be backed by a non-rejected candidate of that kind and source; `effective_date` and `effective_source` must agree with the chosen dates; a modified date before the published date is rejected; an `ok` outcome needs `fetched_at` and `status`.
+**SCH-03** `Interval` enforces `lo ≤ point ≤ hi` and `0 ≤ k ≤ n`; every summary row and `StudySummary` validate; `StudySummary` requires `schema_version`, both sha256 hashes in hex, and runs drawn from {0, 1, 2}.
+**SCH-04** `DomainCard`, `SupportVerdict` and `HandDateLabel` validate; a support quote is at most one sentence (300 characters, no more than one sentence end); a hand label marked `not_determinable` has no dates.
+**SCH-05** `load_study_config` reads `study.yaml` and rejects bad values with an error naming the file and the field; the committed `study.yaml` loads and matches Tech Spec §7.1 (both models, effort medium, London GB, 3 searches, 150 words, 365 days); one v1 fixture per top-level schema round-trips byte-stably, checked against an independent list of the §4 schema names.

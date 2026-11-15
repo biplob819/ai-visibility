@@ -2,7 +2,7 @@
 
 Nov 15, 2026 · @Biplob Chakraborty · Companion to the [AI Visibility PRD](AI%20Visibility%20PRD.md)
 
-The PRD says what the study shows and why. This spec says how it is built: a loophole review of the PRD, the design decisions it forces, the pipeline, schemas, exact metric definitions, the collection protocol (runners, polite fetcher, date resolver), the support and hand checks, the demo, the cost model, testing, the study runbook, and the build harness that delivers it node by node.
+The PRD says what the study shows and why. The study ships as **`citewatch`**, an open-source tool (MIT, on PyPI) that anyone can run with their own questions, country, models and keys; the UK health study is its flagship run (OWNER D-23, D-24). This spec says how it is built: a loophole review of the PRD, the design decisions it forces, the pipeline, schemas, exact metric definitions, the collection protocol (runners, polite fetcher, date resolver), the support and hand checks, the demo, the cost model, testing, the study runbook, and the build harness that delivers it node by node.
 
 The build method is the one EvalKit used (`~/EvalKit`, Tech Spec §11): a lean adaptation of the Kova node harness. Build nodes form a dependency graph; a node starts only when its dependencies are green and turns green only when its proofs pass every gate twice and a skeptical verifier fails to disprove its criteria. The harness scripts are ported from EvalKit, not rewritten.
 
@@ -44,7 +44,7 @@ Every finding below is closed by a section of this spec (Appendix A) and, where 
 
 ## 2. Design decisions
 
-Each decision seeds `docs/decisions.md` as D-1 to D-22. `OWNER D-n` marks a ruling the owner made on 15 Nov 2026.
+Each decision seeds `docs/decisions.md` as D-1 to D-25. `OWNER D-n` marks a ruling the owner made on 15 Nov 2026.
 
 | ID | Decision | Alternatives considered | Why |
 | --- | --- | --- | --- |
@@ -65,11 +65,14 @@ Each decision seeds `docs/decisions.md` as D-1 to D-22. `OWNER D-n` marks a ruli
 | D-15 | Dashboard and post are static HTML on Cloudflare Pages; the demo lives in the shared `portfolio-demos` Streamlit app and reads `domain_cards.json` | GitHub Pages (EvalKit's choice) | Free static hosting with a global CDN for the dashboard and post; lookups never call a model |
 | OWNER D-16 | No dated schedule: all 20 nodes are built now, in dependency order (§12.3), and the study runs when S3.1 becomes eligible | Offline nodes Mon–Tue, runs Wednesday; everything on one build day (PRD milestones) | The owner's ruling ("strip off dates, we build all now"); dates had been driving scope, not quality |
 | D-17 | Live demo mode shows each model's citations (URL, publisher, quoted span), never the answer prose | Show full answers (US8 wording) | B6 wins over US8's wording (H12) |
-| D-18 | Python 3.12 only; CI on Linux and macOS | EvalKit's 3.11–3.13 × three OS matrix | A study repo, not a library. Windows-specific lessons (UTF-8, LF) are still applied |
+| D-18 | Python 3.12 only; CI on Linux and macOS (**superseded by OWNER D-23**: Python 3.11–3.13 on Linux, macOS and Windows) | EvalKit's 3.11–3.13 × three OS matrix | Written when this was a study repo, not a tool others install |
 | OWNER D-19 | Study budget about $45 (two runs of about $19, smoke about $2, support check about $3), measured by the smoke run first; any single run over $25 still needs the owner's go-ahead | Hold to the PRD's $24 | The measured cost, not a guess, sets the bar; quality over cost |
 | OWNER D-20 | The `ai-visibility` git repo is this folder (`AI visibility/`), with the PRD and this spec at its root; public GitHub repo `ai-visibility` | A new `~/ai-visibility` folder | Matches EvalKit, whose PRD and spec live in the repo root |
 | OWNER D-21 | The repo is public on GitHub (`biplob819/ai-visibility`) from the first commit and is pushed as nodes turn green | Private until the B4.4 release | The owner's ruling ("we will publish as public repo; push to remote"); CI runs from the first push. B4.4 keeps the full-history audit and the README |
 | OWNER D-22 | Job-search framing (the application the study supports, outreach tracking, the posting link, the private hub doc) lives in a gitignored `Portfolio notes.md`; the public PRD uses a neutral product-lead persona for US6 | Publish the PRD as written | Same rule as EvalKit: the public repo stays about the study |
+| OWNER D-23 | Open source as a reusable tool plus the flagship study: anyone runs their own study with their own questions file, intents, country, supported models and keys; the UK health study is the flagship run. Python 3.11–3.13 on Linux, macOS and Windows; no telemetry. Adds node B4.5 | An open reproducible study only (no package, UK only) | The owner's ruling ("it should be published as an open source project"); the method is more useful than one dataset |
+| OWNER D-24 | Distribution, CLI and import name `citewatch`; the GitHub repo stays `ai-visibility` | `ai-visibility` (taken on PyPI by an unrelated GEO toolkit, checked 15 Nov 2026); `ai-citation-audit` | Short, says what it does, free on PyPI, and avoids confusion with tools for gaming AI answers (B9) |
+| D-25 | The politeness floor is not configurable: robots.txt is always honoured, at most 1 request per second per host, at most 2 retries, never after a block, only cited URLs fetched, a user agent naming the tool and a contact is required. Users may only make it stricter | Configurable rate and robots override for power users | An open-source fetcher is run by people we never meet; NFR1 and B3 must hold for every study, not just ours |
 
 ---
 
@@ -127,7 +130,7 @@ questions.jsonl (frozen) ─▶ Ask[run × question × model]  (interleaved, ≤
 | `data/page_meta.jsonl`, `data/fetch_log.jsonl` | Dates, candidates, fetch audit | Yes |
 | `data/labels/*.csv` | Hand labels for dates and support | Yes |
 | `results/summary.json`, `results/domain_cards.json` | Metrics | Yes |
-| `~/.cache/ai-visibility/bodies/` | Support-sample page text and EvalKit store | Never; deleted after M3.2 |
+| `~/.cache/citewatch/bodies/` | Support-sample page text and EvalKit store | Never; deleted after M3.2 |
 
 ### 3.4 Error and retry rules
 
@@ -149,8 +152,10 @@ questions.jsonl (frozen) ─▶ Ask[run × question × model]  (interleaved, ≤
 Results format v1. Every file carries `schema_version: "1.0"`. Models are frozen; sequences are tuples; floats reject NaN and infinity (EvalKit L-8, L-9).
 
 ```python
-Intent = Literal["symptoms", "treatment", "nhs_services", "fitness", "nutrition"]
-ModelId = Literal["claude-sonnet-5-5", "gpt-6.1-sol"]
+Intent = str     # one of StudyConfig.intents; the flagship study uses
+                 # symptoms, treatment, nhs_services, fitness, nutrition
+ModelId = str    # a supported web-search model: claude-* (Anthropic) or gpt-* (OpenAI);
+                 # the flagship study uses claude-sonnet-5-5 and gpt-6.1-sol
 
 
 class StudyQuestion(BaseModel):
@@ -290,16 +295,19 @@ class HandDateLabel(BaseModel):
     note: str
 
 
-class StudyConfig(BaseModel):        # loaded from study.yaml
+class StudyConfig(BaseModel):        # loaded from study.yaml (citewatch init writes one)
+    name: str                        # "uk-health-2026-11"
+    questions_path: str              # JSONL of StudyQuestion
+    intents: tuple[str, ...]         # every question's intent must be one of these
     models: tuple[ModelId, ...]
     effort: Literal["low", "medium", "high"]
-    user_location: dict[str, str]    # {"type": "approximate", "country": "GB", "city": "London", ...}
+    user_location: dict[str, str]    # any country; flagship: {"type": "approximate", "country": "GB", "city": "London", ...}
     max_searches: int                # 3
     word_limit: int                  # 150
     stale_days: int                  # 365
     seeds: dict[str, int]            # order, support_sample, hand_sample, bootstrap
     max_cost_usd: float | None
-    user_agent: str
+    user_agent: str                  # must name a contact; the politeness floor itself is not configurable (D-25)
 ```
 
 ---
@@ -326,12 +334,13 @@ async def ask_live(question: str, session_token: str) -> list[LiveCitationCard]:
 
 | Command | What it does | Needs keys |
 | --- | --- | --- |
-| `visibility doctor` | Python version, which keys are set (never printed), network, `prices.yaml` age, user agent contact set | No |
-| `visibility ask --run N [--questions ids] [--dry-run] [--max-cost X]` | Asks the questions on both models; `--dry-run` prints call counts and the cost estimate and exits | Yes, except `--dry-run` |
-| `visibility extract` | Rebuilds citations and consulted sources from the raw store | No |
-| `visibility fetch [--dry-run]` | Fetches new canonical URLs politely, resolves dates; `--dry-run` lists hosts, URL counts and the minimum wall-clock at 1 req/s | No |
-| `visibility score [--sample-support] [--labels path] [--finalise]` | Metrics; draws or scores the support and hand-check samples; `--finalise` deletes the body cache and asserts it is empty | Judges only for the support check |
-| `visibility report [--example]` | Dashboard, post charts, `domain_cards.json`; `--example` renders the bundled golden fixture | No |
+| `citewatch init [dir]` | Writes `study.yaml`, a questions template and `.env.example` into a new study folder; never overwrites | No |
+| `citewatch doctor` | Python version, which keys are set (never printed), network, `prices.yaml` age, user agent contact set | No |
+| `citewatch ask --run N [--questions ids] [--dry-run] [--max-cost X]` | Asks the questions on both models; `--dry-run` prints call counts and the cost estimate and exits | Yes, except `--dry-run` |
+| `citewatch extract` | Rebuilds citations and consulted sources from the raw store | No |
+| `citewatch fetch [--dry-run]` | Fetches new canonical URLs politely, resolves dates; `--dry-run` lists hosts, URL counts and the minimum wall-clock at 1 req/s | No |
+| `citewatch score [--sample-support] [--labels path] [--finalise]` | Metrics; draws or scores the support and hand-check samples; `--finalise` deletes the body cache and asserts it is empty | Judges only for the support check |
+| `citewatch report [--example]` | Dashboard, post charts, `domain_cards.json`; `--example` renders the bundled golden fixture | No |
 
 Every command takes `--json`. Exit codes follow EvalKit: 0 done, 2 configuration or runtime error, 3 stopped at the cost cap (resumable), 4 judging pending.
 
@@ -415,9 +424,9 @@ Appendix C lists the provider facts to confirm against live docs at N1.2 before 
 | Only cited URLs | Input is the canonical URL set from `citations.jsonl`; consulted-only URLs are never fetched |
 | robots.txt | `protego`, fetched once per host and cached for the study. 404 or 410 means allow; 401 or 403 means disallow (stricter than RFC 9309, chosen on purpose); 5xx or timeout means disallow. Every redirect hop to a new host is checked against that host's robots |
 | Rate | Token bucket of 1 request per second per host, covering robots and sitemap requests too; at most 8 hosts in flight |
-| User agent | `AIVisibilityStudy/1.0 (+<project page URL>; <study contact address>)`, set in `study.yaml`; `doctor` refuses an unset contact |
+| User agent | `citewatch/<version> (+<project page URL>; <study contact address>)`, set in `study.yaml`; `doctor` refuses an unset contact |
 | Timeouts and retries | 10 s; at most 2 retries on transport, 5xx and 429 with `Retry-After` honoured; never after 401, 403, 451 or a robots refusal |
-| Bodies | `text/html` only, 5 MB cap, held in memory for date resolution and dropped. Support-sample URLs only: main text written to `~/.cache/ai-visibility/bodies/` for M3.2 and hand labelling, deleted by `score --finalise` |
+| Bodies | `text/html` only, 5 MB cap, held in memory for date resolution and dropped. Support-sample URLs only: main text written to `~/.cache/citewatch/bodies/` for M3.2 and hand labelling, deleted by `score --finalise` |
 | Gated pages | A login form or paywall marker on a 200 response is `gated`; no workaround (B8) |
 | Audit | `fetch_log.jsonl`: url, host, at, attempt, status, bytes, robots decision, outcome. Gate 8 replays it and fails on any host above 1 req/s, any fetched disallowed URL, any retry after a block, or a changed user agent |
 
@@ -515,6 +524,7 @@ Live demo spend is capped separately at $3 a day. Under OWNER D-19, a single run
 | Politeness | A disallowing robots.txt is honoured (including the longest-match case urllib gets wrong); 1 req/s per host under concurrency; no retry after 403; redirect to a new host re-checks robots; user agent constant; fetch-log audit | `pytest -m polite` |
 | Safety | Secret scan; storage audit (no HTML or body text in the repo or committed data; body cache empty after finalise); no answer prose in demo templates; B9 checklist present for the post | `pytest -m safety` plus the scanner |
 | Static | Lint, types | `uv run ruff check`, `uv run pyright` |
+| Compatibility | Python 3.11, 3.12 and 3.13 on Linux, macOS and Windows; golden replay also on 3.11 | CI matrix, gate 7 |
 | No-key CLI | `report --example`, `ask --dry-run` and `fetch --dry-run` succeed with no keys; `doctor` exits 2 and names each missing variable without printing any value | `pytest -m onboarding` |
 
 **Observability.** `run.log` per run (§3.1); `summary.json` carries spend and coverage; the dashboard shows error counts per model.
@@ -544,9 +554,9 @@ scripts/{harness_lib,verify_graph_eligibility,node_start,node_converge,status,se
 
 Status vocabulary: `not-started | spec | building | green`.
 
-### 12.2 Build graph: 20 nodes in six waves
+### 12.2 Build graph: 21 nodes in six waves
 
-**First public release (all Must stories, US1–US6): 17 nodes**, W0.1 through B4.4. **Full scope: 20 nodes**, adding D5.1–D5.3.
+**First public release, v0.1.0 on PyPI (all Must stories, US1–US6): 18 nodes**, W0.1 through B4.5. **Full scope: 21 nodes**, adding D5.1–D5.3.
 
 | Node | Title | Depends on | Deliverable (what exists when it is green) | Stories |
 | --- | --- | --- | --- | --- |
@@ -567,9 +577,10 @@ Status vocabulary: `not-started | spec | building | green`.
 | **B4.2** | The post and charts | B4.1 | Post with charts generated from `summary.json` | US6 |
 | **B4.3** | Signal spec | M3.1, S3.1 | One-page PDF: fields, buyers, delivery, pricing logic | US6 |
 | **B4.4** | Public repo | B4.2, B4.3 | README, licence, data card, decisions, history audit, repo public | US5, US6 |
+| **B4.5** | Open-source packaging and v0.1.0 | B4.4 | PyPI `citewatch`, `init`, run-your-own-study and responsible-use docs, community files, release workflow, import contract test, tag v0.1.0 | US5, US7 |
 | **D5.1** | Domain cards and lookup | M3.1, S3.1 | `domain_cards.json`, `lookup()` | US7 |
 | **D5.2** | Demo page and live mode | D5.1, N1.2 | Streamlit page in `portfolio-demos`, guarded live mode | US7, US8 |
-| **D5.3** | Project page, video, supporting notes | B4.4, D5.2 | Case study page, 90-second video, how-I-built-it note, one-page PRD | US6 |
+| **D5.3** | Project page, video, supporting notes | B4.5, D5.2 | Case study page, 90-second video, how-I-built-it note, one-page PRD | US6 |
 
 Waves: **W0** harness → **N1** core → **A2** collection pipeline → **M3/S3** measurement and the real runs → **B4** write-up and release → **D5** demo and portfolio.
 
@@ -608,7 +619,8 @@ graph LR
   S31 --> D51
   D51 --> D52[D5.2 Demo page]
   N12 --> D52
-  B44 --> D53[D5.3 Project page + video]
+  B44 --> B45[B4.5 OSS release v0.1.0]
+  B45 --> D53[D5.3 Project page + video]
   D52 --> D53
 ```
 
@@ -624,9 +636,10 @@ graph LR
 | 7 | B4.1, B4.3, D5.1 |
 | 8 | B4.2, D5.2 |
 | 9 | B4.4 |
-| 10 | D5.3 |
+| 10 | B4.5 |
+| 11 | D5.3 |
 
-**Critical path (10 nodes to the public release):** W0.1 → N1.1 → N1.3 → A2.2 → A2.3 → A2.4 → S3.1 → B4.1 → B4.2 → B4.4.
+**Critical path (11 nodes to v0.1.0):** W0.1 → N1.1 → N1.3 → A2.2 → A2.3 → A2.4 → S3.1 → B4.1 → B4.2 → B4.4 → B4.5.
 
 **Build order for a single builder** (OWNER D-16: no dates). The public release first, then the demo. Every node appears after all its dependencies; owner work is listed where it blocks.
 
@@ -649,9 +662,10 @@ graph LR
 | 15 | B4.3 | — |
 | 16 | B4.2 | Review the post (B9 checklist) |
 | 17 | B4.4 | Review the README and the history audit |
-| 18 | D5.1 | — |
-| 19 | D5.2 | Passcode and secrets in `portfolio-demos` |
-| 20 | D5.3 | Record the video |
+| 18 | B4.5 | Reserve `citewatch` on PyPI (placeholder 0.0.1) and set up trusted publishing → **v0.1.0 on PyPI** |
+| 19 | D5.1 | — |
+| 20 | D5.2 | Passcode and secrets in `portfolio-demos` |
+| 21 | D5.3 | Record the video |
 
 N1.3 comes before N1.2 so the raw store exists before the first paid call.
 
@@ -663,8 +677,8 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
-| HAR-01 | uv project, `visibility` package (src layout, Python 3.12), MIT licence, ruff pre-commit, `.gitattributes` forcing LF | D-18 |
-| HAR-02 | CI on Linux and macOS: lint, types, tests, golden replay, build on every push; least-privilege workflow permissions | §11 |
+| HAR-01 | uv project, `citewatch` package (src layout, Python ≥3.11), MIT licence, ruff pre-commit, `.gitattributes` forcing LF | D-18 |
+| HAR-02 | CI on Python 3.11–3.13 × Linux, macOS and Windows: lint, types, tests, golden replay, build on every push; least-privilege workflow permissions | §11 |
 | HAR-03 | Ported `verify_graph_eligibility.py` and `node_start.py` with self-tests (cycles, dependencies green, spec and criteria present, check-only writes nothing) | D-13 |
 | HAR-04 | Ported `node_converge.py` with the 12 gates of §12.6, every gate reported, each with a self-test that names the planted defect | D-13 |
 | HAR-05 | Records: `graph.md`, `catalog.tsv`, `decisions.md` seeded with D-1 to D-18, `lessons.md` seeded per §12.8, `changelog.md`, `scripts/status.py` | D-14 |
@@ -830,6 +844,19 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | REL-02 | Full-history audit (the repo has been public since the first push, OWNER D-21): no keys, no `.env`, no page bodies, no hand-label notes that quote pages at length, no job-search content (OWNER D-22) | NFR6 |
 | REL-03 | Decisions, pre-registration and deviations published | D-7 |
 
+**B4.5 Open-source packaging and v0.1.0**
+
+| Cap | Capability | Trace |
+| --- | --- | --- |
+| OSS-01 | Distribution `citewatch` on PyPI, released by GitHub Actions trusted publishing on a tag; name reserved early with a 0.0.1 placeholder | D-24 |
+| OSS-02 | `uvx citewatch --version` and `citewatch report --example` smoke-tested against the published package on all three OS | D-23 |
+| OSS-03 | `citewatch init` scaffolds a study folder without overwriting anything; a study with custom intents, another country and one provider runs end to end on recorded fixtures | D-23 |
+| OSS-04 | Docs: quickstart (an example report in under 5 minutes with no keys), run your own study (questions format, intents, country, models, cost), how dates are resolved and their limits, controlling cost | D-23 |
+| OSS-05 | Responsible use: the politeness floor cannot be lowered by config, flag or environment (tests try each); docs say the tool measures sourcing and is not for gaming AI answers; no telemetry; privacy statement | D-25, B3, B9 |
+| OSS-06 | CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates | D-23 |
+| OSS-07 | Semver policy; public API (`citewatch.schemas`, `canonical_url`, `publisher_of`, `lookup`) and an import contract test against the built wheel | D-23 |
+| OSS-08 | Tag v0.1.0 with the flagship UK study's results and changelog | D-23 |
+
 **D5.1 Domain cards and lookup**
 
 | Cap | Capability | Trace |
@@ -891,10 +918,10 @@ Every gate runs and is reported even after an earlier one fails. Every gate ship
 4. `uv run ruff check`.
 5. `uv run pyright`.
 6. `uv run pytest` (unit, property, contract, data).
-7. `pytest -m golden` (from A2.4 onward; earlier nodes report `n/a: no golden fixture before A2.4`).
+7. `pytest -m golden` on this interpreter and again on the minimum Python, 3.11 (from A2.4 onward; earlier nodes report SKIP).
 8. **Politeness:** `pytest -m polite` plus the fetch-log audit over every committed `fetch_log*.jsonl` (replaces EvalKit's judge-regression gate).
 9. **Safety and storage:** `pytest -m safety`, the secret scan, and the storage audit (no HTML or page text in tracked files; body cache empty unless M3.2 is `building`).
-10. `uv build`, install into a clean venv, and with no keys run `visibility report --example` and `visibility ask --run 1 --dry-run` (both exit 0) and `visibility doctor` (must exit 2 and name each missing variable, EvalKit L-40).
+10. `uv build`, install into a clean venv, and with no keys run `citewatch report --example` and `citewatch ask --run 1 --dry-run` (both exit 0) and `citewatch doctor` (must exit 2 and name each missing variable, EvalKit L-40).
 11. Changed code has changed tests, measured from the node's base commit.
 12. Records: a `changelog.md` entry for the node, `criteria.md` names every catalog row, and `RUN-STATE.md` exists.
 
@@ -904,7 +931,7 @@ Every gate runs and is reported even after an earlier one fails. Every gate ship
 - **Verifier** (fresh-context subagent, told to be skeptical): tries to disprove each criterion. It sees only the criteria, the code and the gate output, never the builder's reasoning. It runs with its own `UV_PROJECT_ENVIRONMENT` so it cannot rebuild the shared venv mid-converge (EvalKit L-15). For S3.1 it also audits the fetch log and the run manifest.
 - **Owner:** writes the questions, labels the 20-page set, the 50 dates and the 50 citations, and rules on scope, budget and trade-offs through batched questions. Rulings are recorded as `OWNER D-n`.
 
-**Dropped from Kova and EvalKit:** lanes, integrator, EM agent, the judge-regression gate, PyPI release work, the Windows and multi-Python matrix.
+**Dropped from Kova and EvalKit:** lanes, integrator, EM agent, the judge-regression gate.
 
 ### 12.8 Lessons inherited from EvalKit
 
@@ -931,7 +958,7 @@ Seeded into `docs/lessons.md` as L-1 to L-12, each citing its EvalKit origin:
 
 Each run is an operation inside node S3.1, gated like a node.
 
-**Gate G1, before run 1** (all must hold; `visibility ask --run 1` refuses otherwise):
+**Gate G1, before run 1** (all must hold; `citewatch ask --run 1` refuses otherwise):
 
 1. `questions.jsonl` and `preregistration.md` hashes match `decisions.md`.
 2. A2.4 is green and its measured estimate is within the approved budget.
@@ -961,6 +988,8 @@ Each run is an operation inside node S3.1, gated like a node.
 | The support-check pages differ from what the model read | Answer-to-fetch gap recorded; sample drawn from run 1 and fetched the same day |
 | EvalKit changes underneath | Pinned commit plus contract test |
 | Cost overruns | Smoke-run measurement, pre-run estimate, `--max-cost`, owner go-ahead above $25 |
+| Someone uses the open-source fetcher to scrape or the tool to game AI answers | Politeness floor not configurable (D-25); only cited URLs fetched; responsible-use docs; no gaming advice anywhere (B9) |
+| A user's run spends more than expected | `--dry-run` estimate always shown; `--max-cost` hard stop; `doctor` warns on a stale `prices.yaml` |
 | The harness costs more time than it saves | Scripts ported from EvalKit, not rewritten; 12 gates, no lanes; add process only when a lesson demands it |
 
 ---
@@ -1009,6 +1038,7 @@ Each run is an operation inside node S3.1, gated like a node.
 | US8, flow B step 3 | Live mode shows citations, not answers (D-17) |
 | Milestones, deliverable "Ready by" column, build-day line in the overview | **Applied 15 Nov 2026** (OWNER D-16): dates removed; build order is the dependency order of §12.3 |
 | Technical architecture | Add `protego`; EvalKit pinned by commit |
+| Goals, deliverables | **Applied 15 Nov 2026** (OWNER D-23): goal 7 and a deliverable row for the open-source tool `citewatch` |
 
 ## Appendix C: Provider facts to confirm at N1.2
 

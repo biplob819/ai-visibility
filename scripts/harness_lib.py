@@ -7,8 +7,15 @@ Nothing here touches the network.
 
 from __future__ import annotations
 
+import bz2
 import csv
+import gzip
+import io
+import lzma
+import os
 import re
+import subprocess
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -95,7 +102,8 @@ def load_graph(path: Path = GRAPH_MD) -> dict[str, Node]:
 
 
 def parse_catalog(text: str) -> list[Cap]:
-    rows = list(csv.reader(text.splitlines(), delimiter="\t"))
+    # QUOTE_NONE: proof cells hold literal double quotes and must round-trip unchanged
+    rows = list(csv.reader(text.splitlines(), delimiter="\t", quoting=csv.QUOTE_NONE))
     if not rows or tuple(c.strip() for c in rows[0]) != CATALOG_FIELDS:
         raise HarnessError("catalog header must be exactly: " + " | ".join(CATALOG_FIELDS))
     caps: list[Cap] = []
@@ -123,10 +131,12 @@ def load_catalog(path: Path = CATALOG_TSV) -> list[Cap]:
 
 def write_catalog(caps: list[Cap], path: Path = CATALOG_TSV) -> None:
     with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.writer(fh, delimiter="\t", lineterminator="\n")
-        writer.writerow(CATALOG_FIELDS)
+        fh.write("\t".join(CATALOG_FIELDS) + "\n")
         for c in caps:
-            writer.writerow([c.cap_id, c.node, c.status, c.proof, c.note])
+            cells = [c.cap_id, c.node, c.status, c.proof, c.note]
+            if any("\t" in x or "\n" in x for x in cells):
+                raise HarnessError(f"catalog row {c.cap_id}: a cell contains a tab or newline")
+            fh.write("\t".join(cells) + "\n")
 
 
 def node_status(node_id: str, caps: list[Cap]) -> str:
@@ -207,5 +217,50 @@ def eligibility_problems(
 
 
 def spec_dir(node_id: str, specs: Path = SPECS_DIR) -> Path | None:
-    matches = sorted(specs.glob(f"{node_id}-*"))
+    matches = sorted(p for p in specs.glob(f"{node_id}-*") if p.is_dir())
     return matches[0] if matches else None
+
+
+def mentions(text: str, cap_id: str) -> bool:
+    """True when cap_id appears as a whole token (HAR-01 is not found inside HAR-010)."""
+    return re.search(rf"(?<![A-Za-z0-9-]){re.escape(cap_id)}(?![A-Za-z0-9])", text) is not None
+
+
+def git_files(root: Path, *paths: str) -> list[Path] | None:
+    """Tracked plus untracked-but-not-ignored files, NUL-separated so no name is quoted or
+    mangled. None when git cannot list them."""
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", *paths],
+            cwd=root,
+            capture_output=True,
+            check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    names = [os.fsdecode(n) for n in out.split(b"\0") if n]
+    return sorted({root / n for n in names if (root / n).is_file()})
+
+
+MAX_UNPACKED = 200 * 1024 * 1024  # stop decompression bombs
+
+
+def unpack(raw: bytes, depth: int = 0) -> bytes:
+    """Decompress gzip, bzip2, xz and zip by their magic bytes (any file name, nested up to
+    three layers) so an audit cannot be dodged by renaming or double compressing."""
+    if depth >= 3:
+        return raw
+    try:
+        if raw[:2] == b"\x1f\x8b":
+            return unpack(gzip.decompress(raw)[:MAX_UNPACKED], depth + 1)
+        if raw[:3] == b"BZh":
+            return unpack(bz2.decompress(raw)[:MAX_UNPACKED], depth + 1)
+        if raw[:6] == b"\xfd7zXZ\x00":
+            return unpack(lzma.decompress(raw)[:MAX_UNPACKED], depth + 1)
+        if raw[:4] == b"PK\x03\x04":
+            with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+                parts = [unpack(zf.read(n)[:MAX_UNPACKED], depth + 1) for n in zf.namelist()]
+            return b"\n".join(parts)
+    except (OSError, EOFError, ValueError, lzma.LZMAError, zipfile.BadZipFile) as exc:
+        raise HarnessError(f"cannot decompress: {exc}") from exc
+    return raw

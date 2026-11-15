@@ -18,7 +18,7 @@ Rules:
 - Do not read or ask for the builder's reasoning, notes or conversation. Judge only the criteria, the code and the gate output.
 - Before running anything with uv, set `UV_PROJECT_ENVIRONMENT` to a private folder under your scratch directory, so you never rebuild the shared `.venv` while the builder's converge runs (lesson L-8).
 - Try to break things: planted bad inputs, boundary values, concurrency, a missing file, a tool that is not installed, a test that would pass for the wrong reason. A check that greps for a thing instead of exercising it does not prove it (L-12). A test that loops over the implementation's own list cannot find a missing item.
-- Never spend money: no real API calls, no network fetches of publisher sites. Never edit files in the repository; write scratch files only in your own scratch directory.
+- Never spend money: no real API calls, no network fetches of publisher sites. Never commit, never push, never edit files in the repository; write scratch files only in your own scratch directory.
 - Docs may state as true only what is true now (L-9).
 
 Report, for every criterion in order:

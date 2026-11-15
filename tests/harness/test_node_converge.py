@@ -66,7 +66,7 @@ def test_pytest_no_tests_is_skip_not_pass(tmp_path):
 def test_changed_tests_rule():
     assert nc.changed_tests_problem(["scripts/node_start.py"]) is not None
     assert nc.changed_tests_problem(["docs/decisions.md"]) is None
-    assert nc.changed_tests_problem(["src/visibility/a.py", "tests/test_a.py"]) is None
+    assert nc.changed_tests_problem(["src/citewatch/a.py", "tests/test_a.py"]) is None
 
 
 def test_records_require_changelog_criteria_and_run_state(tmp_path):
@@ -160,7 +160,7 @@ def test_politeness_gate_fails_on_a_rude_fetch_log(tmp_path):
         encoding="utf-8",
     )
     r = nc.gate_politeness(ctx(tmp_path, "H\tW0.1\tbuilding\t\t\n"))
-    assert r.status == "FAIL" and "0.20 s apart" in r.detail
+    assert r.status == "FAIL" and "0.200 s apart" in r.detail
 
 
 def test_politeness_gate_skips_without_logs_or_tests(tmp_path):
@@ -182,5 +182,5 @@ def test_safety_gate_fails_on_a_stored_body_and_a_full_cache(tmp_path):
     assert r.status == "FAIL" and "body cache" in r.detail
 
 
-def test_build_smoke_runs_the_visibility_cli():
-    assert ["visibility", "--version"] in nc.SMOKE_COMMANDS
+def test_build_smoke_runs_the_citewatch_cli():
+    assert ["citewatch", "--version"] in nc.SMOKE_COMMANDS

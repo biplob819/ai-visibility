@@ -1,19 +1,35 @@
 [project]
-name = "ai-visibility"
+name = "citewatch"
 version = "0.1.0"
-description = "Which websites Claude and OpenAI models cite for UK health questions, and how fresh those pages are."
+description = "Measure which websites AI answers with web search cite, and how fresh those pages are."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Biplob Chakraborty" }]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6",
 ]
+keywords = ["llm", "web-search", "citations", "freshness", "provenance", "ai-search", "research"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+[project.urls]
+Homepage = "https://github.com/biplob819/ai-visibility"
+Issues = "https://github.com/biplob819/ai-visibility/issues"
 
 [project.scripts]
-visibility = "visibility.cli:main"
+citewatch = "citewatch.cli:main"
 
 [dependency-groups]
 dev = [
@@ -28,14 +44,14 @@ requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/visibility"]
+packages = ["src/citewatch"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/visibility", "README.md", "LICENSE", "changelog.md"]
+include = ["src/citewatch", "README.md", "LICENSE", "changelog.md"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 src = ["src", "scripts", "tests"]
 extend-exclude = ["*.md"]
 
@@ -45,7 +61,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]  # allow the › separator used in proof
 
 [tool.pyright]
 include = ["src", "scripts", "tests"]
-pythonVersion = "3.12"
+pythonVersion = "3.11"
 typeCheckingMode = "standard"
 extraPaths = ["scripts"]
 

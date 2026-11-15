@@ -1,7 +1,7 @@
 # W0.1 acceptance criteria
 
-**HAR-01** `uv sync` builds the project; `import visibility` works and `visibility --version` prints the package version; `pyproject.toml` declares MIT, Python ≥3.12, src layout; `.gitattributes` forces LF; ruff and pre-commit are configured.
-**HAR-02** CI runs ruff check, ruff format check, pyright, pytest, the secret scan, the storage audit, graph eligibility and `uv build` on push and pull request, on ubuntu-latest and macos-latest with Python 3.12, with `permissions: contents: read` and no secrets.
+**HAR-01** `uv sync` builds the project; `import citewatch` works and `citewatch --version` prints the package version; `pyproject.toml` declares MIT, Python ≥3.11, src layout; `.gitattributes` forces LF; ruff and pre-commit are configured.
+**HAR-02** CI runs ruff check, ruff format check, pyright, pytest, the secret scan, the storage audit, graph eligibility and `uv build` on push and pull request, on ubuntu-latest, macos-latest and windows-latest with Python 3.11, 3.12 and 3.13 (OWNER D-23), with `permissions: contents: read` and no secrets.
 **HAR-03** `verify_graph_eligibility.py` fails on a cycle and on a node building ahead of a dependency; `node_start.py` refuses an ineligible node, a missing spec, or criteria missing a capability, and check-only mode writes nothing; both pass `--self-test`; node ids accept the M wave.
 **HAR-04** `node_converge.py` runs the 12 gates of Tech Spec §12.6 in order and reports every one; `--self-test` shows each gate failing on a planted defect and names it, including a fetch log that breaks each politeness rule and a stored HTML body.
 **HAR-05** `graph.md` holds the 20 nodes of Tech Spec §12.2 with their dependencies; `catalog.tsv` holds every capability of §12.4 exactly once and round-trips byte-identically; `decisions.md` holds D-1 to D-20; `lessons.md` holds L-1 to L-12; `changelog.md` has a W0.1 entry; `status.py` prints the graph and a node's rows deterministically.

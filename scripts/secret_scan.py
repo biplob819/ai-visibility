@@ -16,16 +16,17 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from harness_lib import ROOT
+from harness_lib import ROOT, HarnessError, git_files, unpack
 
 PATTERNS: dict[str, re.Pattern[str]] = {
     "anthropic key": re.compile(r"sk-ant-[A-Za-z0-9_\-]{20,}"),
-    "openai key": re.compile(r"\bsk-(?!ant-)(?:proj-|svcacct-|admin-)?[A-Za-z0-9_\-]{32,}"),
+    "openai key": re.compile(
+        r"(?<![A-Za-z0-9])sk-(?!ant-)(?:proj-|svcacct-|admin-)?[A-Za-z0-9_\-]{32,}"
+    ),
     "aws access key": re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
     "aws secret key": re.compile(
         r"(?i)aws_?secret_?(?:access_?)?key\W{0,4}[=:]\W{0,4}[A-Za-z0-9/+]{40}(?![A-Za-z0-9/+])"
@@ -38,22 +39,15 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     ),
 }
 ALLOW = "secret-scan: allow"
-SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".whl", ".gz", ".zip", ".ico"}
+SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".whl", ".ico"}  # archives are unpacked
 
 
 def candidate_files(root: Path) -> list[Path]:
-    try:
-        out = subprocess.run(
-            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return [root / p for p in out.stdout.splitlines() if p]
-    except (OSError, subprocess.CalledProcessError):
-        skip = {".git", ".venv", "node_modules", "__pycache__", "dist"}
-        return [p for p in root.rglob("*") if p.is_file() and not (skip & set(p.parts))]
+    files = git_files(root)
+    if files is not None:
+        return files
+    skip = {".git", ".venv", "node_modules", "__pycache__", "dist"}
+    return [p for p in root.rglob("*") if p.is_file() and not (skip & set(p.parts))]
 
 
 def scan(files: list[Path]) -> list[str]:
@@ -63,7 +57,10 @@ def scan(files: list[Path]) -> list[str]:
             continue
         try:
             # never skip a file for its encoding: undecodable bytes become U+FFFD
-            text = f.read_bytes().decode("utf-8", errors="replace")
+            text = unpack(f.read_bytes()).decode("utf-8", errors="replace")
+        except HarnessError as exc:
+            hits.append(f"{f}: cannot unpack to scan ({exc})")
+            continue
         except OSError:
             continue
         for lineno, line in enumerate(text.splitlines(), start=1):
@@ -91,6 +88,22 @@ def self_test() -> int:
             ("honours allow marker", scan([allowed]) == []),
             ("clean file passes", scan([clean]) == []),
         ]
+        import gzip as _gz
+        import subprocess as _sp
+
+        packed = Path(tmp) / "dump.bin"
+        packed.write_bytes(_gz.compress(_gz.compress(f"k={fake_ant}\n".encode())))
+        checks.append(("detects a key inside a double-gzipped file", len(scan([packed])) == 1))
+        under = Path(tmp) / "env.py"
+        under.write_text(f"X_{fake_oai}\n", encoding="utf-8")
+        checks.append(("detects an OpenAI key after an underscore", len(scan([under])) == 1))
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        _sp.run(["git", "init", "-q"], cwd=repo, check=True)
+        (repo / 'notes café "q".md').write_text(f"K = {fake_ant}\n", encoding="utf-8")
+        checks.append(
+            ("scans files whose names git would quote", len(scan(candidate_files(repo))) == 1)
+        )
     for name, ok in checks:
         failures += 0 if ok else 1
         print(f"  [{'ok' if ok else 'WRONG'}] {name}")

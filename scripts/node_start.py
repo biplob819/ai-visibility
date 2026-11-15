@@ -34,6 +34,7 @@ from harness_lib import (
     eligibility_problems,
     load_catalog,
     load_graph,
+    mentions,
     node_status,
     parse_catalog,
     parse_graph,
@@ -62,7 +63,7 @@ def check_start(node_id: str, nodes: dict[str, Node], caps: list[Cap], specs: Pa
     criteria = d / "criteria.md"
     if criteria.is_file():
         text = criteria.read_text(encoding="utf-8")
-        missing = [c.cap_id for c in rows if c.cap_id not in text]
+        missing = [c.cap_id for c in rows if not mentions(text, c.cap_id)]
         if missing:
             problems.append(f"criteria.md does not cover: {', '.join(missing)}")
     return problems

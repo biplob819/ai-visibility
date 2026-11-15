@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 import sys
 
-from visibility import __version__
+from citewatch import __version__
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="visibility", description=__doc__)
-    parser.add_argument("--version", action="version", version=f"visibility {__version__}")
+    parser = argparse.ArgumentParser(prog="citewatch", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"citewatch {__version__}")
     parser.parse_args(argv)
     parser.print_help()
     return 0
