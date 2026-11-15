@@ -119,7 +119,7 @@ def host_lastmods(client: Any, store: RawStore, origin: str) -> dict[str, str]:
                 c = canonical_url(loc)
             except UrlError:
                 continue
-            if urlsplit(c).hostname == host:
+            if urlsplit(c).hostname == host and len(found) < MAX_ENTRIES:  # per host (v2 M1)
                 found.setdefault(c, lastmod)
         if depth == 0:
             queue.extend((c, 1) for c in children)  # one index level at most

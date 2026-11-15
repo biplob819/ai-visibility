@@ -27,7 +27,7 @@ from citewatch.store import RawStore, stage_key
 from .client import FetchResult, PoliteClient
 from .keys import clean, host_of
 
-FETCH_CODE_VERSION = "fetch-1"
+FETCH_CODE_VERSION = "fetch-2"  # fetch-2: date candidates stored (A2.3)
 MAX_HOSTS_IN_FLIGHT = 8
 
 

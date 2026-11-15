@@ -19,7 +19,8 @@ from citewatch.schemas import DateCandidate
 EARLIEST = dt.date(1995, 1, 1)
 NEAR_DAYS = 1  # "within 24 hours": the fetch day or the day either side
 CORROBORATE_DAYS = 7
-STAMP_SOURCES = frozenset({"schema_org", "meta_tag"})
+# every copy of a CMS field, and sitemaps (often generated per request) (v2 H1, L1)
+STAMP_SOURCES = frozenset({"schema_org", "meta_tag", "microdata", "sitemap"})
 # a fresh CMS stamp is believed only when a source independent of the CMS agrees: its own
 # JSON-LD, meta and microdata mirrors, generated sitemaps and future review dates do not count
 INDEPENDENT_SOURCES = frozenset({"visible_text", "page_age"})

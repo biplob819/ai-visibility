@@ -39,7 +39,12 @@ _DATE_WORDS = (
 )
 TEXT_PATTERNS = [
     (re.compile(r"page\s+last\s+reviewed\s*:?\s*" + _DATE_WORDS, re.I), "reviewed"),
-    (re.compile(r"(?:last\s+)?reviewed\s+on\s*:?\s*" + _DATE_WORDS, re.I), "reviewed"),
+    (
+        re.compile(
+            r"(?<!media\s)(?<!media\slast\s)(?:last\s+)?reviewed\s+on\s*:?\s*" + _DATE_WORDS, re.I
+        ),
+        "reviewed",
+    ),
     # not "Media last reviewed": NHS pages date their images and videos separately
     (re.compile(r"(?<!page\s)(?<!media\s)last\s+reviewed\s*:?\s*" + _DATE_WORDS, re.I), "reviewed"),
     (re.compile(r"next\s+review\s+(?:due|date)\s*:?\s*" + _DATE_WORDS, re.I), "review_due"),
@@ -51,7 +56,9 @@ _AGO = re.compile(r"^\s*(a|an|\d+)\s+(day|week|month|year)s?\s+ago\s*$", re.I)
 _UNIT_DAYS = {"day": 1, "week": 7, "month": 30, "year": 365}
 
 
-_NUMERIC = re.compile(r"^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$")
+_NUMERIC = re.compile(
+    r"^\W*(?:[A-Za-z]{3,9}\.?,?\s+)?(\d{1,2})([/.\- ])(\d{1,2})\2(\d{2}|\d{4})(?!\d)"
+)
 
 
 def parse_date(text: str, *, dayfirst: bool = False) -> dt.date | None:
@@ -68,10 +75,11 @@ def parse_date(text: str, *, dayfirst: bool = False) -> dt.date | None:
         if re.match(r"^\d{4}-\d{2}-\d{2}", s):
             return dparser.isoparse(s).date()
         m = _NUMERIC.match(s)
-        if m:
-            a, b, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
-            if a <= 12 and b <= 12 and a != b:
-                return None
+        if m:  # whatever follows it (a time, " - 10:00"), the day-month order decides
+            a, b, y = int(m.group(1)), int(m.group(3)), m.group(4)
+            if len(y) == 2 or (a <= 12 and b <= 12 and a != b):
+                return None  # a two-digit year or a swappable day and month (v2 M2)
+            y = int(y)
             day, month = (a, b) if a > 12 or a == b else (b, a)
             return dt.date(y, month, day)
         one = dparser.parse(s, fuzzy=False, default=dt.datetime(1, 1, 1))

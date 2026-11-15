@@ -347,3 +347,179 @@ def test_the_decoded_cap_and_multi_member_gzip():
     assert parse_sitemap(over) == ({}, [])
     two = gzip.compress(URLS[:30]) + gzip.compress(URLS[30:])
     assert parse_sitemap(two)[0] == {"https://a.example/p": "2025-07-01"}
+
+
+# --- pass 2 ------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("source", ["schema_org", "meta_tag", "microdata", "sitemap"])
+def test_a_fresh_stamp_from_any_cms_copy_or_a_sitemap_needs_corroboration(source):
+    """v2 H1, L1: every copy of the CMS field, and generated sitemaps."""
+    pm = resolve([c("modified", "2026-11-15", source), c("published", "2018-01-01", "meta_tag")])
+    assert pm.date_modified is None and pm.effective_date == dt.date(2018, 1, 1)
+
+
+@pytest.mark.parametrize("kind", ["modified", "published", "reviewed"])
+def test_visible_text_of_any_page_kind_corroborates(kind):
+    r = rej([c("modified", "2026-11-15", "microdata"), c(kind, "2026-11-12", "visible_text")])
+    assert r[("modified", "microdata", "2026-11-15")] is None
+
+
+def test_a_header_one_day_old_is_still_dynamic():
+    assert (
+        rej([c("modified", "2026-11-14", "http_header")])[("modified", "http_header", "2026-11-14")]
+        == "dynamic_header"
+    )
+
+
+@pytest.mark.parametrize(
+    "source", ["microdata", "meta_tag", "visible_text", "sitemap", "page_age", "http_header"]
+)
+def test_published_precedence_reaches_every_source(source):
+    order = [
+        "schema_org",
+        "microdata",
+        "meta_tag",
+        "visible_text",
+        "sitemap",
+        "page_age",
+        "http_header",
+    ]
+    later = order[order.index(source) + 1 :]
+    cands = [c("published", "2020-01-01", source)] + [
+        c("published", "2010-01-01", s) for s in later
+    ]
+    pm = resolve(cands)
+    assert pm.published_source == source and pm.date_published == dt.date(2020, 1, 1)
+
+
+def test_modified_from_a_header_alone_and_the_reviewed_order():
+    pm = resolve([c("modified", "2024-01-01", "http_header")])
+    assert pm.modified_source == "http_header"
+    pm = resolve(
+        [c("reviewed", "2024-02-02", "microdata"), c("reviewed", "2024-03-03", "schema_org")]
+    )
+    assert (pm.date_reviewed, pm.reviewed_source) == (dt.date(2024, 3, 3), "schema_org")
+    assert resolve([c("reviewed", "2024-02-02", "microdata")]).reviewed_source == "microdata"
+
+
+@pytest.mark.parametrize(
+    ("text", "value"),
+    [
+        ("12/13/2024", "2024-12-13"),
+        ("05/12/2024", None),
+        ("12/05/2024", None),
+        ("13/12/2024", "2024-12-13"),
+        ("04/06/2024 10:00:00", None),
+        ("Tue, 04/06/2024 - 10:00", None),
+        ("04.06.2024 10:00", None),
+        ("04/06/24", None),
+        ("16/10/2024 09:00", "2024-10-16"),
+    ],
+)
+def test_ambiguity_whatever_follows_the_date(text, value):
+    got = parse_date(text)
+    assert (None if got is None else got.isoformat()) == value
+
+
+@pytest.mark.parametrize(
+    "typ",
+    ["BlogPosting", "Report", "HealthTopicContent", "SocialMediaPosting", "NewsArticle", "FAQPage"],
+)
+def test_every_page_type_is_read(typ):
+    got = kinds(
+        '<script type="application/ld+json">'
+        f'{{"@type":"{typ}","dateModified":"2024-04-04"}}</script>'
+    )
+    assert ("modified", "2024-04-04", "schema_org") in got
+
+
+def test_main_entity_of_page_and_typed_non_pages():
+    ld = {
+        "@type": "WebPage",
+        "mainEntityOfPage": {"@type": "Article", "datePublished": "2019-02-02"},
+    }
+    assert ("published", "2019-02-02", "schema_org") in kinds(
+        f'<script type="application/ld+json">{json.dumps(ld)}</script>'
+    )
+    assert (
+        kinds(
+            '<script type="application/ld+json">'
+            '{"@type":"Product","dateModified":"2024-04-04"}</script>'
+        )
+        == set()
+    )
+
+
+def test_rdfa_schema_org_dates_count():
+    html = (
+        '<div vocab="https://schema.org/" typeof="Article">'
+        '<meta property="dateModified" content="2024-05-05"></div>'
+    )
+    assert ("modified", "2024-05-05", "microdata") in kinds(html)
+
+
+def test_a_missing_sitemap_is_cached_as_none(tmp_path):
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": _robots("Sitemap: https://a.example/s.xml\n"),
+            "https://a.example/s.xml": httpx.Response(404),
+        }
+    )
+    client, _l, _ = make(tmp_path, web, store=store)
+    client.get("https://a.example/p")
+    assert host_lastmods(client, store, "https://a.example") == {}
+    web2 = FakeWeb()
+    later, _l2, _ = make(tmp_path / "r2", web2, store=store)
+    assert host_lastmods(later, store, "https://a.example") == {} and web2.requests == []
+
+
+def test_the_sitemap_cap_is_per_host(tmp_path, monkeypatch):
+    import citewatch.dates.sitemaps as sm
+
+    monkeypatch.setattr(sm, "MAX_ENTRIES", 100)
+    store = RawStore(tmp_path)
+    routes = {"https://a.example/robots.txt": _robots("Sitemap: https://a.example/i.xml\n")}
+    idx = "".join(f"<sitemap><loc>https://a.example/s{i}.xml</loc></sitemap>" for i in range(5))
+    routes["https://a.example/i.xml"] = httpx.Response(
+        200, content=f"<sitemapindex>{idx}</sitemapindex>".encode()
+    )
+    for i in range(5):
+        body = "".join(
+            f"<url><loc>https://a.example/{i}/{j}</loc><lastmod>2025-01-01</lastmod></url>"
+            for j in range(100)
+        )
+        routes[f"https://a.example/s{i}.xml"] = httpx.Response(
+            200, content=f"<urlset>{body}</urlset>".encode()
+        )
+    client, _l, _ = make(tmp_path, FakeWeb(routes), store=store)
+    client.get("https://a.example/p")
+    assert len(host_lastmods(client, store, "https://a.example")) == 100
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    ["ok", "robots_disallowed", "blocked", "gated", "not_html", "fetch_error", "too_large"],
+)
+def test_page_meta_keeps_each_fetch_outcome(tmp_path, outcome):
+    from citewatch.fetch import fetch_key
+
+    store = RawStore(tmp_path)
+    store.put(
+        "fetch",
+        fetch_key("https://a.example/p"),
+        {
+            "url": "https://a.example/p",
+            "outcome": outcome,
+            "status": 200 if outcome == "ok" else None,
+            "fetched_at": "2026-11-15T12:00:00Z",
+            "candidates": [],
+        },
+    )
+    metas = {
+        m.url: m
+        for m in build_page_meta(tmp_path, ["https://a.example/p", "https://a.example/never"])
+    }
+    assert metas["https://a.example/p"].outcome == outcome
+    assert metas["https://a.example/never"].outcome == "not_fetched"
