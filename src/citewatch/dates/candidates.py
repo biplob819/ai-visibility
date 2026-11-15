@@ -39,14 +39,15 @@ _DATE_WORDS = (
 )
 TEXT_PATTERNS = [
     (re.compile(r"page\s+last\s+reviewed\s*:?\s*" + _DATE_WORDS, re.I), "reviewed"),
+    # a bare "Last reviewed" or "Reviewed on" counts only at the start of its own line: a
+    # related-page card ("Other page - Last reviewed: ...") or a comment byline is not the
+    # page's review, and "Media last reviewed" (NHS images and videos) never starts with it
+    # (A2.3 v3 M1, L3)
     (
-        re.compile(
-            r"(?<!media\s)(?<!media\slast\s)(?:last\s+)?reviewed\s+on\s*:?\s*" + _DATE_WORDS, re.I
-        ),
+        re.compile(r"^[ \t]*(?:last\s+)?reviewed\s+on\s*:?\s*" + _DATE_WORDS, re.I | re.M),
         "reviewed",
     ),
-    # not "Media last reviewed": NHS pages date their images and videos separately
-    (re.compile(r"(?<!page\s)(?<!media\s)last\s+reviewed\s*:?\s*" + _DATE_WORDS, re.I), "reviewed"),
+    (re.compile(r"^[ \t]*last\s+reviewed\s*:?\s*" + _DATE_WORDS, re.I | re.M), "reviewed"),
     (re.compile(r"next\s+review\s+(?:due|date)\s*:?\s*" + _DATE_WORDS, re.I), "review_due"),
     (re.compile(r"last\s+updated\s*(?:on)?\s*:?\s*" + _DATE_WORDS, re.I), "modified"),
     (re.compile(r"(?<!last\s)updated\s+on\s*:?\s*" + _DATE_WORDS, re.I), "modified"),
@@ -73,7 +74,10 @@ def parse_date(text: str, *, dayfirst: bool = False) -> dt.date | None:
         return None
     try:
         if re.match(r"^\d{4}-\d{2}-\d{2}", s):
-            return dparser.isoparse(s).date()
+            try:
+                return dparser.isoparse(s).date()
+            except ValueError:  # "2021-05-01 09:00:00 +0000" (Ruby, Rails): the date as written
+                return dt.date.fromisoformat(s[:10])
         m = _NUMERIC.match(s)
         if m:  # whatever follows it (a time, " - 10:00"), the day-month order decides
             a, b, y = int(m.group(1)), int(m.group(3)), m.group(4)
@@ -96,7 +100,10 @@ def page_age_date(page_age: str, answered_at: dt.datetime) -> dt.date | None:
     m = _AGO.match(page_age or "")
     if m:
         n = 1 if m.group(1).lower() in ("a", "an") else int(m.group(1))
-        return (answered_at - dt.timedelta(days=n * _UNIT_DAYS[m.group(2).lower()])).date()
+        try:
+            return (answered_at - dt.timedelta(days=n * _UNIT_DAYS[m.group(2).lower()])).date()
+        except (OverflowError, ValueError):  # "3000 years ago" (v3 L1)
+            return None
     return parse_date(page_age)
 
 
@@ -162,16 +169,20 @@ def page_objects(data: Any) -> list[Mapping[str, Any]]:
     return found
 
 
-def _values(v: Any) -> Iterable[str]:
-    if isinstance(v, str):
-        yield v
-    elif isinstance(v, list):
-        for x in v:
-            yield from _values(x)
-    elif isinstance(v, Mapping):
-        for k in ("@value", "value"):
-            if isinstance(v.get(k), str):
-                yield v[k]
+def _values(v: Any, limit: int = 10_000) -> Iterable[str]:
+    """Strings of a value, iteratively (deeply nested lists never raise, v3 L2)."""
+    stack = [v]
+    while stack and limit > 0:
+        limit -= 1
+        cur = stack.pop()
+        if isinstance(cur, str):
+            yield cur
+        elif isinstance(cur, list):
+            stack.extend(reversed(cur))
+        elif isinstance(cur, Mapping):
+            for k in ("@value", "value"):
+                if isinstance(cur.get(k), str):
+                    yield cur[k]
 
 
 def structured(html: str, url: str) -> list[DateCandidate]:
@@ -256,21 +267,9 @@ class _Page(HTMLParser):
             self._ld = []
         elif tag in self.SKIP:
             self._skip += 1
-        if tag in (
-            "p",
-            "div",
-            "br",
-            "li",
-            "tr",
-            "dd",
-            "dt",
-            "h1",
-            "h2",
-            "h3",
-            "h4",
-            "span",
-            "time",
-        ):
+        if tag in ("p", "div", "br", "li", "tr", "dd", "dt", "h1", "h2", "h3", "h4", "h5", "h6"):
+            self.text.append("\n")  # block boundaries are line breaks
+        elif tag in ("span", "time", "td", "th"):
             self.text.append(" ")
 
     def handle_endtag(self, tag: str) -> None:
@@ -307,7 +306,7 @@ def from_html(html: str, url: str) -> list[DateCandidate]:
                     evidence=_ev(f"{name}: {content}"),
                 )
             )
-    text = " ".join(" ".join(p.text).split())
+    text = "\n".join(" ".join(line.split()) for line in "".join(p.text).split("\n"))
     seen: set[tuple[str, int]] = set()
     for rx, kind in TEXT_PATTERNS:
         for m in rx.finditer(text):

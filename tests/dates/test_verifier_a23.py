@@ -523,3 +523,119 @@ def test_page_meta_keeps_each_fetch_outcome(tmp_path, outcome):
     }
     assert metas["https://a.example/p"].outcome == outcome
     assert metas["https://a.example/never"].outcome == "not_fetched"
+
+
+# --- pass 3 ------------------------------------------------------------------------------------
+
+
+def test_a_review_line_about_another_page_never_dates_this_one():
+    """v3 M1, L3: bare review lines count only at the start of their own line."""
+    html = (
+        "<p>Page body. Last updated 3 March 2024</p>"
+        "<div>Other page - Last reviewed: 14 November 2026</div>"
+        "<p>Great article! Reviewed on 15 November 2026 by Jane</p>"
+        "<p>Media - last reviewed: 1 Nov 2026</p>"
+        '<meta property="article:modified_time" content="2026-11-15">'
+    )
+    got = kinds(html)
+    assert not any(k == "reviewed" for k, _, _ in got)
+    pm = resolve(from_html(html, "https://a.example/"))
+    assert pm.date_modified == dt.date(2024, 3, 3) and pm.effective_date == dt.date(2024, 3, 3)
+
+
+def test_a_review_line_of_its_own_still_counts():
+    got = kinds("<p>Last reviewed: 06 Nov 2024</p><p>Reviewed on 2 March 2021</p>")
+    assert ("reviewed", "2024-11-06", "visible_text") in got and (
+        "reviewed",
+        "2021-03-02",
+        "visible_text",
+    ) in got
+    assert ("reviewed", "2024-03-12", "visible_text") in kinds(
+        "<p>Page last reviewed: <span>12 March 2024</span></p>"
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2021-05-01 09:00:00 +0000",
+        "2021-05-01 09:00:00 UTC",
+        "2021-05-01T09:00:00 +00:00",
+        "2021-05-01 GMT",
+    ],
+)
+def test_iso_dates_with_a_spaced_zone_keep_their_date(value):
+    """v3 M2: Ruby and Rails formats."""
+    assert parse_date(value) == dt.date(2021, 5, 1)
+
+
+def test_nested_microdata_is_not_a_page_date():
+    """v3 M3: the microdata side of the page-level scoping."""
+    html = (
+        '<div itemscope itemtype="https://schema.org/Article">'
+        '<meta itemprop="dateModified" content="2024-01-02">'
+        '<div itemprop="comment" itemscope itemtype="https://schema.org/Comment">'
+        '<meta itemprop="dateModified" content="2026-11-10"></div></div>'
+    )
+    got = kinds(html)
+    assert ("modified", "2024-01-02", "microdata") in got and (
+        "modified",
+        "2026-11-10",
+        "microdata",
+    ) not in got
+
+
+def test_only_json_ld_scripts_are_read_as_json_ld():
+    html = (
+        '<script id="__NEXT_DATA__" type="application/json">'
+        '{"@type":"Article","dateModified":"2026-11-10"}</script>'
+    )
+    assert kinds(html) == set()
+
+
+def test_a_date_with_trailing_words_is_not_guessed():
+    assert parse_date("3 June 2024 by Jane") is None
+
+
+def test_a_server_error_with_a_body_is_not_cached_and_410_is_permanent(tmp_path):
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": _robots(
+                "Sitemap: https://a.example/s.xml\nSitemap: https://a.example/gone.xml\n"
+            ),
+            "https://a.example/s.xml": [httpx.Response(503, content=b"<html>down</html>")] * 3,
+            "https://a.example/gone.xml": httpx.Response(410),
+        }
+    )
+    client, _l, _ = make(tmp_path, web, store=store)
+    client.get("https://a.example/p")
+    host_lastmods(client, store, "https://a.example")
+    web2 = FakeWeb({"https://a.example/s.xml": httpx.Response(200, content=URLS)})
+    later, _l2, _ = make(tmp_path / "r2", web2, store=store)
+    assert host_lastmods(later, store, "https://a.example") == {"https://a.example/p": "2025-07-01"}
+    store2 = RawStore(tmp_path / "only410")
+    web3 = FakeWeb(
+        {
+            "https://a.example/robots.txt": _robots("Sitemap: https://a.example/gone.xml\n"),
+            "https://a.example/gone.xml": httpx.Response(410),
+        }
+    )
+    c3, _l3, _ = make(tmp_path / "only410", web3, store=store2)
+    c3.get("https://a.example/p")
+    host_lastmods(c3, store2, "https://a.example")
+    web4 = FakeWeb()
+    c4, _l4, _ = make(tmp_path / "only410b", web4, store=store2)
+    assert host_lastmods(c4, store2, "https://a.example") == {} and web4.requests == []
+
+
+def test_odd_page_ages_and_deep_values_never_stop_a_page(tmp_path):
+    from citewatch.dates import page_age_date
+
+    assert page_age_date("3000 years ago", FETCHED) is None
+    deep = '{"@type":"Article","dateModified":' + "[" * 3000 + '"2024-01-01"' + "]" * 3000 + "}"
+    html = (
+        f'<script type="application/ld+json">{deep}</script>'
+        '<meta property="article:published_time" content="2020-01-01">'
+    )
+    assert ("published", "2020-01-01", "meta_tag") in kinds(html)

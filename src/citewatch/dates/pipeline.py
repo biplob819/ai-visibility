@@ -76,7 +76,10 @@ def build_page_meta(
         cands = [DateCandidate.model_validate(c) for c in (rec or {}).get("candidates") or []]
         cands += from_sitemap(lastmods.get(url))
         for age, at in ages.get(url, []):
-            cands += from_page_age(age, at)
+            try:
+                cands += from_page_age(age, at)
+            except (OverflowError, ValueError):  # one malformed row never stops the stage
+                continue
         outcome = (rec or {}).get("outcome") or "not_fetched"
         if outcome not in OUTCOMES:
             outcome = "fetch_error"
