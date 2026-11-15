@@ -97,7 +97,7 @@ def decode(body: bytes, content_type: str) -> str:
         if enc:
             try:
                 return body.decode(enc, errors="replace")
-            except LookupError:
+            except (LookupError, UnicodeError, ValueError):  # charset=idna, undefined (v6 M3)
                 continue
     return body.decode("utf-8", errors="replace")
 
@@ -147,7 +147,11 @@ def fetch_pages(
         r = client.get(url, "page")
         extra: dict[str, Any] = {}
         if r.outcome == "ok" and r.body is not None and r.status is not None:
-            html = decode(r.body, r.headers.get("content-type", ""))
+            try:
+                html = decode(r.body, r.headers.get("content-type", ""))
+            except Exception as exc:  # a fetched page always gets its record
+                html = ""
+                extra = {"analyse_error": f"{type(exc).__name__}: {exc}"[:300]}
             page = Page(
                 url,
                 r.final_url or url,
@@ -162,10 +166,13 @@ def fetch_pages(
                 except Exception as exc:  # a parser bug never loses the fetch record
                     extra = {"analyse_error": f"{type(exc).__name__}: {exc}"[:300]}
             if url in keep_text:
-                d = body_cache or body_cache_dir()
-                d.mkdir(parents=True, exist_ok=True)
-                name = hashlib.sha256(url.encode("utf-8")).hexdigest()[:32] + ".txt"
-                (d / name).write_text(main_text(html), encoding="utf-8")
+                try:
+                    d = body_cache or body_cache_dir()
+                    d.mkdir(parents=True, exist_ok=True)
+                    name = hashlib.sha256(url.encode("utf-8")).hexdigest()[:32] + ".txt"
+                    (d / name).write_text(main_text(html), encoding="utf-8")
+                except (OSError, ValueError) as exc:  # the record is kept even so
+                    extra["text_cache_error"] = f"{type(exc).__name__}: {exc}"[:300]
             del html, page
         r.body = None  # dropped here: nothing below sees the body
         store.put("fetch", key, _record(r, extra))

@@ -218,6 +218,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "idna" },
     { name = "protego" },
     { name = "pydantic" },
     { name = "pyyaml" },
@@ -246,6 +247,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=1" },
     { name = "httpx", specifier = ">=0.28" },
+    { name = "idna", specifier = ">=3.7" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=2" },
     { name = "protego", specifier = ">=0.4" },
     { name = "pydantic", specifier = ">=2.7" },

@@ -753,3 +753,103 @@ def test_a_redirect_without_location_is_an_error_not_a_new_outcome(tmp_path):
 
     rec = store.get("fetch", fetch_key("https://a.example/p"))
     assert rec["outcome"] == "fetch_error" and rec["status"] == 302
+
+
+# --- pass 6 -------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "http://x<body>.example/robots.txt",
+        "http://b&c.example/robots.txt",
+        "http://u:pw@b.example/robots.txt",
+    ],
+)
+def test_robots_redirects_get_the_page_redirect_checks(tmp_path, target):
+    """v6 M1, L1: no odd host or credentials on the robots path either."""
+    web = FakeWeb(
+        {"https://a.example/robots.txt": httpx.Response(301, headers={"location": target})}
+    )
+    client, log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/p").outcome == "robots_disallowed"
+    assert [str(r.url) for r in web.requests] == ["https://a.example/robots.txt"]
+    assert all("authorization" not in r.headers for r in web.requests)
+    assert audit(log) == [] and storage_audit.file_problems(log.path, tmp_path) == []
+
+
+@pytest.mark.parametrize("host", ["straße.example", "ς.example", "a‍b.example"])
+def test_hosts_whose_idna_forms_disagree_are_never_requested(tmp_path, host):
+    """v6 M2: robots would be checked on one host and the page sent to another."""
+    web = FakeWeb(
+        {
+            "https://a.example/p": httpx.Response(
+                301, headers=[(b"location", f"http://{host}/x".encode())]
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web)
+    client.get("https://a.example/p")
+    assert all(r.url.host == "a.example" for r in web.requests)
+    from citewatch.fetch.keys import plain_host
+
+    assert plain_host("https://bücher.example/") and plain_host("http://my_host.example/")
+
+
+@pytest.mark.parametrize("charset", ["idna", "undefined", "no-such-charset"])
+def test_an_odd_charset_still_stores_the_page_once(tmp_path, charset):
+    """v6 M3: the page keeps its outcome and is never fetched again."""
+    from citewatch.fetch import fetch_key
+
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {
+            "https://a.example/p": httpx.Response(
+                200, headers={"content-type": f"text/html; charset={charset}"}, content=PAGE
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web, store=store)
+    res = fetch_pages(
+        ["https://a.example/p"], client=client, store=store, analyse=lambda p: {"n": len(p.html)}
+    )
+    assert res.errors == [] and store.has("fetch", fetch_key("https://a.example/p"))
+    again = fetch_pages(["https://a.example/p"], client=client, store=store)
+    assert again.cached == 1 and web.urls().count("https://a.example/p") == 1
+
+
+def test_a_worker_failing_at_its_send_instant_never_loses_the_outcome(tmp_path, monkeypatch):
+    """v6 L2: the RuntimeError from an abandoned send is a fetch_error, not a crash."""
+    from citewatch.fetch import PoliteClient
+
+    def boom(self, *a, **k):
+        raise RuntimeError("request abandoned before it was sent")
+
+    client, log, _ = make(tmp_path, FakeWeb())
+    client.robots.allows("https://a.example/x")
+    monkeypatch.setattr(PoliteClient, "_send", boom)
+    r = client.get("https://a.example/p")
+    assert r.outcome == "fetch_error" and audit(log) == []
+
+
+def test_robots_redirect_loops_stay_within_the_page_budget(tmp_path):
+    h = PageHistory()
+    for _ in range(2):
+        h.seed(
+            {
+                "url": "https://a.example/robots.txt",
+                "status": 503,
+                "outcome": "fetch_error",
+                "at": "2026-11-15T11:00:00Z",
+            }
+        )
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                301, headers={"location": "http://a.example/robots.txt"}
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web, history=h)
+    assert client.get("https://a.example/p").outcome == "robots_disallowed"
+    assert web.urls().count("https://a.example/robots.txt") == 1

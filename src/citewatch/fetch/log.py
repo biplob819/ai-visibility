@@ -34,7 +34,7 @@ class FetchLog:
             raise ValueError("fetch log times must be timezone-aware")
         row = {
             "url": clean(url),
-            "host": host_of(url),
+            "host": host_of(clean(url)),
             "at": at.astimezone(dt.UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "attempt": attempt,
             "status": status,

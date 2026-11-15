@@ -43,7 +43,17 @@ def page_key(url: str) -> str:
 _MARKUP = str.maketrans(
     {"&": "%26", "<": "%3C", ">": "%3E", '"': "%22", "'": "%27", "\\": "%5C"}
 )  # backslash too: a literal `\u003chtml` is markup to the storage audit (v5 M1)
-_PLAIN_HOST = re.compile(r"^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)*\.?|\[[0-9a-f:.]+\])$")
+_PLAIN_HOST = re.compile(r"^(?:[a-z0-9_-]+(?:\.[a-z0-9_-]+)*\.?|\[[0-9a-f:.]+\])$")
+
+
+def _same_idna(host: str) -> bool:
+    import idna  # httpx's own encoder (a dependency of httpx)
+
+    try:
+        new = idna.encode(host.lower().rstrip("."), uts46=True).decode("ascii")
+    except (idna.IDNAError, UnicodeError, ValueError):
+        return False
+    return new == ascii_host(host)
 
 
 def plain_host(url: str) -> bool:
@@ -55,8 +65,10 @@ def plain_host(url: str) -> bool:
         return False
     host = netloc[1 : netloc.index("]")] if netloc.startswith("[") and "]" in netloc else netloc
     if not netloc.startswith("["):
-        host = netloc.split(":", 1)[0]
-        host = ascii_host(host)
+        raw = netloc.split(":", 1)[0]
+        if not raw.isascii() and not _same_idna(raw):
+            return False  # ß, ς, ZWJ: Python's IDNA 2003 and httpx's IDNA 2008 disagree (v6 M2)
+        host = ascii_host(raw)
         return bool(host) and _PLAIN_HOST.match(host) is not None
     return _PLAIN_HOST.match(f"[{host.lower()}]") is not None
 

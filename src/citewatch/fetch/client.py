@@ -148,9 +148,16 @@ class PoliteClient:
         or a loop simply disallows."""
         url, seen = robots_url, set()
         for _ in range(MAX_REDIRECTS + 1):
-            parts = urlsplit(url)
-            if parts.scheme not in ("http", "https") or not parts.hostname or url in seen:
-                return None, None  # file:, a missing host or a loop (v1 M3, M4)
+            try:
+                parts = urlsplit(url)
+                odd = parts.scheme not in ("http", "https") or not parts.hostname
+                odd = odd or bool(parts.username or parts.password) or not plain_host(url)
+            except ValueError:
+                return None, None
+            if odd or url in seen:
+                # file:, no host, credentials, an odd host or a loop: the same checks as page
+                # redirects (v1 M3, M4, v6 M1)
+                return None, None
             seen.add(url)
             if self.history.may_request(url) is not None:
                 return None, None
