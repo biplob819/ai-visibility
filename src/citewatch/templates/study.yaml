@@ -1,0 +1,22 @@
+# A citewatch study. Edit the values, write your questions, then run `citewatch doctor`.
+name: my-study
+questions_path: questions.jsonl
+intents: [symptoms, treatment]          # every question's intent must be one of these
+ts_reasons: [services, prices, guidance] # your rubric's time-sensitive clauses
+models: [claude-sonnet-5-5, gpt-6.1-sol] # supported: claude-* and gpt-* models with web search
+effort: medium
+user_location:
+  type: approximate
+  country: GB                           # ISO 3166-1 alpha-2 code
+  city: London
+max_searches: 3
+word_limit: 150
+stale_days: 365
+seeds:
+  order: 1
+  support_sample: 2
+  hand_sample: 3
+  bootstrap: 4
+max_cost_usd: 5
+# Names the tool and how site owners can reach you. Must start with citewatch/<version>.
+user_agent: "citewatch/0.1.0 (+https://example.org/your-study)"

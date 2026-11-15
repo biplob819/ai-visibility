@@ -184,6 +184,7 @@ def test_safety_gate_fails_on_a_stored_body_and_a_full_cache(tmp_path):
 
 def test_build_smoke_runs_the_citewatch_cli():
     assert (["citewatch", "--version"], 0) in nc.SMOKE_COMMANDS
+    assert (["citewatch", "doctor", "--study", "smoke-study"], 2) in nc.SMOKE_COMMANDS
 
 
 def test_smoke_commands_run_without_provider_keys(monkeypatch):

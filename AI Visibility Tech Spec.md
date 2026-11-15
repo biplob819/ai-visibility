@@ -987,7 +987,7 @@ Every gate runs and is reported even after an earlier one fails. Every gate ship
 7. `pytest -m golden` on this interpreter and again on the minimum Python, 3.11 (from A2.4 onward; earlier nodes report SKIP).
 8. **Politeness:** `pytest -m polite` plus the fetch-log audit over every committed `fetch_log*.jsonl` (replaces EvalKit's judge-regression gate).
 9. **Safety and storage:** `pytest -m safety`, the secret scan, and the storage audit (no HTML or page text in tracked files; body cache empty unless M3.2 is `building`).
-10. `uv build`, install into a clean venv, and with no keys run `citewatch report --example` and `citewatch ask --run 1 --dry-run` (both exit 0) and `citewatch doctor` (must exit 2 and name each missing variable, EvalKit L-40).
+10. `uv build`, install into a clean venv, and with no provider credentials in the environment run the smoke commands, each with its expected exit code. The list grows with the nodes: `--version`, `--help`, `init` (exit 0) and `doctor` (exit 2, naming each missing variable, EvalKit L-40) from N1.3; `ask --run 1 --dry-run` (exit 0) from N1.2; `report --example` (exit 0) from B4.1.
 11. Changed code has changed tests, measured from the node's base commit.
 12. Records: a `changelog.md` entry for the node, `criteria.md` names every catalog row, and `RUN-STATE.md` exists.
 

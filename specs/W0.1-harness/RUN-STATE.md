@@ -23,4 +23,4 @@
 - A stored answer quoting a literal `<body>` tag fails the HTML-marker rule (a false positive). Closing test: M3.2 `test_raw_answers_quoting_html_tags_are_flagged_for_review` once real answers exist; the fix would be an allow-list per stored field.
 - `keyless_env` strips `*_API_KEY`, `*_TOKEN`, `*_SECRET` and `ANTHROPIC_PROFILE`; AWS/GCP credentials are not used by this project. Closing test: `test_smoke_commands_run_without_provider_keys` extended with `AWS_*` and `GOOGLE_APPLICATION_CREDENTIALS` if a cloud provider is ever added.
 - Fetch-log discovery finds `data/**/fetch_log*.jsonl[.gz]` only. Closing test: A2.2 contract test "the fetcher writes exactly data/runs/<run>/fetch_log.jsonl".
-- Gate 10 smoke runs `citewatch --version` only. Closing test: N1.3 adds `report --example` (exit 0), `ask --dry-run` (exit 0) and `doctor` with no keys (exit 2) to `SMOKE_COMMANDS`.
+- Gate 10 smoke ran `citewatch --version` only. **Closed by N1.3** for `--help`, `init` and `doctor` (exit 2 with no keys); `ask --dry-run` arrives with N1.2 and `report --example` with B4.1.

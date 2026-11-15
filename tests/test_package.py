@@ -10,9 +10,7 @@ from harness_lib import ROOT
 
 
 def test_version_flag_prints_version(capsys):
-    with pytest.raises(SystemExit) as exc:
-        cli.main(["--version"])
-    assert exc.value.code == 0
+    assert cli.main(["--version"]) == 0
     assert capsys.readouterr().out.strip() == f"citewatch {citewatch.__version__}"
 
 
@@ -23,7 +21,7 @@ def test_pyproject_metadata():
     assert project["name"] == "citewatch"
     assert project["license"] == "MIT"
     assert project["requires-python"] == ">=3.11"
-    assert project["scripts"]["citewatch"] == "citewatch.cli:main"
+    assert project["scripts"]["citewatch"] == "citewatch.cli:entry"
     assert meta["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"] == ["src/citewatch"]
 
 

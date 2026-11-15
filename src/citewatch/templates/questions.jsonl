@@ -1,0 +1,2 @@
+{"id": "q-001", "text": "When should I see a doctor about a cough that won't go away?", "intent": "symptoms", "time_sensitive": false, "ts_reason": null}
+{"id": "q-002", "text": "How much does a prescription cost in England?", "intent": "treatment", "time_sensitive": true, "ts_reason": "prices"}

@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6",
+    "typer>=0.12",
 ]
 keywords = ["llm", "web-search", "citations", "freshness", "provenance", "ai-search", "research"]
 classifiers = [
@@ -29,7 +30,7 @@ Homepage = "https://github.com/biplob819/ai-visibility"
 Issues = "https://github.com/biplob819/ai-visibility/issues"
 
 [project.scripts]
-citewatch = "citewatch.cli:main"
+citewatch = "citewatch.cli:entry"
 
 [dependency-groups]
 dev = [
