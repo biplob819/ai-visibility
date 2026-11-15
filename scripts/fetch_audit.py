@@ -7,12 +7,19 @@ must be null); every other line is a request that was made, even if it then fail
 
 All logs are audited together, since the rules hold for the whole study, not per file.
 Rules, each a failure:
-  - a line that is not valid JSON, lacks a field, or has a field of the wrong type or value;
+  - a line that is not valid JSON, repeats a key, lacks a field, or has a field of the wrong
+    type or value (a robots_disallowed line must say robots "disallowed" and carry no status
+    and no bytes);
   - two requests to one host (case, port and trailing dot ignored) less than 1.0 s apart;
-  - a request to a URL whose robots decision was "disallowed" (robots.txt itself exempt);
-  - a request for a URL after an earlier request for it returned 401, 403 or 451, comparing
-    URLs with host case, default port and fragment normalised;
+  - a request to a URL whose robots decision was "disallowed" (only a bare /robots.txt is
+    exempt);
+  - a request for a page after robots refused it, or after a request for it returned 401,
+    403 or 451;
+  - more than three requests for one page (one try and two retries), counted rather than
+    trusted from the logged attempt number;
   - more than one distinct user agent across requests.
+Pages are compared with scheme, host case, port, trailing slash, fragment, percent-encoding
+and query order normalised, and events are ordered by timestamp, not by file order.
 
 Usage:
     python scripts/fetch_audit.py                 # every data/**/fetch_log*.jsonl[.gz]
@@ -86,6 +93,14 @@ def page_key(norm: str) -> str:
     return path + ("?" + "&".join(sorted(query.split("&"))) if query else "")
 
 
+def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+    keys = [k for k, _ in pairs]
+    dupes = sorted({k for k in keys if keys.count(k) > 1})
+    if dupes:
+        raise ValueError(f"repeated keys {dupes}")
+    return dict(pairs)
+
+
 def _is_int(x: object) -> bool:
     return isinstance(x, int) and not isinstance(x, bool)
 
@@ -103,8 +118,10 @@ def _type_problems(row: dict) -> list[str]:
         problems.append(f"status must be null or an HTTP status code, got {row['status']!r}")
     if row["bytes"] is not None and not (_is_int(row["bytes"]) and row["bytes"] >= 0):
         problems.append(f"bytes must be null or a non-negative integer, got {row['bytes']!r}")
-    if row["outcome"] == NO_REQUEST and (row["status"] is not None or row["bytes"]):
+    if row["outcome"] == NO_REQUEST and (row["status"] is not None or row["bytes"] is not None):
         problems.append(f"a {NO_REQUEST} line made no request, so status and bytes must be null")
+    if row["outcome"] == NO_REQUEST and row["robots"] != "disallowed":
+        problems.append(f'a {NO_REQUEST} line must have robots "disallowed"')
     if _is_int(row["attempt"]) and row["attempt"] > MAX_ATTEMPTS:
         problems.append(f"attempt {row['attempt']} means more than {MAX_ATTEMPTS - 1} retries")
     return problems
@@ -118,9 +135,12 @@ def parse(lines: Iterable[str], source: str) -> tuple[list[dict], list[str]]:
             continue
         where = f"{source}:{lineno}"
         try:
-            row = json.loads(line)
+            row = json.loads(line, object_pairs_hook=_no_duplicate_keys)
         except json.JSONDecodeError as exc:
             problems.append(f"{where}: not JSON ({exc.msg})")
+            continue
+        except ValueError as exc:
+            problems.append(f"{where}: {exc}")
             continue
         if not isinstance(row, dict):
             problems.append(f"{where}: not a JSON object")
@@ -161,7 +181,8 @@ def rules(rows: list[dict], source: str) -> list[str]:
     for r in rows:
         if urlsplit(r["_url"]).hostname != r["_host"]:
             problems.append(f"{r['_where']}: host {r['host']!r} does not match url {r['url']}")
-        is_robots_txt = urlsplit(r["_url"]).path == "/robots.txt"
+        parts = urlsplit(r["_url"])
+        is_robots_txt = parts.path == "/robots.txt" and not parts.query
         if r["robots"] == "disallowed" and r["outcome"] != NO_REQUEST and not is_robots_txt:
             problems.append(f"{r['_where']}: requested {r['url']} although robots disallowed it")
 
@@ -346,6 +367,37 @@ def self_test() -> int:
         None,
     )
     check("a malformed url fails", audit([_line(url="https://[::1/x")]), "malformed url")
+    check("a repeated key fails", audit([_line()[:-1] + ', "robots": "allowed"}']), "repeated keys")
+    check(
+        "a skipped line must say robots disallowed",
+        audit([_line(**{**SKIPPED, "robots": "allowed"})]),
+        'must have robots "disallowed"',
+    )
+    check(
+        "bytes 0 on a skipped line fails", audit([_line(**{**SKIPPED, "bytes": 0})]), "must be null"
+    )
+    check(
+        "robots.txt with a query is not exempt",
+        audit([_line(url="https://www.nhs.uk/robots.txt?x=1", robots="disallowed")]),
+        "although robots disallowed",
+    )
+    check("a status outside 100-599 fails", audit([_line(status=999)]), "status must be")
+    check("an unparseable timestamp fails", audit([_line(at="yesterday")]), "bad timestamp")
+    check(
+        "events are ordered by time, not by file order",
+        audit([_line(at="2026-11-15T10:00:09+00:00"), _line(status=403, outcome="blocked")]),
+        "after it was blocked",
+    )
+    check(
+        "percent-encoding does not hide a retry",
+        audit(
+            [
+                _line(url="https://www.nhs.uk/a%20b", status=403, outcome="blocked"),
+                _line(url="https://www.nhs.uk/a b", at="2026-11-15T10:00:09+00:00"),
+            ]
+        ),
+        "after it was blocked",
+    )
     check(
         "four requests for one page fail even if each says attempt 1",
         audit([_line(at=f"2026-11-15T10:00:0{i}+00:00") for i in range(0, 8, 2)]),

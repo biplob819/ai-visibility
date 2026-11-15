@@ -20,6 +20,8 @@ A uv project for the `citewatch` package and the lean Kova build harness ported 
 - The secret scan lists files NUL-separated (no quoted names skipped) and unpacks compressed files before scanning.
 - The catalog is read and written without CSV quoting, so proof cells round-trip byte for byte; the writer refuses any cell it could not read back.
 - Gate 10 runs its smoke commands with every provider credential removed from the environment and checks each command's expected exit code.
+- Gate 11 counts only real test files (`tests/**/test_*.py`, `*_test.py`, `conftest.py`) that still exist; fixtures and deleted tests do not count.
+- Gate 3 treats a proof as skipped when pytest would skip or never collect it: skip/skipif/xfail marks by any import or alias, unittest skips, parametrized cases marked skip, module-level skip or importorskip, runtime skips (including `skipTest`, `raise SkipTest`, `raise pytest.skip.Exception`), `__test__ = False`, and `Test*` classes with `__init__`.
 - Every gate keeps EvalKit's rules: reported even after a failure; a tool error is a FAIL; self-tests name the planted defect.
 
 ## Out of scope

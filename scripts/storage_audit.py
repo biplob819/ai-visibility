@@ -47,12 +47,15 @@ from harness_lib import (
 AUDITED_DIRS = ("data", "results")
 # "<" may also appear JSON-escaped as \u003c or HTML-escaped as &lt;
 LT = rb"(?:<|\\u003c|&lt;|&#0*60;|&#x0*3c;)"
-HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html[\s>/]|body[\s>/])", re.I)
+HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html|body)(?=[\s>/]|\Z)", re.I)
 # JSON or repr keys (also double-encoded \"body\":), YAML keys, and CSV/TSV header columns
 BODY_KEYS = re.compile(
-    rb"(?:\\?[\"'](?:body|html|page_text)\\?[\"']\s*:)"
-    rb"|(?m:^\s*(?:body|html|page_text)\s*:)"
-    rb"|(?:\A[^\n]*(?:^|[,\t])\"?(?:body|html|page_text)\"?(?:[,\t\r]|$))",
+    # a JSON or repr key, also double-encoded or padded: "body":, \"body\":, " body ":
+    rb"(?:\\?[\"']\s*(?:body|html|page_text)\s*\\?[\"']\s*:)"
+    # a YAML key, also as a list item: body: / - body:
+    rb"|(?:^\s*(?:-\s+)?(?:body|html|page_text)\s*:)"
+    # a CSV/TSV/semicolon header cell on any line (a BOM allowed), e.g. ref, body
+    rb"|(?:^(?:\xef\xbb\xbf)?(?:[^\n]*[,;\t]\s*)?\"?(?:body|html|page_text)\"?\s*(?:[,;\t\r]|$))",
     re.I | re.M,
 )
 BODY_NODE = "M3.2"
@@ -78,6 +81,8 @@ def file_problems(path: Path, root: Path) -> list[str]:
     rel = path.relative_to(root) if path.is_relative_to(root) else path
     try:
         raw = unpack(path.read_bytes())  # by magic bytes, whatever the file is called
+        if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):  # UTF-16 text
+            raw = raw.decode("utf-16", "replace").encode("utf-8")
     except (OSError, HarnessError) as exc:
         return [f"{rel}: cannot read ({exc})"]
     problems = []
@@ -176,6 +181,12 @@ def self_test() -> int:
             "labels.csv": b"citation_ref,verdict,page_text\nv-1,supported,x\n",
             "sheet.tsv": b"ref\tBody\nv-1\tx\n",
             "notes.yaml": b"url: https://x.org\nbody: x\n",
+            "list.yaml": b"items:\n  - body: x\n",
+            "bom.csv": b"\xef\xbb\xbfbody,url\nx,y\n",
+            "spaced.csv": b"ref, body\nv-1, x\n",
+            "semi.csv": b"ref;body\nv-1;x\n",
+            "utf16.html": "<html>".encode("utf-16"),
+            "tail.txt": b"ends with <body",
             "double.json": b'{"rec": "{\\"html\\": 1}"}',
         }
         for name, content in sneaky.items():

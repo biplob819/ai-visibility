@@ -86,10 +86,10 @@ def _run(
 ) -> tuple[int, str]:
     try:
         p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env)
-    except FileNotFoundError as exc:
-        return 127, str(exc)
+    except FileNotFoundError as exc:  # Windows' message does not name the program, so we do
+        return 127, f"{cmd[0]}: not found ({exc})"
     except subprocess.TimeoutExpired:
-        return 124, f"timed out after {timeout}s"
+        return 124, f"{cmd[0]}: timed out after {timeout}s"
     return p.returncode, (p.stdout + p.stderr).strip()
 
 
@@ -138,6 +138,9 @@ def _dotted(expr: ast.expr) -> list[str]:
 
 
 UNITTEST_SKIPS = {"skip", "skipIf", "skipUnless", "expectedFailure"}
+MARK_ALIASES: set[str] = {
+    "mark"
+}  # names `pytest.mark` is bound to (`from pytest import mark as mk`)
 
 
 def _is_skip_mark(expr: ast.expr, bare_marks: set[str]) -> bool:
@@ -149,7 +152,7 @@ def _is_skip_mark(expr: ast.expr, bare_marks: set[str]) -> bool:
     parts = _dotted(expr)
     if not parts:
         return False
-    if len(parts) >= 2 and parts[-2] == "mark" and parts[-1] in SKIP_MARKS:
+    if len(parts) >= 2 and parts[-2] in MARK_ALIASES and parts[-1] in SKIP_MARKS:
         return True
     if len(parts) >= 2 and parts[0] == "unittest" and parts[-1] in UNITTEST_SKIPS:
         return True
@@ -174,6 +177,18 @@ def _pytest_imports(tree: ast.Module) -> tuple[set[str], set[str], set[str]]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             aliases |= {a.asname or a.name for a in node.names if a.name == "pytest"}
+        if isinstance(node, ast.ImportFrom) and node.module == "unittest":
+            marks |= {a.asname or a.name for a in node.names if a.name in UNITTEST_SKIPS}
+        if isinstance(node, ast.ImportFrom) and node.module == "pytest":
+            MARK_ALIASES.update(a.asname or a.name for a in node.names if a.name == "mark")
+    for node in tree.body:  # skip = pytest.mark.skip; @skip
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and _is_skip_mark(node.value, marks)
+        ):
+            marks.add(node.targets[0].id)
         if isinstance(node, ast.ImportFrom) and node.module in ("pytest", "_pytest.outcomes"):
             runtime |= {a.asname or a.name for a in node.names if a.name in RUNTIME_SKIPS}
         if isinstance(node, ast.ImportFrom) and node.module == "pytest.mark":
@@ -187,9 +202,15 @@ def _calls_skip(
     """A body that calls pytest.skip/xfail/importorskip (or the same names imported from
     pytest) never proves anything. pytest.fail is a legitimate assertion and is allowed."""
     for node in ast.walk(fn):
+        if isinstance(node, ast.Raise) and node.exc is not None:
+            raised = _dotted(node.exc)
+            if raised[-1:] == ["SkipTest"] or raised[-2:] == ["skip", "Exception"]:
+                return True
         if not isinstance(node, ast.Call):
             continue
         parts = _dotted(node.func)
+        if parts[-1:] == ["skipTest"]:
+            return True
         if len(parts) == 2 and parts[0] in aliases and parts[-1] in RUNTIME_SKIPS:
             return True
         if len(parts) == 1 and parts[0] in runtime_names:
@@ -225,7 +246,23 @@ def _test_functions(path: Path) -> dict[str, bool]:
     pytestmark, or the module's pytestmark), or when its body calls a runtime skip.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    MARK_ALIASES.clear()
+    MARK_ALIASES.add("mark")
     runtime_names, bare_marks, aliases = _pytest_imports(tree)
+    # a module-level skip or importorskip skips every test in the file
+    module_calls_skip = any(
+        isinstance(n, ast.Expr | ast.Assign)
+        and isinstance(n.value, ast.Call)
+        and (
+            (
+                len(_dotted(n.value.func)) == 2
+                and _dotted(n.value.func)[0] in aliases
+                and _dotted(n.value.func)[1] in RUNTIME_SKIPS
+            )
+            or _dotted(n.value.func) in ([r] for r in runtime_names)
+        )
+        for n in tree.body
+    )
     found: dict[str, bool] = {}
     # `name.__test__ = False` at module level, or `__test__ = False` in a class body
     disabled = {
@@ -250,9 +287,10 @@ def _test_functions(path: Path) -> dict[str, bool]:
         )
 
     def is_test_class(node: ast.ClassDef) -> bool:
-        return node.name.startswith("Test") or any(
-            _dotted(b)[-1:] == ["TestCase"] for b in node.bases
-        )
+        if any(_dotted(b)[-1:] == ["TestCase"] for b in node.bases):
+            return True
+        has_init = any(isinstance(n, ast.FunctionDef) and n.name == "__init__" for n in node.body)
+        return node.name.startswith("Test") and not has_init  # pytest skips classes with __init__
 
     def visit(body: list[ast.stmt], inherited: bool) -> None:
         for node in body:
@@ -274,7 +312,7 @@ def _test_functions(path: Path) -> dict[str, bool]:
                 )
                 visit(node.body, skip)
 
-    visit(tree.body, _pytestmark_skips(tree.body, bare_marks))
+    visit(tree.body, module_calls_skip or _pytestmark_skips(tree.body, bare_marks))
     return found
 
 
@@ -377,7 +415,20 @@ def gate_pytest(ctx: Ctx) -> Result:
 MIN_PYTHON = "3.11"  # requires-python floor; float and stdlib behaviour can differ (L-13)
 
 
-def golden_min_python(root: Path, which: Callable[[str], str | None] | None = None) -> Result:
+Runner = Callable[[list[str], Path, dict[str, str]], "subprocess.CompletedProcess[str]"]
+
+
+def _default_runner(
+    cmd: list[str], cwd: Path, env: dict[str, str]
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=900)
+
+
+def golden_min_python(
+    root: Path,
+    which: Callable[[str], str | None] | None = None,
+    runner: Runner | None = None,
+) -> Result:
     """Run the golden replays again on the minimum supported Python. Never silently skipped:
     no uv, or a failing replay, is a FAIL."""
     if not (which or shutil.which)("uv"):
@@ -391,7 +442,7 @@ def golden_min_python(root: Path, which: Callable[[str], str | None] | None = No
     env = {**os.environ, "UV_PROJECT_ENVIRONMENT": venv}
     cmd = ["uv", "run", "--python", MIN_PYTHON, "python", "-m", "pytest", "-q", "-m", "golden"]
     try:
-        proc = subprocess.run(cmd, cwd=root, env=env, capture_output=True, text=True, timeout=900)
+        proc = (runner or _default_runner)(cmd, root, env)
     except subprocess.TimeoutExpired:
         return Result("FAIL", f"golden on Python {MIN_PYTHON} timed out")
     out = (proc.stdout + proc.stderr).strip()
@@ -469,7 +520,7 @@ def keyless_env() -> dict[str, str]:
     return {
         k: v
         for k, v in os.environ.items()
-        if not (k.endswith("_API_KEY") or k.endswith("_AUTH_TOKEN") or k == "ANTHROPIC_PROFILE")
+        if not (k.endswith(("_API_KEY", "_TOKEN", "_SECRET")) or k == "ANTHROPIC_PROFILE")
     }
 
 
@@ -541,7 +592,7 @@ def changed_tests_problem(files: list[str], root: Path | None = None) -> str | N
         f
         for f in files
         if f.startswith("tests/")
-        and not f.endswith("__init__.py")
+        and re.search(r"(?:^|/)(?:test_[^/]*|[^/]*_test|conftest)\.py$", f)
         and (root is None or (root / f).is_file())  # a deleted test is not a changed test
     ]
     if src and not tests:
@@ -781,6 +832,8 @@ def self_test() -> int:
         (lint / "bad.py").write_text("import os\n", encoding="utf-8")
         r = gate_ruff(ctx("H-1\tW0.1\tbuilding\t\t\n", at=lint))
         check("4 ruff fails naming F401", r.status == "FAIL" and "F401" in r.detail)
+        code, out = _run([sys.executable, "-c", "import time; time.sleep(5)"], lint, timeout=1)
+        check("4/5 a hung tool times out as a failure", code == 124 and "timed out" in out)
         r = _tool_gate(["citewatch-no-such-tool-xyz"], lint, "")
         check(
             "4/5 a missing tool is a FAIL, never a pass (L-3)",
@@ -848,6 +901,34 @@ def self_test() -> int:
             "7 golden fails when the Python 3.11 replay fails",
             r.status == "FAIL" and "3.11" in r.detail,
         )
+        seen: list[list[str]] = []
+
+        def fake(code: int, out: str, boom: bool = False) -> Runner:
+            def run(cmd: list[str], _cwd: Path, _env: dict[str, str]):
+                seen.append(cmd)
+                if boom:
+                    raise subprocess.TimeoutExpired(cmd, 900)
+                return subprocess.CompletedProcess(cmd, code, out, "")
+
+            return run
+
+        uv_here = lambda _n: "/usr/bin/uv"  # noqa: E731
+        for label, runner, needle in [
+            ("a failing replay", fake(1, "1 failed"), "golden on Python 3.11"),
+            ("an all-skipped replay", fake(0, "1 skipped"), "golden on Python 3.11"),
+            ("a timed-out replay", fake(0, "", boom=True), "timed out"),
+        ]:
+            r = golden_min_python(green, which=uv_here, runner=runner)
+            check(
+                f"7 the Python 3.11 leg fails on {label}", r.status == "FAIL" and needle in r.detail
+            )
+        r = golden_min_python(green, which=uv_here, runner=fake(0, "2 passed in 0.1s"))
+        check(
+            "7 the Python 3.11 leg really asks uv for Python 3.11 and the golden marker",
+            r.status == "PASS"
+            and seen[-1][:4] == ["uv", "run", "--python", MIN_PYTHON]
+            and seen[-1][-2:] == ["-m", "golden"],
+        )
         r = gate_golden(
             ctx(building, at=green),
             min_python=lambda rt: golden_min_python(rt, which=lambda _n: None),
@@ -874,6 +955,21 @@ def self_test() -> int:
                 "different user agents",
             ),
             "unparseable line": (["{oops"], "not JSON"),
+            "request after a robots refusal": (
+                [
+                    line(robots="disallowed", outcome="robots_disallowed", status=None, bytes=None),
+                    line(at="2026-11-15T10:00:09+00:00"),
+                ],
+                "after robots refused it",
+            ),
+            "more than three requests for a page": (
+                [line(at=f"2026-11-15T10:00:0{i}+00:00") for i in range(0, 8, 2)],
+                "requested 4 times",
+            ),
+            "a skipped line with a status": (
+                [line(robots="disallowed", outcome="robots_disallowed", status=200)],
+                "status and bytes must be null",
+            ),
         }
         for label, (lines, needle) in rude_logs.items():
             rude = root / f"rude-{label.replace(' ', '-')}"
@@ -928,7 +1024,13 @@ def self_test() -> int:
         proj = root / "proj"
         (proj / "src" / "fakepkg").mkdir(parents=True)
         (proj / "src" / "fakepkg" / "__init__.py").write_text(
-            "def main():\n    raise SystemExit(3)\n", encoding="utf-8"
+            "import os\n\n"
+            "def main():\n"
+            "    creds = [k for k in os.environ\n"
+            "             if k.endswith(('_API_KEY', '_TOKEN', '_SECRET'))\n"
+            "             or k == 'ANTHROPIC_PROFILE']\n"
+            "    raise SystemExit(5 if creds else 3)\n",
+            encoding="utf-8",
         )
         (proj / "pyproject.toml").write_text(
             '[project]\nname = "fakepkg"\nversion = "0.0.1"\n'
@@ -942,8 +1044,26 @@ def self_test() -> int:
             "10 build fails when a smoke command exits wrongly, naming it",
             r.status == "FAIL" and "fakecli --version: exit 3, expected 0" in r.detail,
         )
-        r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[(["fakecli"], 3)])
-        check("10 build passes when the smoke exit code is the expected one", r.status == "PASS")
+        planted = {
+            "OPENAI_API_KEY": "x",
+            "ANTHROPIC_AUTH_TOKEN": "x",
+            "CLAUDE_CODE_OAUTH_TOKEN": "x",
+            "ANTHROPIC_PROFILE": "x",
+        }
+        saved_env = {k: os.environ.get(k) for k in planted}
+        os.environ.update(planted)
+        try:
+            r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[(["fakecli"], 3)])
+        finally:
+            for k, v in saved_env.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        check(
+            "10 smoke commands run with every credential removed (expected exit seen)",
+            r.status == "PASS",
+        )
         pyproject = proj / "pyproject.toml"
         pyproject.write_text(
             pyproject.read_text(encoding="utf-8").replace(
@@ -1030,16 +1150,20 @@ def self_test() -> int:
             path.write_text(saved, encoding="utf-8")
 
         # every gate is reported, whatever failed before it
-        fail = lambda _c: Result("FAIL", "first broke")  # noqa: E731
         ok = lambda _c: Result("PASS", "second ran")  # noqa: E731
 
         def boom(_c: Ctx) -> Result:
             raise ZeroDivisionError("planted crash")
 
-        lines, failed = run_gates(ctx(building), [("a", fail), ("b", boom), ("c", ok)])
+        two = lambda _c: Result("FAIL", "first problem\nsecond problem")  # noqa: E731
+        lines, failed = run_gates(ctx(building), [("a", two), ("b", boom), ("c", ok)])
         check(
-            "every gate is reported after a failure and a crash",
-            failed == 2 and len(lines) == 3 and "second ran" in lines[2] and "crashed" in lines[1],
+            "every gate is reported, with every detail line, after a failure and a crash",
+            failed == 2
+            and len(lines) == 4
+            and "second problem" in lines[1]
+            and "crashed" in lines[2]
+            and "second ran" in lines[3],
         )
     print("self-test", "PASSED" if failures == 0 else f"FAILED ({failures})")
     return 0 if failures == 0 else 1

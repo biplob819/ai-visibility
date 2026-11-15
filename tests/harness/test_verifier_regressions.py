@@ -311,3 +311,199 @@ def test_storage_audit_catches_csv_yaml_and_double_encoded_keys(tmp_path, name, 
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / name).write_bytes(content)
     assert any(name in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))
+
+
+# ---- W0.1 verifier pass 4: pin every non-equivalent surviving mutant ----
+
+
+def _git_repo(path):
+    subprocess.run(["git", "init", "-q"], cwd=path, check=True)
+
+    def commit(msg="c"):
+        subprocess.run(["git", "add", "-A"], cwd=path, check=True)
+        subprocess.run(
+            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", msg],
+            cwd=path,
+            check=True,
+        )
+
+    return commit
+
+
+@pytest.mark.safety
+def test_tracked_files_are_scanned_and_audited(tmp_path):
+    from harness_lib import git_files
+
+    commit = _git_repo(tmp_path)
+    (tmp_path / "data").mkdir()
+    (tmp_path / "k.py").write_text("K = 'sk-ant-" + "Q" * 40 + "'\n", encoding="utf-8")
+    (tmp_path / "data" / "p.html").write_text("<html>", encoding="utf-8")
+    commit()
+    files = git_files(tmp_path)
+    assert files is not None and tmp_path / "k.py" in files  # tracked, not only untracked
+    assert secret_scan.scan(secret_scan.candidate_files(tmp_path))
+    assert any("p.html" in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))
+
+
+@pytest.mark.safety
+def test_cli_exit_codes_that_ci_and_pre_commit_rely_on(tmp_path, monkeypatch, capsys):
+    import node_start
+    import verify_graph_eligibility as vge
+
+    leak = tmp_path / "leak.py"
+    leak.write_text("K = 'sk-ant-" + "Q" * 40 + "'\n", encoding="utf-8")
+    assert secret_scan.main([str(leak)]) == 1
+
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "p.html").write_text("<html>", encoding="utf-8")
+    cat = tmp_path / "catalog.tsv"
+    cat.write_text(HDR + "SUP-01\tM3.2\tnot-started\t\t\n", encoding="utf-8")
+    monkeypatch.setattr(sa, "ROOT", tmp_path)
+    monkeypatch.setattr(sa, "CATALOG_TSV", cat)
+    monkeypatch.setenv("CITEWATCH_BODY_CACHE", str(tmp_path / "none"))
+    assert sa.main([]) == 1
+
+    assert vge.main(["--graph", str(tmp_path / "missing.md")]) == 1
+
+    graph = tmp_path / "graph.md"
+    graph.write_text("| **W0.1** | A | — |\n| **N1.1** | B | W0.1 |\n", encoding="utf-8")
+    cat2 = tmp_path / "cat2.tsv"
+    cat2.write_text(HDR + "H\tW0.1\tbuilding\t\t\nS\tN1.1\tspec\t\t\n", encoding="utf-8")
+    before = cat2.read_bytes()
+    rc = node_start.start(
+        "N1.1",
+        graph_path=graph,
+        catalog_path=cat2,
+        specs=tmp_path / "specs",
+        root=tmp_path,
+        mark_building=True,
+    )
+    assert rc == 1 and cat2.read_bytes() == before  # refused, and nothing flipped
+
+    monkeypatch.setattr(nc, "ROOT", tmp_path)
+    monkeypatch.setattr(nc, "load_graph", lambda: {"W0.1": None})
+    monkeypatch.setattr(nc, "load_catalog", lambda: [])
+    monkeypatch.setattr(nc, "GATES", [("x", lambda _c: nc.Result("FAIL", "planted"))])
+    assert nc.main(["W0.1"]) == 1  # the default (logging) path
+    assert list((tmp_path / ".harness" / "W0.1").glob("converge-*.txt"))
+
+
+def test_node_start_flips_only_this_nodes_unstarted_rows(tmp_path):
+    import node_start
+
+    graph = tmp_path / "graph.md"
+    graph.write_text("| **W0.1** | A | — |\n| **N1.1** | B | W0.1 |\n", encoding="utf-8")
+    cat = tmp_path / "cat.tsv"
+    cat.write_text(
+        HDR + "H\tW0.1\tgreen\t\t\nS1\tN1.1\tspec\t\t\nS2\tN1.1\tgreen\t\t\n", encoding="utf-8"
+    )
+    specs = tmp_path / "specs" / "N1.1-x"
+    specs.mkdir(parents=True)
+    for f in ("criteria.md", "tasks.md"):
+        (specs / f).write_text("S1 S2\n", encoding="utf-8")
+    assert node_start.check_start(
+        "N1.1", node_start.load_graph(graph), load_catalog(cat), tmp_path / "specs"
+    ) == ["missing specs/N1.1-x/spec.md"]
+    (specs / "spec.md").write_text("spec\n", encoding="utf-8")
+    _git_repo(tmp_path)
+    assert (
+        node_start.start(
+            "N1.1",
+            graph_path=graph,
+            catalog_path=cat,
+            specs=tmp_path / "specs",
+            root=tmp_path,
+            mark_building=True,
+        )
+        == 0
+    )
+    status = {c.cap_id: c.status for c in load_catalog(cat)}
+    assert status == {"H": "green", "S1": "building", "S2": "green"}
+
+
+def test_changed_tests_rules_for_base_none_non_git_and_fixtures(tmp_path):
+    commit = _git_repo(tmp_path)
+    (tmp_path / "src").mkdir()
+    (tmp_path / "tests" / "fixtures").mkdir(parents=True)
+    (tmp_path / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    pass\n", encoding="utf-8")
+    commit()
+    ctx = nc.Ctx("W0.1", tmp_path, {}, [], tmp_path / "specs")
+    assert nc.gate_changed_tests(ctx).status == "PASS"  # base none: every file counts
+    assert nc.changed_tests_problem(["src/a.py", "tests/fixtures/x.json"], tmp_path)
+    assert nc.changed_tests_problem(["src/a.py", "tests/conftest.py"]) is None
+    other = tmp_path.parent / f"{tmp_path.name}-nogit"
+    other.mkdir()
+    assert nc.gate_changed_tests(nc.Ctx("W0.1", other, {}, [], other)).status == "SKIP"
+
+
+def test_graph_and_marker_edge_cases():
+    from harness_lib import HarnessError, parse_graph
+
+    with pytest.raises(HarnessError):
+        parse_graph("| **W0.1x** | bad id | — |\n")
+    with pytest.raises(HarnessError, match="no node rows"):
+        parse_graph("nothing here\n")
+    assert not mentions("har-01", "HAR-01")
+    assert sa.HTML_MARKERS.search(b"<html/>") and sa.HTML_MARKERS.search(b"ends <body")
+
+
+def test_catalog_keeps_cells_that_start_with_a_quote(tmp_path):
+    caps = [Cap("HAR-01", "W0.1", "green", '"quoted" start', "note")]
+    write_catalog(caps, tmp_path / "c.tsv")
+    assert load_catalog(tmp_path / "c.tsv")[0].proof == '"quoted" start'
+    with pytest.raises(Exception, match="tab"):
+        write_catalog([Cap("HAR-01", "W0.1", "green", "a\tb", "n")], tmp_path / "d.tsv")
+
+
+def test_proofs_gate_rejects_skips_that_pytest_honours(tmp_path):
+    files = {
+        "test_mod_skip.py": "import pytest\npytest.importorskip('nope')\n\n"
+        "def test_a():\n    pass\n",
+        "test_mod_skip2.py": "import pytest\npytest.skip('x', allow_module_level=True)\n\n"
+        "def test_a():\n    pass\n",
+        "test_misc.py": "import pytest\nimport unittest\nfrom unittest import skip as uskip\n"
+        "from pytest import mark as mk\nfrom _pytest.outcomes import skip as oskip\n"
+        "later = pytest.mark.skip\n\n"
+        "@uskip('x')\ndef test_u():\n    pass\n\n"
+        "@mk.skip\ndef test_mk():\n    pass\n\n"
+        "@later\ndef test_later():\n    pass\n\n"
+        "def test_raise():\n    raise unittest.SkipTest('x')\n\n"
+        "def test_raise2():\n    raise pytest.skip.Exception('x')\n\n"
+        "def test_outcomes():\n    oskip('x')\n\n"
+        "class TestSelf(unittest.TestCase):\n    def test_s(self):\n        self.skipTest('x')\n\n"
+        "class TestOff:\n    __test__ = False\n    def test_off(self):\n        pass\n\n"
+        "class TestInit:\n    def __init__(self):\n        pass\n    def test_init(self):\n"
+        "        pass\n\n"
+        "def helper():\n    pass\n\n"
+        "def test_real():\n    pass\n",
+    }
+    for name, body in files.items():
+        (tmp_path / name).write_text(body, encoding="utf-8")
+    assert nc._test_functions(tmp_path / "test_mod_skip.py") == {"test_a": True}
+    assert nc._test_functions(tmp_path / "test_mod_skip2.py") == {"test_a": True}
+    found = nc._test_functions(tmp_path / "test_misc.py")
+    assert found == {
+        "test_u": True,
+        "test_mk": True,
+        "test_later": True,
+        "test_raise": True,
+        "test_raise2": True,
+        "test_outcomes": True,
+        "test_s": True,
+        "test_off": True,
+        "test_real": False,
+    }  # helper() and TestInit's methods are not collected by pytest
+
+
+def test_proof_entries_need_a_py_file_and_a_well_formed_value(tmp_path):
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_p.py").write_text("def test_a():\n    pass\n", encoding="utf-8")
+    (tmp_path / "tests" / "notes.txt").write_text("def test_a():\n    pass\n", encoding="utf-8")
+    good = "; ".join(f'{d}=tests/test_p.py›"test_a"' for d in nc.PROOF_DIMENSIONS)
+    ctx = lambda proof: nc.Ctx(  # noqa: E731
+        "W0.1", tmp_path, {}, parse_catalog(HDR + f"H\tW0.1\tgreen\t{proof}\t\n"), tmp_path
+    )
+    assert nc.gate_proofs(ctx(good)).status == "PASS"
+    assert nc.gate_proofs(ctx(good.replace("test_p.py", "notes.txt", 1))).status == "FAIL"
+    assert nc.gate_proofs(ctx(good.replace('›"test_a"', " test_a", 1))).status == "FAIL"

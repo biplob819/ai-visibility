@@ -44,7 +44,7 @@ Every finding below is closed by a section of this spec (Appendix A) and, where 
 
 ## 2. Design decisions
 
-Each decision seeds `docs/decisions.md` as D-1 to D-25. `OWNER D-n` marks a ruling the owner made on 15 Nov 2026.
+Each decision seeds `docs/decisions.md` as D-1 to D-25; D-26 onward are added during the build. `OWNER D-n` marks a ruling the owner made on 15 Nov 2026.
 
 | ID | Decision | Alternatives considered | Why |
 | --- | --- | --- | --- |
@@ -60,7 +60,7 @@ Each decision seeds `docs/decisions.md` as D-1 to D-25. `OWNER D-n` marks a ruli
 | D-10 | robots.txt is parsed with `protego` (RFC 9309, longest match); a URL is fetched only when it allows our user agent | `urllib.robotparser` (PRD) | urllib's first-match semantics can allow paths a site disallows (H4) |
 | D-11 | The support check calls EvalKit's `faithfulness()` with both judges (Opus 5.5 and GPT Sol), EvalKit pinned to an exact commit, with a contract test on the imported symbols. EvalKit's store and the page text live in a temp folder outside the repo and are deleted after scoring | Write a new judge; single judge; pin a future tag | Reuses a calibrated, blinded judge; dual judges measure self-preference (GPT Sol judging GPT answers); NFR6 holds (C6, E1) |
 | D-12 | Uncertainty comes from a question-cluster bootstrap (each question's answers from both models and both runs resample together). Run-to-run comparison measures stability, not variance. Overlap is reported beside each model's self-overlap | Variance from two runs | 100 questions is the sample; two runs cannot give an interval (H2, H3) |
-| D-13 | Lean Kova harness ported from EvalKit: one builder plus a fresh-context skeptical verifier, with verifier rounds repeated until a pass confirms every criterion, as in EvalKit | Rounds capped at two; tests only | With no dated schedule (OWNER D-16) nothing justifies cutting verification; quality first |
+| D-13 | Lean Kova harness ported from EvalKit: one builder plus a fresh-context skeptical verifier, with verifier rounds repeated until a pass confirms every criterion, as in EvalKit (green bar: D-26) | Rounds capped at two; tests only | With no dated schedule (OWNER D-16) nothing justifies cutting verification; quality first |
 | D-14 | Build status comes from `scripts/status.py` in the repo | A plan file in the statusnow skill | statusnow is wired to the Kova and VOC repos (EvalKit D-13) |
 | D-15 | Dashboard and post are static HTML on Cloudflare Pages; the demo lives in the shared `portfolio-demos` Streamlit app and reads `domain_cards.json` | GitHub Pages (EvalKit's choice) | Free static hosting with a global CDN for the dashboard and post; lookups never call a model |
 | OWNER D-16 | No dated schedule: all nodes are built now, in dependency order (§12.3), and the study runs when S3.1 becomes eligible | Offline nodes Mon–Tue, runs Wednesday; everything on one build day (PRD milestones) | The owner's ruling ("strip off dates, we build all now"); dates had been driving scope, not quality |
@@ -893,7 +893,7 @@ D5.3 and the prose parts of B4.2 and B4.3 have no code to test. Their proof cell
 | 2. Tests first | Failing tests for each criterion across the five proof dimensions | `tests/` |
 | 3. Build | Implement until tests pass | code |
 | 4. Converge twice | Full gate set twice in a row with clean caches | `scripts/node_converge.py <node>` |
-| 5. Skeptical verify | A fresh-context verifier tries to disprove each criterion; findings are fixed or ruled on; repeated until a pass confirms every criterion (D-13) | verifier report in `RUN-STATE.md` |
+| 5. Skeptical verify | A fresh-context verifier tries to disprove each criterion and mutation-tests the node's checks; findings are fixed or ruled on; repeated until a pass confirms every criterion with no high or medium finding open (D-13, D-26) | verifier report in `RUN-STATE.md` |
 | 6. Flip green | Proof cells in `catalog.tsv`, changelog line, lessons, one local commit for the node | `catalog.tsv`, `changelog.md`, `lessons.md` |
 
 **The five proof dimensions:**
