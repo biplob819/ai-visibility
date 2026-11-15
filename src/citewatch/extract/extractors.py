@@ -63,6 +63,7 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
     the paragraph start; the citation markers are removed from the counted text (D-43)."""
     out = Extracted(answer_text="")
     kept: list[str] = []
+    parts_seen = 0
     for r in responses:
         for item in r.get("output") or []:
             kind = item.get("type")
@@ -77,7 +78,11 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                 for part in item.get("content") or []:
                     if part.get("type") != "output_text":
                         continue
+                    if parts_seen:
+                        kept.append("\n\n")  # separate parts, never run words together (v1 L6)
+                    parts_seen += 1
                     text = part.get("text") or ""
+                    last_span: str | None = None
                     spans = sorted(
                         (
                             a
@@ -88,21 +93,28 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                     )
                     cursor = 0
                     for a in spans:
-                        s, e = int(a.get("start_index", 0)), int(a.get("end_index", 0))
+                        try:
+                            s, e = int(a.get("start_index") or 0), int(a.get("end_index") or 0)
+                        except (TypeError, ValueError):  # a missing index (v1 L5)
+                            s = e = cursor
                         if not (0 <= s <= e <= len(text)) or s < cursor:
                             s = e = cursor  # out of order or out of range: no span of its own
                         before = text[cursor:s]
                         para = before.rsplit("\n\n", 1)[-1].strip()
                         kept.append(before)
+                        # a marker right after another one supports the same claim (v1 M1)
+                        span = para or last_span
                         if a.get("url"):
                             out.citations.append(
                                 RawCitation(
                                     url_raw=a["url"],
                                     title=a.get("title"),
                                     quoted_span=None,
-                                    answer_span=para or text[s:e].strip() or a["url"],
+                                    answer_span=span or text[s:e].strip() or a["url"],
                                 )
                             )
+                        if span:
+                            last_span = span
                         cursor = max(cursor, e)
                     kept.append(text[cursor:])
     joined = "".join(kept)

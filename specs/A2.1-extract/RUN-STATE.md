@@ -1,9 +1,13 @@
 # A2.1 run state
 
-**Now:** built and converged; verifier pass 1.
+**Now:** pass 1 fixes in; converging, then verifier pass 2.
 
 ## History
 - 2026-11-15 — spec and criteria written; started after N1.2 green. Real OpenAI responses put inline markdown citation links inside the answer text, spanned by the annotation indices (D-43).
 - 2026-11-15 — built `src/citewatch/extract/` and `citewatch extract`; 42 tests on the recorded fixtures, with hypothesis property tests (idempotence found `+` and `%2541` round-trip bugs, both fixed). tldextract on its bundled PSL snapshot, no network.
+- 2026-11-15 — verifier pass 1 CONFIRMED CIT-01/03/04/05 (55 URL edge cases idempotent; offline PSL; byte-identical rebuilds under `env -i`); DISPROVED CIT-02 and CIT-06. Medium: a second marker after one claim, or two annotations on the same indices, got the link or the bare URL as its span (M1); an edited question's old answer (or one under old settings) was extracted beside the new one, doubling the unit (M2); one unreadable file stopped the stage (M3); mutants on url_raw, the citation type filters, open_page sources, cited, dedup, refusal, searches, group, title, annotation order and the word-limit boundary survived (M4). Fixed: a marker with no claim of its own reuses the previous claim; the stage extracts only envelopes whose key is the current questions' and settings' (others counted `stale`); unreadable files are reported; a test per surviving mutant; lows: `*.sch.uk` schools keep their own publisher (L1), a missing index keeps the answer (L5), text parts are separated (L6), ordinals have no gaps (L10). Five new tests fail on the old code.
 
 ## Known limits
+- `*.service.gov.uk` hosts (including `assets.publishing.service.gov.uk`, where GOV.UK keeps its PDFs) map to publisher `service.gov.uk`, group `gov.uk`, as D-4 is written; the group keeps them countable with gov.uk. Owner ruling pending on whether they should count as `gov.uk`.
+- `canonical_url` decodes then re-encodes, so `/a%2Fb` and `/a/b`, invalid UTF-8 escapes (`/caf%E9` and `/caf%E8`), `?a%3Db=c` and `?a=b=c`, and `?foo` and `?foo=` become one URL; it does not resolve dot segments. It keeps trailing slashes, http versus https and query order distinct, where the fetcher's page identity merges them (the fetcher still fetches such a page once). Closing tests: an encoding-preserving canonicaliser and a measured merge rate on the study's URLs at A2.4 (not written).
+- Annotation indices are trusted: overlapping or wrong indices can leave a stray character or remove real text from the counted answer. PSL private suffixes are ignored, so all `*.github.io` (or `*.blogspot.com`) hosts are one publisher. The idempotence property test does not generate IPv6 or IDN hosts (fixed examples cover them). `usage=None` records zero searches and tokens.

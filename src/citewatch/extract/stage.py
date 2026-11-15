@@ -8,16 +8,19 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from citewatch.runners import anthropic_runner, openai_runner
+from citewatch.runners.schedule import ask_key
 from citewatch.schemas import (
     AnswerRecord,
     Citation,
     ConsultedSource,
     StudyConfig,
+    StudyQuestion,
     count_words,
     provider_of,
 )
@@ -35,6 +38,7 @@ class ExtractResult:
     citations: list[Citation] = field(default_factory=list)
     consulted: list[ConsultedSource] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
+    stale: int = 0  # envelopes for edited questions or old settings, kept but not extracted
     skipped_urls: Counter[str] = field(default_factory=Counter)
 
 
@@ -82,11 +86,13 @@ def extract_envelope(
     skipped: list[str] = []
     cites: list[Citation] = []
     cited_canon: set[str] = set()
-    for n, c in enumerate(ex.citations, start=1):
+    n = 0
+    for c in ex.citations:
         url = canonical_or_none(c.url_raw)
         if url is None:
             skipped.append(c.url_raw)
             continue
+        n += 1  # ordinals count kept citations, with no gaps (v1 L10)
         pub, group = publisher_of(url)
         cites.append(
             Citation(
@@ -133,12 +139,23 @@ def unique_cited_urls(citations: list[Citation]) -> dict[tuple[int, str, str], l
     return out
 
 
-def run_extract(base: Path, cfg: StudyConfig) -> ExtractResult:
+def run_extract(
+    base: Path, cfg: StudyConfig, questions: Sequence[StudyQuestion] | None = None
+) -> ExtractResult:
+    """Extract every current answer. With `questions`, an envelope counts only when its key
+    is the one the current questions and settings give: answers to an edited question or under
+    old settings stay in the store but are never pooled with the new ones (v1 M2)."""
     store = RawStore(base)
     res = ExtractResult()
+    by_id = {q.id: q for q in questions or ()}
     for key in sorted(store.keys("ask")):
-        env = store.get("ask", key)
         try:
+            env = store.get("ask", key)  # an unreadable file is reported, never fatal (v1 M3)
+            if questions is not None:
+                q = by_id.get(env.get("question_id"))
+                if q is None or ask_key(cfg, env["run"], q, env["model"]) != key:
+                    res.stale += 1
+                    continue
             rec, cites, cons, skipped = extract_envelope(key, env, cfg)
         except Exception as exc:  # one odd envelope never stops the stage; it is reported
             res.problems.append(f"{key[:12]}: {type(exc).__name__}: {exc}"[:300])

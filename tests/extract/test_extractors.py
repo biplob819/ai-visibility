@@ -205,13 +205,19 @@ def test_the_cli_extracts_with_no_keys(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert cli.main(["init", "s", "--contact", "https://github.com/me/study"]) == 0
-    from citewatch.schemas import load_study_config
+    from citewatch.schemas import load_questions, load_study_config
 
     cfg = load_study_config(tmp_path / "s" / "study.yaml")
+    q = load_questions(tmp_path / "s" / cfg.questions_path, cfg)[0]
     env = stored_env("gpt-6.1-sol", Q2)
+    env["question_id"] = q.id
     env["answer_config_hash"] = answer_config_hash(cfg)
-    RawStore(tmp_path / "s").put("ask", ask_key(cfg, 1, Q2, "gpt-6.1-sol"), env)
+    store = RawStore(tmp_path / "s")
+    store.put("ask", ask_key(cfg, 1, q, "gpt-6.1-sol"), env)
+    stale = dict(env, question_id="q-999")
+    store.put("ask", "f" * 64, stale)  # an answer to a question no longer in the study
     capsys.readouterr()
     assert cli.main(["extract", "--study", str(tmp_path / "s"), "--json"]) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["answers"] == 1 and out["citations"] == 5 and out["unique_cited_urls"] == 3
+    assert out["stale"] == 1

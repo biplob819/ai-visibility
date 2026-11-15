@@ -96,8 +96,10 @@ def publisher_of(url_or_domain: str) -> tuple[str, str | None]:
         if host == inst or host == "www." + inst:
             return inst, None
         if host.endswith("." + inst):
-            label = host[: -len(inst) - 1].rsplit(".", 1)[-1]
-            return f"{label}.{inst}", inst
+            labels = host[: -len(inst) - 1].split(".")
+            # the PSL lists *.sch.uk: a school is school.county.sch.uk (v1 L1)
+            take = 2 if inst == "sch.uk" and len(labels) >= 2 else 1
+            return ".".join([*labels[-take:], inst]), inst
     ex = _extractor()(host)
     if ex.suffix and ex.domain:
         return f"{ex.domain}.{ex.suffix}", None

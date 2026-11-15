@@ -372,7 +372,11 @@ def extract(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
         cfg = load_study_config(path)
     except ConfigError as exc:
         _fail(as_json, "extract", str(exc))
-    res = run_extract(path.parent, cfg)
+    try:
+        qs = load_questions(path.parent / cfg.questions_path, cfg)
+    except ConfigError as exc:
+        _fail(as_json, "extract", str(exc))
+    res = run_extract(path.parent, cfg, qs)
     unique = unique_cited_urls(res.citations)
     summary = {
         "ok": not res.problems,
@@ -382,6 +386,7 @@ def extract(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
         "unique_cited_urls": sum(len(v) for v in unique.values()),
         "consulted": len(res.consulted),
         "skipped_urls": sum(res.skipped_urls.values()),
+        "stale": res.stale,
         "problems": res.problems,
     }
     text = (
