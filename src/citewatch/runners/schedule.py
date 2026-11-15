@@ -25,6 +25,7 @@ import threading
 import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from concurrent.futures import wait as _drain_wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -87,13 +88,27 @@ class RunResult:
     order: list[str] = field(default_factory=list)
 
 
+class _Hold:
+    """One reservation, settled exactly once."""
+
+    def __init__(self, cap: SpendCap, amount: float) -> None:
+        self.cap, self.amount, self.done = cap, amount, False
+
+    def settle(self, actual: float) -> None:
+        if not self.done:
+            self.done = True
+            self.cap.settle(self.amount, actual)
+
+
 class SpendCap:
     """Reserve before a call, settle after; a reservation that would pass the cap is refused.
     The reservation per call adapts upward to the largest real cost seen (D-37)."""
 
-    def __init__(self, cap_usd: float | None, initial_reserve: float) -> None:
+    def __init__(self, cap_usd: float | None, initial_reserve: float, floor: float = 0.0) -> None:
         self.cap = None if cap_usd is None else check_money(cap_usd, "cap_usd")
         self.reserve_each = check_money(initial_reserve, "reserve")
+        self.initial = self.reserve_each
+        self.floor = check_money(floor, "floor")  # a cheap first call never shrinks it below this
         self.max_seen = 0.0
         self.spent = 0.0
         self.reserved = 0.0
@@ -138,7 +153,8 @@ class SpendCap:
             self.spent += actual
             if actual > self.max_seen:
                 self.max_seen = actual
-                self.reserve_each = actual  # never reserve less than the worst real call so far
+                # never reserve less than the worst real call so far, nor the planning cost
+                self.reserve_each = max(actual, self.floor)
             self._cond.notify_all()
 
 
@@ -171,7 +187,12 @@ def ask_run(
         )
         for m in cfg.models
     )
-    cap = SpendCap(cap_usd, planning * INITIAL_RESERVE_FACTOR)
+    if per_provider < 1:
+        raise ValueError("per_provider must be at least 1")
+    cap = SpendCap(cap_usd, planning * INITIAL_RESERVE_FACTOR, floor=planning)
+    for r in runners.values():
+        if hasattr(r, "stop"):
+            r.stop = stop  # type: ignore[attr-defined]  # retries end on Ctrl-C
     sems = {p: threading.Semaphore(per_provider) for p in {provider_of(m) for m in cfg.models}}
     stopped_models: set[str] = set()
     lock = threading.Lock()
@@ -227,24 +248,59 @@ def ask_run(
                     result.stopped_at_cap = True
                     result.skipped_for_cap += 1
             return
+        hold = _Hold(cap, reserved)
+        called = [False]
+        try:
+            paid(q, model, key, hold, called)
+        except BaseException as exc:
+            # a bug between reserve and settle never leaks a reservation (which would hang a
+            # capped run) nor loses the record of a paid call (N1.2 v4 M2)
+            if not hold.done:
+                charge = max(reserved, cap.initial) if called[0] else 0.0
+                hold.settle(charge)
+                if called[0]:
+                    spend(q, model, charge)
+                    note_error(q, model, "internal", f"{type(exc).__name__}: {exc}", key, charge)
+            raise
+        finally:
+            hold.settle(0.0)  # no-op unless a path forgot to settle
+
+    def spend(q: StudyQuestion, model: str, actual: float) -> str | None:
+        if spend_ledger is None:
+            return None
+        try:
+            record_spend(
+                spend_ledger,
+                kind="answer",
+                run_id=f"{cfg.name}:run-{run}",
+                spent_usd=actual,
+                note=f"{q.id} {model}",
+            )
+        except OSError as exc:  # keep the paid response even if the spend file fails
+            return f"{type(exc).__name__}: {exc}"
+        return None
+
+    def paid(q: StudyQuestion, model: str, key: str, hold: _Hold, called: list[bool]) -> None:
+        reserved = hold.amount
         runner = runners[model]
         with sems[provider_of(model)]:
             # a worker may have waited for this slot: check again so Ctrl-C or a bad key
             # starts nothing new (N1.2 v2 M1)
             if stop.is_set() or model in stopped_models:
-                cap.settle(reserved, 0.0)
+                hold.settle(0.0)
                 with lock:
                     result.cancelled += 1
                 return
             start = time.monotonic()
+            called[0] = True
             try:
                 rc: RawCall = runner.call(q, cfg)
             except TransportError as exc:
-                cap.settle(reserved, 0.0)
+                hold.settle(0.0)
                 note_error(q, model, "transport", str(exc), key)
                 return
             except Exception as exc:  # a provider refusal of the request, a bad key, a bug
-                cap.settle(reserved, 0.0)
+                hold.settle(0.0)
                 status = getattr(exc, "status_code", None)
                 if status in STOP_MODEL_AFTER:
                     stopped_models.add(model)
@@ -271,24 +327,14 @@ def ask_run(
                 cached_in=u.cached_in,
                 searches=u.searches,
             )
-        except Exception as exc:  # cannot price it: charge the reservation so the cap stays safe
-            actual = reserved
+        except Exception as exc:  # cannot price it: charge generously so the cap stays safe
+            actual = max(reserved, cap.initial)  # never a tiny room-left reservation (v4 L3)
             u = None
             unpriced = f"{type(exc).__name__}: {exc}"
-        cap.settle(reserved, actual)
-        if spend_ledger is not None:
-            try:
-                record_spend(
-                    spend_ledger,
-                    kind="answer",
-                    run_id=f"{cfg.name}:run-{run}",
-                    spent_usd=actual,
-                    note=f"{q.id} {model}",
-                )
-            except OSError as exc:  # keep the paid response even if the spend file fails
-                note_error(
-                    q, model, "spend-ledger", f"{type(exc).__name__}: {exc}", key, cost=actual
-                )
+        hold.settle(actual)
+        failed = spend(q, model, actual)
+        if failed is not None:
+            note_error(q, model, "spend-ledger", failed, key, cost=actual)
         if unpriced is not None:  # noted only once the spend line is down (v3 L2)
             note_error(q, model, "unpriced", unpriced, key, cost=actual)
         answered_at = clock().isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -326,6 +372,17 @@ def ask_run(
     workers = max(1, per_provider * len(sems))
     pool = ThreadPoolExecutor(max_workers=workers)
     futures: list[Future[None]] = []
+
+    def drain() -> None:
+        """Wait for in-flight calls; a second Ctrl-C never abandons one mid-call, which would
+        lose its spend line and answer (`shutdown(wait=True)` can be interrupted; v4 M1)."""
+        pend = {f for f in futures if not f.done()}
+        while pend:
+            try:
+                _, pend = _drain_wait(pend, timeout=0.5)
+            except KeyboardInterrupt:
+                continue
+
     try:
         futures.extend(pool.submit(one, q, m) for q in order for m in cfg.models)  # v3 L6
         pending = set(futures)
@@ -336,9 +393,17 @@ def ask_run(
     except KeyboardInterrupt:
         stop.set()
         result.interrupted = True
-        pool.shutdown(wait=True, cancel_futures=True)  # in-flight calls finish, queued are dropped
-        result.cancelled += sum(1 for f in futures if f.cancelled())
+    except BaseException:
+        stop.set()  # a bug stops new calls; in-flight ones still finish and are recorded
+        raise
     finally:
-        pool.shutdown(wait=True, cancel_futures=True)
+        stop_queued = stop.is_set()
+        if stop_queued:
+            for f in futures:
+                f.cancel()
+        drain()
+        pool.shutdown(wait=True, cancel_futures=True)  # every future is done: returns at once
+        if stop_queued:
+            result.cancelled += sum(1 for f in futures if f.cancelled())
         result.spent_usd = round(cap.spent, 6)
     return result

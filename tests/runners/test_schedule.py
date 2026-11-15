@@ -460,3 +460,117 @@ def test_moving_the_city_asks_again():
         update={"user_location": CFG.user_location.model_copy(update={"city": "Leeds"})}
     )
     assert answer_config_hash(moved) != answer_config_hash(CFG)
+
+
+def _bounded(fn, timeout=20):
+    """Run fn in a daemon thread; fail (not hang) if it does not end."""
+    box: dict = {}
+
+    def target():
+        try:
+            box["value"] = fn()
+        except BaseException as exc:
+            box["error"] = exc
+
+    th = threading.Thread(target=target, daemon=True)
+    th.start()
+    th.join(timeout)
+    assert not th.is_alive(), "the run hung"
+    return box
+
+
+def test_a_second_ctrl_c_never_abandons_a_call_in_flight(tmp_path, monkeypatch):
+    """N1.2 v4 M1: Ctrl-C, then Ctrl-C again while in-flight calls finish."""
+    import concurrent.futures
+
+    import citewatch.runners.schedule as sch
+
+    real_wait = real_drain = concurrent.futures.wait
+    n = {"wait": 0, "drain": 0}
+
+    def first_interrupt(*a, **k):
+        n["wait"] += 1
+        if n["wait"] == 2:
+            raise KeyboardInterrupt
+        return real_wait(*a, **k)
+
+    def second_interrupt(*a, **k):
+        n["drain"] += 1
+        if n["drain"] == 1:
+            raise KeyboardInterrupt
+        return real_drain(*a, **k)
+
+    monkeypatch.setattr(sch, "wait", first_interrupt)
+    monkeypatch.setattr(sch, "_drain_wait", second_interrupt)
+    qs = [
+        StudyQuestion(id=f"v-{i:03d}", text=f"Q{i}?", intent="fitness", time_sensitive=False)
+        for i in range(1, 31)
+    ]
+    rs = runners(delay=0.3)
+    res = go(tmp_path, rs, qs=qs, per_provider=2)
+    made = sum(len(r.calls) for r in rs.values())
+    assert res.interrupted and n["drain"] >= 2 and 0 < made < 60
+    assert len(spend_lines(tmp_path)) == made == res.asked  # every started call recorded
+
+
+def test_failures_under_a_cap_never_leak_a_reservation(tmp_path):
+    """N1.2 v4 M2: transport and provider errors settle their reservations under a cap."""
+    fail = {
+        "v-002": TransportError("gone"),
+        "v-003": StatusError(400),
+        "v-005": TransportError("gone"),
+    }
+    box = _bounded(lambda: go(tmp_path, runners(fail=fail), cap=0.6))
+    res = box["value"]
+    assert res.stopped_at_cap or res.asked + len(res.errors) == 12
+    assert {e["error"] for e in res.errors} >= {"transport", "provider:400"}
+
+
+def test_a_runner_bug_after_a_paid_call_is_recorded_and_ends_the_run(tmp_path):
+    class Garbage(FakeRunner):
+        def call(self, q, cfg):  # type: ignore[override]
+            super().call(q, cfg)
+            return None  # a bug: paid, but nothing usable came back
+
+    rs = {m: Garbage(m) for m in CFG.models}
+    box = _bounded(lambda: go(tmp_path, rs, qs=QS[:2], cap=0.6))
+    assert isinstance(box.get("error"), AttributeError)
+    made = sum(len(r.calls) for r in rs.values())
+    assert made >= 1 and len(spend_lines(tmp_path)) == made  # every paid call has its line
+
+
+def test_a_missing_runner_raises_instead_of_hanging(tmp_path):
+    rs = {CFG.models[0]: FakeRunner(CFG.models[0])}
+    box = _bounded(lambda: go(tmp_path, rs, cap=0.6))
+    assert isinstance(box.get("error"), KeyError)
+
+
+def test_the_search_limit_is_part_of_the_answer_key():
+    more = CFG.model_copy(update={"max_searches": CFG.max_searches + 1})
+    assert answer_config_hash(more) != answer_config_hash(CFG)
+
+
+def test_an_interrupt_under_a_tight_cap_is_not_reported_as_the_cap(tmp_path):
+    stop = threading.Event()
+    timer = threading.Timer(0.05, stop.set)
+    timer.start()
+    qs = [
+        StudyQuestion(id=f"v-{i:03d}", text=f"Q{i}?", intent="fitness", time_sensitive=False)
+        for i in range(1, 21)
+    ]
+    res = go(tmp_path, runners(delay=0.1), qs=qs, cap=0.3, stop=stop)
+    timer.cancel()
+    assert not res.stopped_at_cap and res.skipped_for_cap == 0 and res.cancelled > 0
+
+
+def test_per_provider_must_be_positive(tmp_path):
+    with pytest.raises(ValueError, match="per_provider"):
+        go(tmp_path, runners(), per_provider=0)
+
+
+def test_a_cheap_first_call_never_shrinks_reservations_below_the_plan():
+    cap = SpendCap(10.0, initial_reserve=0.4, floor=0.1)
+    r = cap.reserve()
+    assert r is not None
+    cap.settle(r, 0.01)  # a quick refusal
+    assert cap.reserve_each == 0.1

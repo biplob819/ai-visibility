@@ -303,18 +303,31 @@ def ask(
         json.dumps({"seed": cfg.seeds["order"], "run": run, "order": order}, indent=2) + "\n",
         encoding="utf-8",
     )
-    res = ask_run(
-        qs,
-        cfg,
-        run=run,
-        runners=runners,
-        store=RawStore(base),
-        ledger=Ledger(run_dir),
-        prices=prices,
-        cap_usd=cap,
-        spend_ledger=base / "data" / "spend-ledger.jsonl",  # one line per paid call (D-19)
-    )
-    nothing = res.asked == 0 and res.cached == 0 and bool(res.errors)  # every call failed (v3 M2)
+    import signal
+
+    def _term(*_a: Any) -> None:
+        raise KeyboardInterrupt  # SIGTERM stops like Ctrl-C: in-flight calls are recorded
+
+    try:
+        old_term = signal.signal(signal.SIGTERM, _term)
+    except (ValueError, OSError):  # not the main thread
+        old_term = None
+    try:
+        res = ask_run(
+            qs,
+            cfg,
+            run=run,
+            runners=runners,
+            store=RawStore(base),
+            ledger=Ledger(run_dir),
+            prices=prices,
+            cap_usd=cap,
+            spend_ledger=base / "data" / "spend-ledger.jsonl",  # one line per paid call (D-19)
+        )
+    finally:
+        if old_term is not None:
+            signal.signal(signal.SIGTERM, old_term)
+    nothing = res.asked == 0 and bool(res.errors)  # every attempted call failed (D-41, v4 L5)
     summary = {
         "ok": not (res.stopped_at_cap or res.interrupted or nothing),
         "command": "ask",

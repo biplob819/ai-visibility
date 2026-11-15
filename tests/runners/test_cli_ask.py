@@ -132,3 +132,36 @@ def test_an_interrupted_run_exits_2(study, capsys, monkeypatch):
     assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 2
     assert json.loads(capsys.readouterr().out)["interrupted"] is True
     assert real_wait  # the real wait is untouched outside the scheduler
+
+
+@pytest.mark.skipif(
+    __import__("sys").platform == "win32", reason="SIGTERM to self ends a Windows process"
+)
+def test_sigterm_stops_like_ctrl_c_and_records_every_call(study, capsys, monkeypatch):
+    import os
+    import signal
+    import threading
+
+    _fake(monkeypatch, delay=0.3)
+    timer = threading.Timer(0.2, os.kill, args=(os.getpid(), signal.SIGTERM))
+    timer.start()
+    capsys.readouterr()
+    code = cli.main(["ask", "--run", "0", "--study", str(study), "--json"])
+    timer.cancel()
+    out = json.loads(capsys.readouterr().out)
+    spend = (study / "data" / "spend-ledger.jsonl").read_text(encoding="utf-8").splitlines()
+    assert code == 2 and out["interrupted"] is True and len(spend) == out["asked"]
+    assert signal.getsignal(signal.SIGTERM) is not None  # the old handler is back
+
+
+def test_a_resume_where_every_missing_call_fails_exits_2(study, capsys, monkeypatch):
+    """v4 L5: answers already stored do not turn a revoked key into success."""
+    from .helpers import StatusError
+
+    _fake(monkeypatch)
+    assert cli.main(["ask", "--run", "0", "--questions", "q-001", "--study", str(study)]) == 0
+    _fake(monkeypatch, fail={"q-002": StatusError(401)})
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 2
+    out = json.loads(capsys.readouterr().out)
+    assert out["cached"] == 2 and out["asked"] == 0 and out["ok"] is False

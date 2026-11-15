@@ -68,8 +68,10 @@ def with_retries(
     attempts: int = MAX_ATTEMPTS,
     sleep: Callable[[float], None] = time.sleep,
     rng: random.Random | None = None,
+    stop: Any = None,
 ) -> T:
-    """Exponential backoff with jitter on transient errors, up to `attempts` tries (§3.4)."""
+    """Exponential backoff with jitter on transient errors, up to `attempts` tries (§3.4).
+    A set `stop` event ends the retries at once, so Ctrl-C never waits out a backoff."""
     rng = rng or random.Random()
     for attempt in range(1, attempts + 1):
         try:
@@ -77,6 +79,8 @@ def with_retries(
         except Exception as exc:
             if not is_transient(exc):
                 raise
+            if stop is not None and stop.is_set():
+                raise TransportError(f"{type(exc).__name__}; stopped before retrying") from exc
             if attempt == attempts:
                 raise TransportError(
                     f"{type(exc).__name__} after {attempts} attempts: {exc}"

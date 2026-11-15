@@ -98,13 +98,15 @@ class OpenAIRunner:
             client = openai.OpenAI(api_key=key_for("openai"), max_retries=0)
         self.client = client
         self._sleep = sleep
+        self.stop: Any = None  # the scheduler's stop event; ends retries on Ctrl-C
 
     def usage(self, responses: list[dict[str, Any]]) -> Usage:
         return usage(responses)
 
     def call(self, question: StudyQuestion, cfg: StudyConfig) -> RawCall:
         request = build_request(question, cfg)
-        kwargs = {"sleep": self._sleep} if self._sleep else {}
+        kwargs: dict[str, Any] = {"sleep": self._sleep} if self._sleep else {}
+        kwargs["stop"] = self.stop
         resp = with_retries(
             lambda: self.client.responses.create(model=self.model, **request), **kwargs
         )

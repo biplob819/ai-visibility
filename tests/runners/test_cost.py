@@ -27,6 +27,14 @@ def test_recorded_costs_match_a_hand_calculation():
             + a["tokens_out"] * p.output
         ) / 1e6 + a["searches"] * p.search_per_1k / 1000
         assert math.isclose(env["cost_usd"], hand, rel_tol=1e-12)
+        computed = answer_cost(  # the code path, not only the stored number (v4 L7)
+            p,
+            tokens_in=a["tokens_in"],
+            tokens_out=a["tokens_out"],
+            cached_in=a["cached_in"],
+            searches=a["searches"],
+        )
+        assert math.isclose(computed, hand, rel_tol=1e-12)
 
 
 def test_long_context_price_applies_above_the_threshold():

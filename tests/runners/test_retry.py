@@ -87,3 +87,24 @@ def test_usage_readers_match_the_parsers_on_recorded_responses():
         anthropic_runner.usage([{"usage": {"input_tokens": "x", "output_tokens": -1}}]).tokens_in
         == 0
     )
+
+
+def test_a_stop_ends_retries_at_once():
+    import threading
+
+    from citewatch.runners.base import TransportError, with_retries
+
+    from .helpers import StatusError
+
+    stop = threading.Event()
+    stop.set()
+    slept: list[float] = []
+    calls = []
+
+    def flaky():
+        calls.append(1)
+        raise StatusError(503)
+
+    with pytest.raises(TransportError, match="stopped"):
+        with_retries(flaky, sleep=slept.append, stop=stop)
+    assert len(calls) == 1 and slept == []

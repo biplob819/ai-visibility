@@ -126,6 +126,7 @@ class AnthropicRunner:
             client = anthropic.Anthropic(api_key=key_for("anthropic"), max_retries=0)
         self.client = client
         self._sleep = sleep
+        self.stop: Any = None  # the scheduler's stop event; ends retries on Ctrl-C
 
     def usage(self, responses: list[dict[str, Any]]) -> Usage:
         return usage(responses)
@@ -136,7 +137,8 @@ class AnthropicRunner:
         request = build_request(question, cfg)
         messages = list(request["messages"])
         responses: list[dict[str, Any]] = []
-        kwargs = {"sleep": self._sleep} if self._sleep else {}
+        kwargs: dict[str, Any] = {"sleep": self._sleep} if self._sleep else {}
+        kwargs["stop"] = self.stop
         for _ in range(MAX_CONTINUATIONS + 1):
             body = {**request, "messages": messages}
             try:
