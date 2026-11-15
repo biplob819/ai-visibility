@@ -60,7 +60,7 @@ def check_start(node_id: str, nodes: dict[str, Node], caps: list[Cap], specs: Pa
         return problems
     for f in SPEC_FILES:
         if not (d / f).is_file():
-            problems.append(f"missing {d.relative_to(specs.parent)}/{f}")
+            problems.append(f"missing {d.relative_to(specs.parent).as_posix()}/{f}")
     criteria = d / "criteria.md"
     if criteria.is_file():
         text = criteria.read_text(encoding="utf-8")
