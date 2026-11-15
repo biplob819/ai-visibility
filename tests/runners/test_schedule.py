@@ -254,3 +254,15 @@ def test_keyboard_interrupt_in_the_main_loop_cancels_queued_calls(tmp_path, monk
     made = sum(len(r.calls) for r in rs.values())
     assert res.interrupted and made < 80
     assert len(spend_lines(tmp_path)) == res.asked == made
+
+
+def test_a_failing_spend_file_still_keeps_the_paid_response(tmp_path, monkeypatch):
+    import citewatch.runners.schedule as sch
+
+    def broken(*_a, **_k):
+        raise OSError("read-only file system")
+
+    monkeypatch.setattr(sch, "record_spend", broken)
+    res = go(tmp_path, runners(), qs=QS[:1])
+    assert {e["error"] for e in res.errors} == {"spend-ledger"} and res.asked == 2
+    assert RawStore(tmp_path).has("ask", ask_key(CFG, 1, "v-001", CFG.models[0]))

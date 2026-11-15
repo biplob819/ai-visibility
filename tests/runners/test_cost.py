@@ -62,7 +62,7 @@ def test_bad_prices_are_errors(tmp_path):
         "  checked_on: 2026-11-15\n",
         encoding="utf-8",
     )
-    with pytest.raises(LedgerError):
+    with pytest.raises(PriceError):
         load_prices(p)
     p.write_text("m:\n  input: 1\n", encoding="utf-8")
     with pytest.raises(PriceError):
@@ -92,3 +92,85 @@ def test_cached_tokens_are_priced_once_at_the_cached_rate():
     cost = answer_cost(p, tokens_in=10_000, tokens_out=0, cached_in=4_000)
     assert math.isclose(cost, (6_000 * p.input + 4_000 * p.cached_input) / 1e6)
     assert cost < answer_cost(p, tokens_in=10_000, tokens_out=0)
+
+
+def test_spend_lines_never_tear_when_threads_append_at_once(tmp_path, monkeypatch):
+    """Simulates a non-atomic append (what Windows does across handles): each write is split
+    into pieces with a pause between them. Without the per-file lock, lines interleave."""
+    import io
+    import json
+    import threading
+    import time
+    from pathlib import Path
+
+    real_open = Path.open
+
+    class Slow(io.TextIOWrapper):
+        pass
+
+    def slow_open(self, mode="r", *a, **k):
+        fh = real_open(self, mode, *a, **k)
+        if "a" not in mode:
+            return fh
+        write = fh.write
+
+        def chunked(s):
+            for i in range(0, len(s), 7):
+                write(s[i : i + 7])
+                fh.flush()
+                time.sleep(0.0002)
+            return len(s)
+
+        fh.write = chunked  # type: ignore[method-assign]
+        return fh
+
+    monkeypatch.setattr(Path, "open", slow_open)
+    led = tmp_path / "spend.jsonl"
+
+    def worker(i):
+        for j in range(15):
+            record_spend(led, kind="answer", run_id=f"r{i}", spent_usd=0.01, note=f"{i}-{j}" * 5)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    lines = led.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 120
+    assert all(json.loads(x)["spent_usd"] == 0.01 for x in lines)
+
+
+@pytest.mark.parametrize(
+    ("body", "needle"),
+    [
+        ("- a\n- b\n", "must map"),
+        ("m: [1, 2]\n", "must be a mapping"),
+        (
+            "m:\n  input: -1\n  output: 1\n  cached_input: 0\n  search_per_1k: 1\n"
+            "  checked_on: 2026-11-15\n",
+            "negative",
+        ),
+        (
+            "m:\n  input: 1\n  output: 1\n  cached_input: 0\n  search_per_1k: 1\n"
+            "  checked_on: 2099-01-01\n",
+            "future",
+        ),
+        ("m: {input: 1\n", "not valid YAML"),
+    ],
+)
+def test_malformed_prices_are_price_errors(tmp_path, body, needle):
+    p = tmp_path / "prices.yaml"
+    p.write_text(body, encoding="utf-8")
+    with pytest.raises(PriceError, match=needle):
+        load_prices(p)
+
+
+def test_a_datetime_checked_on_is_read_as_its_date(tmp_path):
+    p = tmp_path / "prices.yaml"
+    p.write_text(
+        "m:\n  input: 1\n  output: 1\n  cached_input: 0\n  search_per_1k: 1\n"
+        "  checked_on: 2026-11-15 10:00:00\n",
+        encoding="utf-8",
+    )
+    assert load_prices(p)["m"].checked_on == dt.date(2026, 11, 15)

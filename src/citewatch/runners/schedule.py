@@ -235,13 +235,18 @@ def ask_run(
             note_error(q, model, "unpriced", f"{type(exc).__name__}: {exc}", key, cost=actual)
         cap.settle(reserved, actual)
         if spend_ledger is not None:
-            record_spend(
-                spend_ledger,
-                kind="answer",
-                run_id=f"{cfg.name}:run-{run}",
-                spent_usd=actual,
-                note=f"{q.id} {model}",
-            )
+            try:
+                record_spend(
+                    spend_ledger,
+                    kind="answer",
+                    run_id=f"{cfg.name}:run-{run}",
+                    spent_usd=actual,
+                    note=f"{q.id} {model}",
+                )
+            except OSError as exc:  # keep the paid response even if the spend file fails
+                note_error(
+                    q, model, "spend-ledger", f"{type(exc).__name__}: {exc}", key, cost=actual
+                )
         answered_at = clock().isoformat(timespec="seconds").replace("+00:00", "Z")
         env = {
             "schema_version": "1.0",

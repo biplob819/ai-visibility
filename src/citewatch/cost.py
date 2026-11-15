@@ -9,11 +9,12 @@ from __future__ import annotations
 import datetime as dt
 import json
 import math
+import threading
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -46,21 +47,53 @@ def load_prices(path: Path | None = None) -> dict[str, Price]:
         if path
         else files("citewatch").joinpath("prices.yaml").read_text(encoding="utf-8")
     )
-    raw = yaml.safe_load(text) or {}
+    try:
+        raw = yaml.safe_load(text) or {}
+    except yaml.YAMLError as exc:
+        raise PriceError(f"prices.yaml is not valid YAML ({exc})") from exc
+    if not isinstance(raw, dict):
+        raise PriceError("prices.yaml must map each model to its prices")
     prices = {}
     for model, p in raw.items():
         try:
+            if not isinstance(p, dict):
+                raise PriceError(f"prices.yaml: {model} must be a mapping of prices")
+            p = cast(dict[str, Any], p)
             fields = {k: p[k] for k in ("input", "output", "cached_input", "search_per_1k")}
             for k, v in fields.items():
-                check_money(v, f"{model}.{k}")
+                try:
+                    check_money(v, f"{model}.{k}")
+                except ValueError as exc:
+                    raise PriceError(f"prices.yaml: {exc}") from exc
             checked = p["checked_on"]
+            if isinstance(checked, dt.datetime):
+                checked = checked.date()
             if not isinstance(checked, dt.date):
                 raise PriceError(f"{model}.checked_on must be a date")
-            long = {k: p.get(k) for k in ("long_threshold", "long_input", "long_output")}
-            if long["long_threshold"] is not None:
-                for k in ("long_input", "long_output"):
-                    check_money(long[k], f"{model}.{k}")
-            prices[model] = Price(model=model, checked_on=checked, **fields, **long)
+            if checked > dt.date.today() + dt.timedelta(days=1):
+                raise PriceError(f"{model}.checked_on {checked} is in the future")
+            threshold, long_in, long_out = (
+                p.get(k) for k in ("long_threshold", "long_input", "long_output")
+            )
+            if threshold is not None:
+                for k, v in (("long_input", long_in), ("long_output", long_out)):
+                    try:
+                        if v is None:
+                            raise ValueError(f"{model}.{k} is required with long_threshold")
+                        check_money(v, f"{model}.{k}")
+                    except ValueError as exc:
+                        raise PriceError(f"prices.yaml: {exc}") from exc
+            prices[model] = Price(
+                model=model,
+                input=float(fields["input"]),
+                output=float(fields["output"]),
+                cached_input=float(fields["cached_input"]),
+                search_per_1k=float(fields["search_per_1k"]),
+                checked_on=checked,
+                long_threshold=threshold,
+                long_input=None if long_in is None else float(long_in),
+                long_output=None if long_out is None else float(long_out),
+            )
         except (KeyError, TypeError) as exc:
             raise PriceError(f"prices.yaml: {model} is missing or has a bad field ({exc})") from exc
     return prices
@@ -135,7 +168,18 @@ def record_spend(
         "spent_usd": round(check_money(spent_usd, "spent_usd"), 6),
         "note": note,
     }
+    line = json.dumps(row, sort_keys=True) + "\n"
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    with ledger_path.open("a", encoding="utf-8", newline="\n") as fh:
-        fh.write(json.dumps(row, sort_keys=True) + "\n")
+    with _lock_for(ledger_path), ledger_path.open("a", encoding="utf-8", newline="\n") as fh:
+        fh.write(line)  # one locked write per line: appends from threads never tear (Windows)
     return row
+
+
+_LOCKS: dict[str, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
+
+
+def _lock_for(path: Path) -> threading.Lock:
+    key = str(path.resolve())
+    with _LOCKS_GUARD:
+        return _LOCKS.setdefault(key, threading.Lock())
