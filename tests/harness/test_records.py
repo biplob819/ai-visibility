@@ -137,6 +137,8 @@ def test_verifier_prompt_sets_the_rules():
         "criteria",
         "Never spend money",
         "never push",
+        "OPEN HIGH/MEDIUM",
+        "D-26",
     ):
         assert needle in text, needle
     assert "builder's reasoning" in text

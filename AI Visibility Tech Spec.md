@@ -428,7 +428,7 @@ Appendix C lists the provider facts to confirm against live docs at N1.2 before 
 | Timeouts and retries | 10 s; at most 2 retries on transport, 5xx and 429 with `Retry-After` honoured; never after 401, 403, 451 or a robots refusal |
 | Bodies | `text/html` only, 5 MB cap, held in memory for date resolution and dropped. Support-sample URLs only: main text written to `~/.cache/citewatch/bodies/` for M3.2 and hand labelling, deleted by `score --finalise` |
 | Gated pages | A login form or paywall marker on a 200 response is `gated`; no workaround (B8) |
-| Audit | `fetch_log.jsonl`: url, host, at, attempt, status, bytes, robots decision, outcome. Gate 8 replays it and fails on any host above 1 req/s, any fetched disallowed URL, any retry after a block, or a changed user agent |
+| Audit | `fetch_log.jsonl`: url, host, at (the request's **start** time, UTC), attempt, status, bytes, robots decision, outcome, user agent. Gate 8 replays it and fails on any host above 1 req/s, any fetched disallowed URL, any retry after a block, more than three requests for one page, or a changed user agent. A robots.txt that returned 401, 403 or 5xx makes every later page on that host `robots_disallowed`; A2.2's polite tests pin this, since the audit trusts each line's robots field |
 
 ### 7.3 Date resolution
 

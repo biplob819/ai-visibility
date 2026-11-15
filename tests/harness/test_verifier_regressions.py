@@ -507,3 +507,43 @@ def test_proof_entries_need_a_py_file_and_a_well_formed_value(tmp_path):
     assert nc.gate_proofs(ctx(good)).status == "PASS"
     assert nc.gate_proofs(ctx(good.replace("test_p.py", "notes.txt", 1))).status == "FAIL"
     assert nc.gate_proofs(ctx(good.replace('›"test_a"', " test_a", 1))).status == "FAIL"
+
+
+# ---- W0.1 verifier pass 5 ----
+
+
+@pytest.mark.safety
+def test_prose_in_stored_answers_never_trips_the_header_rule(tmp_path):
+    (tmp_path / "data" / "raw" / "ask" / "ab").mkdir(parents=True)
+    (tmp_path / "data" / "raw" / "ask" / "ab" / "abcd.json.gz").write_bytes(
+        gzip.compress(b'{"answer_text": "Good for your mind, body, and mood."}')
+    )
+    (tmp_path / "data" / "labels.csv").write_text(
+        "citation_ref,where_found\nv-1,body\n", encoding="utf-8"
+    )
+    assert sa.audit(tmp_path, tmp_path / "none", IDLE) == []
+    (tmp_path / "data" / "sheet.tsv.gz").write_bytes(gzip.compress(b"ref\tpage_text\nv-1\tx\n"))
+    assert any("sheet.tsv.gz" in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))
+
+
+def test_pass_five_survivors_are_pinned(tmp_path, monkeypatch):
+    import io
+    import zipfile
+
+    from harness_lib import unpack
+
+    monkeypatch.setenv("SOME_SECRET", "x")
+    assert "SOME_SECRET" not in nc.keyless_env()
+    upper = "CITEWATCH/0.1.0 (+https://example.org; study@example.org)"
+    lines = [fa._line(), fa._line(host="a.com", url="https://a.com/", user_agent=upper)]
+    assert any("different user agents" in p for p in fa.audit(lines))
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("a.txt", b"clean " * 100)
+        zf.writestr("b.txt", b"x <html> y " * 10)
+    assert b"<html>" in unpack(buf.getvalue())
+    f = tmp_path / "doc.md"
+    key = "sk-ant-" + "Q" * 40
+    f.write_text(f"example {key}  # secret-scan: allow\nreal = '{key}'\n", encoding="utf-8")
+    hits = secret_scan.scan([f])
+    assert len(hits) == 1 and ":2:" in hits[0]

@@ -53,11 +53,30 @@ BODY_KEYS = re.compile(
     # a JSON or repr key, also double-encoded or padded: "body":, \"body\":, " body ":
     rb"(?:\\?[\"']\s*(?:body|html|page_text)\s*\\?[\"']\s*:)"
     # a YAML key, also as a list item: body: / - body:
-    rb"|(?:^\s*(?:-\s+)?(?:body|html|page_text)\s*:)"
-    # a CSV/TSV/semicolon header cell on any line (a BOM allowed), e.g. ref, body
-    rb"|(?:^(?:\xef\xbb\xbf)?(?:[^\n]*[,;\t]\s*)?\"?(?:body|html|page_text)\"?\s*(?:[,;\t\r]|$))",
+    rb"|(?:^\s*(?:-\s+)?(?:body|html|page_text)\s*:)",
     re.I | re.M,
 )
+# A header cell named body/html/page_text, checked only on the first line of a CSV, TSV or
+# semicolon file, so prose such as "mind, body, and mood" in stored answers never matches.
+HEADER_CELL = re.compile(rb"^\s*\"?(?:body|html|page_text)\"?\s*$", re.I)
+TABULAR = (".csv", ".tsv", ".psv", ".txt")
+COMPRESSED = (".gz", ".bz2", ".xz", ".zip")
+
+
+def header_problem(path: Path, raw: bytes) -> bytes | None:
+    """The offending header cell, when the file is tabular and its header names a body column."""
+    name = path.name.lower()
+    for ext in COMPRESSED:
+        name = name.removesuffix(ext)
+    if not name.endswith(TABULAR):
+        return None
+    first = raw.split(b"\n", 1)[0].removeprefix(b"\xef\xbb\xbf").rstrip(b"\r")
+    for cell in re.split(rb"[,;\t|]", first):
+        if HEADER_CELL.match(cell):
+            return cell.strip()
+    return None
+
+
 BODY_NODE = "M3.2"
 
 
@@ -92,6 +111,9 @@ def file_problems(path: Path, root: Path) -> list[str]:
     k = BODY_KEYS.search(raw)
     if k:
         problems.append(f"{rel}: page-body key {k.group(0).decode('ascii', 'replace')!r}")
+    h = header_problem(path, raw)
+    if h:
+        problems.append(f"{rel}: page-body column {h.decode('ascii', 'replace')!r} in the header")
     return problems
 
 
@@ -222,6 +244,21 @@ def self_test() -> int:
         (root / "data" / "deep.gz").unlink()
         (root / "data" / "notes.txt").write_bytes(b"BZh is how bzip2 files start")
         check("plain text starting with BZh passes", audit(root, cache, idle) == [])
+        (root / "data" / "notes.txt").unlink()
+        ordinary = {
+            "answer.json.gz": gzip.compress(
+                b'{"answer_text": "Exercise is good for your mind, body, and mood; '
+                b'CSS, HTML, and JS aside.", "tags": ["head", "body"]}'
+            ),
+            "quotes.jsonl": b'{"quoted_span": "mind; body; spirit"}\n',
+            "labels.csv": b"citation_ref,where_found,verdict\nv-1,body,supported\n",
+        }
+        for name, content in ordinary.items():
+            (root / "data" / name).write_bytes(content)
+        r = audit(root, cache, idle)
+        check("ordinary text and CSV cells that say 'body' pass", r == [])
+        for name in ordinary:
+            (root / "data" / name).unlink()
     print("self-test", "PASSED" if failures == 0 else f"FAILED ({failures})")
     return 0 if failures == 0 else 1
 

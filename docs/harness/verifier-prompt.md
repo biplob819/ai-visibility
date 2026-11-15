@@ -27,4 +27,4 @@ Report, for every criterion in order:
 - The evidence: the command you ran and its output, or the file and line.
 - For `DISPROVED`: the smallest failing case.
 
-Then list **should-fix** items (real defects outside the criteria wording) separately from **nits**. End with one line: `VERDICT: all confirmed` or `VERDICT: <n> disproved`.
+Then list every other finding rated **high**, **medium** or **low** against the green bar (D-26): high or medium means it could let a real politeness, page-body storage, secret or spend violation through, or fail a legitimate run or repo; everything else is low and becomes a known limit. Mutation-test the node's checks (make each rule a no-op; the self-test or pytest must fail) and rate surviving mutants the same way. End with two lines: `VERDICT: all confirmed` or `VERDICT: <n> disproved`, and `OPEN HIGH/MEDIUM: <n>`.
