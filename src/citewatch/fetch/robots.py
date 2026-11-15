@@ -18,7 +18,7 @@ from protego import Protego
 
 from citewatch.store import stage_key
 
-from .keys import ascii_host
+from .keys import ascii_host, clean
 
 ROBOTS_TOKEN = "citewatch"
 MAX_ROBOTS_BYTES = 512 * 1024  # RFC 9309 asks crawlers to parse at least 500 KiB
@@ -74,8 +74,8 @@ def directives(text: str) -> list[str]:
             # percent-encode angle brackets: no markup is ever stored (v2 M-2), and request
             # paths carry them encoded anyway, so matching is unchanged
             out.append(
-                line.replace("&", "%26").replace("<", "%3C").replace(">", "%3E").replace('"', "%22")
-            )  # escaped markup (`&lt;html`) and JSON-looking keys are encoded too (v3 M3)
+                clean(line)
+            )  # escaped markup (`&lt;html`) and JSON- or dict-looking keys too (v3 M3, v4 M1)
             if len(out) >= MAX_DIRECTIVES:
                 break
     return out

@@ -25,7 +25,7 @@ from typing import Any
 from citewatch.store import RawStore, stage_key
 
 from .client import FetchResult, PoliteClient
-from .keys import host_of
+from .keys import clean, host_of
 
 FETCH_CODE_VERSION = "fetch-1"
 MAX_HOSTS_IN_FLIGHT = 8
@@ -106,16 +106,16 @@ def _record(r: FetchResult, extra: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": "1.0",
         "url": r.url,
-        "final_url": r.final_url,
+        "final_url": None if r.final_url is None else clean(r.final_url),
         "outcome": r.outcome,
         "status": r.status,
-        "headers": dict(r.headers),
+        "headers": {k: clean(v) for k, v in r.headers.items()},
         "robots": r.robots,
-        "hops": list(r.hops),
+        "hops": [clean(h) for h in r.hops],
         "fetched_at": None
         if r.fetched_at is None
         else r.fetched_at.isoformat(timespec="seconds").replace("+00:00", "Z"),
-        "detail": r.detail,
+        "detail": None if r.detail is None else clean(r.detail),
         **extra,
     }
 

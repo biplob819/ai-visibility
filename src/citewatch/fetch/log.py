@@ -8,7 +8,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from .keys import host_of
+from .keys import clean, host_of
 
 FIELDS = ("url", "host", "at", "attempt", "status", "bytes", "robots", "outcome", "user_agent")
 
@@ -33,7 +33,7 @@ class FetchLog:
         if at.tzinfo is None:
             raise ValueError("fetch log times must be timezone-aware")
         row = {
-            "url": url,
+            "url": clean(url),
             "host": host_of(url),
             "at": at.astimezone(dt.UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "attempt": attempt,

@@ -547,3 +547,127 @@ def test_a_block_on_one_spelling_of_a_host_covers_the_other():
         }
     )
     assert h.may_request("https://xn--bcher-kva.example/p") == "blocked earlier"
+
+
+# --- pass 4 -------------------------------------------------------------------------------
+
+
+def test_server_text_never_carries_markup_into_the_store_or_log(tmp_path):
+    """v4 M1: redirect targets, header values and robots lines are encoded."""
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /'html': x\n"
+            ),
+            "https://a.example/r": httpx.Response(302, headers={"location": "/<body class=x>"}),
+            "https://a.example/e": httpx.Response(
+                200,
+                headers={**HTML, "etag": '"<html lang=en>"', "last-modified": "&lt;html>"},
+                content=PAGE,
+            ),
+        }
+    )
+    client, log, _ = make(tmp_path, web, store=store)
+    fetch_pages(["https://a.example/r", "https://a.example/e"], client=client, store=store)
+    files = [*list((tmp_path / "data" / "raw").rglob("*.gz")), log.path]
+    assert all(storage_audit.file_problems(f, tmp_path) == [] for f in files)
+    assert audit(log) == []
+
+
+def test_a_malformed_location_is_one_request_and_keeps_its_status(tmp_path):
+    """v4 M2: never retried as a transport error."""
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {"https://a.example/p": httpx.Response(302, headers={"location": "http://[::1/x"})}
+    )
+    client, log, _ = make(tmp_path, web, store=store)
+    fetch_pages(["https://a.example/p"], client=client, store=store)
+    from citewatch.fetch import fetch_key
+
+    rec = store.get("fetch", fetch_key("https://a.example/p"))
+    assert web.urls().count("https://a.example/p") == 1
+    assert rec["outcome"] == "fetch_error" and rec["status"] == 302
+    assert audit(log) == []
+
+
+def test_two_workers_on_one_host_wait_for_each_others_real_send(tmp_path, monkeypatch):
+    """v4 M3: the per-host lock keeps wire gaps when two threads share a host."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    import httpcore._backends.sync as backend
+
+    from citewatch.fetch import FetchLog, PoliteClient
+
+    seen: list[float] = []
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_GET(self):
+            if self.path != "/robots.txt":
+                seen.append(time.monotonic())
+                if len(seen) == 1:
+                    time.sleep(0.5)  # still answering when the second grant comes due
+            self.send_response(404 if self.path == "/robots.txt" else 200)
+            body = b"" if self.path == "/robots.txt" else PAGE
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    real = backend.SyncBackend.connect_tcp
+    lock = threading.Lock()
+    n = {"i": 0}
+
+    def slow_some(self, *a, **k):
+        with lock:
+            n["i"] += 1
+            i = n["i"]
+        if i == 2:
+            time.sleep(0.8)  # the first page's connection is slow
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(backend.SyncBackend, "connect_tcp", slow_some)
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    try:
+        client = PoliteClient(
+            "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)",
+            FetchLog(tmp_path / "fetch_log.jsonl"),
+        )
+        client.robots.allows(base + "/x")  # robots first, so both pages race for the host
+        ts = [threading.Thread(target=client.get, args=(f"{base}/p{i}",)) for i in range(2)]
+        for t in ts:
+            t.start()
+        for t in ts:
+            t.join()
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    assert len(seen) == 2 and seen[1] - seen[0] >= 0.98, seen
+
+
+def test_a_wall_clock_step_back_still_spaces_logged_times():
+    """v4 low: the wall-clock wait is exercised on a granting read."""
+    from citewatch.fetch import HostLimiter
+
+    from .web import BASE
+
+    clock = VClock()
+    n = {"grants": 0}
+
+    def wall():
+        back = 0.5 if n["grants"] >= 1 else 0.0  # NTP stepped the clock back after grant 1
+        return BASE + dt.timedelta(seconds=clock.now() - back)
+
+    lim = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=wall)
+    ats = []
+    for _ in range(3):
+        with lim.request("a.example") as at:
+            ats.append(at)
+            n["grants"] += 1
+    assert all((b - a).total_seconds() >= 1.0 for a, b in itertools.pairwise(ats))

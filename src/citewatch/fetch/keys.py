@@ -39,6 +39,16 @@ def page_key(url: str) -> str:
     return path + ("?" + "&".join(sorted(query.split("&"))) if query else "")
 
 
+_MARKUP = str.maketrans({"&": "%26", "<": "%3C", ">": "%3E", '"': "%22", "'": "%27"})
+
+
+def clean(text: str) -> str:
+    """Server-controlled text made safe to store or log: markup characters percent-encoded,
+    so no stored record ever carries page markup (NFR6, A2.2 v4 M1). URLs keep their page
+    identity, since page keys decode percent-encoding."""
+    return text.translate(_MARKUP)
+
+
 def ascii_host(host: str) -> str:
     """The punycode form, so `bücher.example` and `xn--bcher-kva.example` are one host for
     the rate limit and robots (v2 M-4)."""

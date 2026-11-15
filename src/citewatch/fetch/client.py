@@ -85,6 +85,28 @@ def _retry_after(value: str | None, now: dt.datetime) -> float | None:
     return max(0.0, (when - now).total_seconds())
 
 
+LOCATION_HEADER = "x-citewatch-location"
+
+
+class _KeepLocation(httpx.BaseTransport):
+    """Moves a 3xx Location out of httpx's reach: httpx builds the next request even with
+    redirects off, and a malformed Location then raises and was retried as a transport error
+    (v4 M2). The client reads and checks the target itself."""
+
+    def __init__(self, inner: httpx.BaseTransport) -> None:
+        self.inner = inner
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        resp = self.inner.handle_request(request)
+        if 300 <= resp.status_code < 400 and "location" in resp.headers:
+            resp.headers[LOCATION_HEADER] = resp.headers["location"]
+            del resp.headers["location"]
+        return resp
+
+    def close(self) -> None:
+        self.inner.close()
+
+
 class PoliteClient:
     def __init__(
         self,
@@ -152,7 +174,7 @@ class PoliteClient:
         out: dict[str, Any] = {"status": None, "headers": {}, "body": None, "nbytes": None}
         start = self._clock()
         with httpx.Client(
-            transport=self._transport,
+            transport=_KeepLocation(self._transport or httpx.HTTPTransport(trust_env=False)),
             timeout=self._timeout_cfg,
             follow_redirects=False,
             headers={"User-Agent": self.user_agent, "Accept": "text/html,*/*;q=0.1"},
@@ -162,17 +184,18 @@ class PoliteClient:
 
             def trace(event: str, info: Any) -> None:
                 if event.endswith("send_request_headers.started"):
-                    if state["abandoned"].is_set():  # past its deadline: never send late
-                        raise RuntimeError("request abandoned before it was sent")
-                    state["sent"] = self.limiter_clock()
+                    with state["lock"]:  # atomic with the deadline (v4 low)
+                        if state["abandoned"].is_set():  # past its deadline: never send late
+                            raise RuntimeError("request abandoned before it was sent")
+                        state["sent"] = self.limiter_clock()
 
             with http.stream("GET", url, extensions={"trace": trace}) as resp:
                 out["status"] = resp.status_code
                 out["headers"] = {
-                    k: resp.headers[k]
-                    for k in (*KEEP_HEADERS, "location", "retry-after")
-                    if k in resp.headers
+                    k: resp.headers[k] for k in (*KEEP_HEADERS, "retry-after") if k in resp.headers
                 }
+                if LOCATION_HEADER in resp.headers:
+                    out["headers"]["location"] = resp.headers[LOCATION_HEADER]
                 ctype = resp.headers.get("content-type", "").split(";")[0].strip().lower()
                 out["ctype"] = ctype
                 if 200 <= resp.status_code < 300 and (kind != "page" or ctype == "text/html"):
@@ -207,7 +230,11 @@ class PoliteClient:
             res.fetched_at = at
             holder: list[Any] = []
             box: dict[str, Any] = {}
-            state: dict[str, Any] = {"abandoned": threading.Event(), "sent": None}
+            state: dict[str, Any] = {
+                "abandoned": threading.Event(),
+                "sent": None,
+                "lock": threading.Lock(),
+            }
 
             def work() -> None:
                 try:
@@ -221,10 +248,12 @@ class PoliteClient:
             th = threading.Thread(target=work, daemon=True, name="citewatch-fetch")
             th.start()
             th.join(self.timeout + 1.0)
-            if th.is_alive():
-                state["abandoned"].set()
-            if state["sent"] is not None:
-                self.limiter.mark_sent(host, state["sent"])
+            with state["lock"]:
+                if th.is_alive():
+                    state["abandoned"].set()
+                sent = state["sent"]
+            if sent is not None:
+                self.limiter.mark_sent(host, sent)
             try:
                 if th.is_alive():
                     raise FutureTimeout
@@ -340,9 +369,16 @@ class PoliteClient:
                 )
             r = self._with_retries(current, kind, limit)
             if r.status in REDIRECTS and r.headers.get("location"):
-                nxt = urljoin(current, r.headers["location"])
-                parts = urlsplit(nxt)
-                if parts.scheme not in ("http", "https") or not parts.hostname:
+                try:
+                    nxt = urljoin(current, r.headers["location"].strip())
+                    parts = urlsplit(nxt)
+                    _ = parts.port  # raises on a bad port
+                    bad = parts.scheme not in ("http", "https") or not parts.hostname
+                except ValueError:
+                    return FetchResult(
+                        url, current, "fetch_error", r.status, hops=hops, detail="bad redirect"
+                    )
+                if bad:
                     return FetchResult(
                         url,
                         current,
