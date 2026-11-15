@@ -7,11 +7,12 @@ error, too many redirects or a redirect away from a robots.txt disallow everythi
 
 from __future__ import annotations
 
+import re
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 from protego import Protego
 
@@ -34,7 +35,19 @@ class RobotsRules:
             return True
         if self.mode == "deny_all" or self.parser is None:
             return False
-        return bool(self.parser.can_fetch(url, ROBOTS_TOKEN))
+        if not self.parser.can_fetch(url, ROBOTS_TOKEN):
+            return False
+        # servers often merge `//` (Apache, nginx): `//private/` is served as `/private/`, so
+        # a URL is allowed only if its slash-merged form is allowed too (v9 L1)
+        p = urlsplit(url)
+        merged = re.sub(r"/{2,}", "/", p.path)
+        if merged != p.path:
+            return bool(
+                self.parser.can_fetch(
+                    urlunsplit((p.scheme, p.netloc, merged, p.query, "")), ROBOTS_TOKEN
+                )
+            )
+        return True
 
 
 def rules_from(status: int | None, text: str | None) -> RobotsRules:

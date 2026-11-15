@@ -1039,3 +1039,90 @@ def test_answers_stored_under_an_older_robots_version_are_read_again(tmp_path):
     client, _log, _ = make(tmp_path, web, store=store)
     assert client.get("https://a.example/p").outcome == "robots_disallowed"
     assert web.urls() == ["https://a.example/robots.txt"]
+
+
+# --- pass 9: each guard pinned by a test that kills its mutant -----------------------------
+
+
+def test_a_robots_file_cut_inside_an_allow_line_drops_that_line(tmp_path):
+    """v9 M1: the cut really lands inside `Allow: /private-ok`."""
+    from citewatch.fetch.robots import MAX_ROBOTS_BYTES
+
+    head = b"User-agent: *\nDisallow: /pri\n"
+    fill = MAX_ROBOTS_BYTES - len(head) - len(b"Allow: /priv")  # bytes of comment lines
+    lines = []
+    while fill > 0:
+        n = min(64, fill) if fill - min(64, fill) != 1 else 32  # never leave a 1-byte line
+        lines.append(b"#" * (n - 1) + b"\n")
+        fill -= n
+    body = head + b"".join(lines) + b"Allow: /private-ok\n" + b"#more\n" * 10
+    assert body[:MAX_ROBOTS_BYTES].endswith(b"\nAllow: /priv")
+    web = FakeWeb({"https://a.example/robots.txt": httpx.Response(200, content=body)})
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/private").outcome == "robots_disallowed"
+
+
+def test_upper_case_encoded_dots_in_a_redirect_are_resolved(tmp_path):
+    """v9 M2 #2."""
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /private\n"
+            ),
+            "https://a.example/r": httpx.Response(301, headers={"location": "/x/%2E%2E/private"}),
+        }
+    )
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/r").outcome == "robots_disallowed"
+    assert not any(r.url.path.startswith("/private") for r in web.requests)
+
+
+def test_the_page_key_resolves_dots_itself(tmp_path):
+    """v9 M2 #6: a target `wire_url` leaves alone (`%2F..`) still maps to the blocked page."""
+    web = FakeWeb(
+        {
+            "https://a.example/a": httpx.Response(403),
+            "https://a.example/r": httpx.Response(301, headers={"location": "/a/b%2F.."}),
+        }
+    )
+    client, log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/a").outcome == "blocked"
+    client.get("https://a.example/r")
+    assert audit(log) == []
+
+
+def test_a_robots_refusal_is_remembered_for_the_same_page(tmp_path):
+    """v9 M2 #17: `/x/` refused, then `/x` (same page identity) is never requested."""
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /x/\n"
+            )
+        }
+    )
+    client, log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/x/").outcome == "robots_disallowed"
+    assert client.get("https://a.example/x").outcome == "robots_disallowed"
+    assert "https://a.example/x" not in web.urls() and audit(log) == []
+
+
+def test_logged_urls_are_cleaned(tmp_path):
+    """v9 M2 #23: quotes reach the log through a redirect target httpx does not encode."""
+    web = FakeWeb({"https://a.example/r": httpx.Response(301, headers={"location": "/'body':x"})})
+    client, log, _ = make(tmp_path, web)
+    client.get("https://a.example/r")
+    assert storage_audit.file_problems(log.path, tmp_path) == []
+
+
+def test_merged_slashes_cannot_get_past_robots(tmp_path):
+    """v9 L1: Apache serves `//private/` as `/private/`."""
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /private\n"
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("https://a.example//private/").outcome == "robots_disallowed"
+    assert client.get("https://a.example/public//page").outcome == "ok"
