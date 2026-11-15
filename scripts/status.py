@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from harness_lib import HarnessError, load_catalog, load_graph, node_status
+from harness_lib import HarnessError, load_catalog, load_graph, node_status, safe_console
 
 
 def render_graph(nodes, caps) -> str:
@@ -43,6 +43,7 @@ def render_node(node_id, nodes, caps) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

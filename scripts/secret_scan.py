@@ -20,7 +20,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from harness_lib import ROOT, HarnessError, git_files, unpack
+from harness_lib import ROOT, HarnessError, git_files, safe_console, unpack
 
 PATTERNS: dict[str, re.Pattern[str]] = {
     "anthropic key": re.compile(r"sk-ant-[A-Za-z0-9_\-]{20,}"),
@@ -100,7 +100,7 @@ def self_test() -> int:
         repo = Path(tmp) / "repo"
         repo.mkdir()
         _sp.run(["git", "init", "-q"], cwd=repo, check=True)
-        (repo / 'notes café "q".md').write_text(f"K = {fake_ant}\n", encoding="utf-8")
+        (repo / "notes café ü.md").write_text(f"K = {fake_ant}\n", encoding="utf-8")
         checks.append(
             ("scans files whose names git would quote", len(scan(candidate_files(repo))) == 1)
         )
@@ -112,6 +112,7 @@ def self_test() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

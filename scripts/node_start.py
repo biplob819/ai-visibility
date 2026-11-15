@@ -38,6 +38,7 @@ from harness_lib import (
     node_status,
     parse_catalog,
     parse_graph,
+    safe_console,
     spec_dir,
     write_catalog,
 )
@@ -182,6 +183,7 @@ def start(
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

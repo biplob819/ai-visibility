@@ -15,6 +15,7 @@ import lzma
 import os
 import re
 import subprocess
+import sys
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -219,6 +220,14 @@ def eligibility_problems(
 def spec_dir(node_id: str, specs: Path = SPECS_DIR) -> Path | None:
     matches = sorted(p for p in specs.glob(f"{node_id}-*") if p.is_dir())
     return matches[0] if matches else None
+
+
+def safe_console() -> None:
+    """Never crash printing a non-ASCII path or symbol to a cp1252 Windows console (L-5)."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
 
 
 def mentions(text: str, cap_id: str) -> bool:

@@ -38,7 +38,7 @@ def test_spec_dir_ignores_files_and_mentions_needs_whole_tokens(tmp_path):
 def test_secret_scan_reads_names_git_would_quote_and_gz(tmp_path):
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     key = "sk-ant-" + "Q" * 40
-    (tmp_path / 'notes café "q".md').write_text(f"K = {key}\n", encoding="utf-8")
+    (tmp_path / "notes café ü.md").write_text(f"K = {key}\n", encoding="utf-8")
     (tmp_path / "dump.JSON.GZ").write_bytes(gzip.compress(f"K = {key}\n".encode()))
     hits = secret_scan.scan(secret_scan.candidate_files(tmp_path))
     assert len(hits) == 2

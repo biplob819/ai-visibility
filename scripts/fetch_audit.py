@@ -36,7 +36,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
-from harness_lib import ROOT, HarnessError, unpack
+from harness_lib import ROOT, HarnessError, safe_console, unpack
 
 FIELDS = ("url", "host", "at", "attempt", "status", "bytes", "robots", "outcome", "user_agent")
 ROBOTS_VALUES = {"allowed", "disallowed"}
@@ -82,7 +82,7 @@ def _type_problems(row: dict) -> list[str]:
     if row["robots"] not in ROBOTS_VALUES:
         problems.append(f"robots must be one of {sorted(ROBOTS_VALUES)}, got {row['robots']!r}")
     if not (_is_int(row["attempt"]) and row["attempt"] >= 1):
-        problems.append(f"attempt must be an integer ≥ 1, got {row['attempt']!r}")
+        problems.append(f"attempt must be an integer >= 1, got {row['attempt']!r}")
     if row["status"] is not None and not (_is_int(row["status"]) and 100 <= row["status"] <= 599):
         problems.append(f"status must be null or an HTTP status code, got {row['status']!r}")
     if row["bytes"] is not None and not (_is_int(row["bytes"]) and row["bytes"] >= 0):
@@ -303,6 +303,7 @@ def self_test() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

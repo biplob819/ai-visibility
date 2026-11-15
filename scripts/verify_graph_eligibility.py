@@ -26,6 +26,7 @@ from harness_lib import (
     load_graph,
     parse_catalog,
     parse_graph,
+    safe_console,
 )
 
 _GRAPH_OK = """
@@ -98,6 +99,7 @@ def self_test() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 import sys
@@ -134,8 +135,10 @@ def test_every_harness_script_self_test_passes():
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
+            env={**os.environ, "PYTHONUTF8": "1"},
         )
-        assert p.returncode == 0 and "PASSED" in p.stdout, (script, p.stdout + p.stderr)
+        assert p.returncode == 0 and "PASSED" in p.stdout, (script, p.stdout, p.stderr)
 
 
 @pytest.mark.safety

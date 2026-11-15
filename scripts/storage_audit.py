@@ -36,6 +36,7 @@ from harness_lib import (
     load_catalog,
     node_status,
     parse_catalog,
+    safe_console,
     unpack,
 )
 
@@ -158,6 +159,7 @@ def self_test() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    safe_console()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
