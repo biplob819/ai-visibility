@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [A2.1] — verified over three skeptical passes (D-43); only current answers extracted, every row field pinned with literal values
 - [FEAT] [A2.1] — citation extraction for both providers from API citation fields only, consulted sources with page_age, `canonical_url` (idempotent, utm and click IDs stripped), `publisher_of` per D-4 offline, `citewatch extract`
 - [GREEN] [N1.2] — verified over six skeptical passes (L-27, L-29 to L-31; D-37 to D-41); money recorded for every paid call under errors, interrupts and signals
 - [FEAT] [A2.2] — polite fetcher: protego robots per origin kept for the study, 1 req/s per host and 8 in flight, hand-followed redirects re-checking robots, retries and page history that keep gate 8's rules across runs, HTML-only capped bodies held in memory, gating, fetch log, `citewatch fetch` with `--dry-run`

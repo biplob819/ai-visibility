@@ -15,7 +15,8 @@ from urllib.parse import urlsplit
 
 from .urls import UrlError, canonical_url, publisher_of
 
-_SPACE_BEFORE_MARK = re.compile(r"\s+([.,;:!?])")
+_SEAM = "\x00"
+_SEAM_BEFORE_MARK = re.compile(r"[ \t]*\x00+[ \t]*(?=[.,;:!?])")
 
 
 @dataclass
@@ -107,6 +108,7 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                         if not any(ch.isalnum() for ch in para):
                             para = ""  # punctuation between markers is no claim (v2 L-a)
                         kept.append(before)
+                        kept.append(_SEAM)  # where a marker was cut
                         # a marker right after another one supports the same claim (v1 M1)
                         span = para or last_span
                         if a.get("url"):
@@ -123,9 +125,10 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                         cursor = max(cursor, e)
                     kept.append(text[cursor:])
     joined = "".join(kept)
-    paras = (" ".join(p.split()) for p in joined.split("\n\n") if p.strip())
-    # a removed marker leaves "claim ." or "claim ," behind; a lone mark is not a word (v2 L-a)
-    out.answer_text = "\n\n".join(_SPACE_BEFORE_MARK.sub(r"\1", p) for p in paras)
+    # a removed marker leaves "claim ." behind: close the gap only at those seams, never
+    # elsewhere (".nhs.uk", ".NET" and "Wait ..." keep their spaces, v3 L-1)
+    joined = _SEAM_BEFORE_MARK.sub("", joined).replace(_SEAM, " ")
+    out.answer_text = "\n\n".join(" ".join(p.split()) for p in joined.split("\n\n") if p.strip())
     return out
 
 

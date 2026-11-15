@@ -339,3 +339,83 @@ def test_punctuation_is_never_a_span_or_a_word():
     )
     assert ex2.citations[1].answer_span == "Claim two"
     assert ex2.answer_text == "Claim. Claim two."
+
+
+# --- pass 3: expected values written out, never taken from the extractor -----------------
+
+
+def test_literal_values_for_a_gpt_answer():
+    """v3 M-1: consulted publisher, cited flag across utm spellings, paragraph-cut spans."""
+    text = "Uncited intro para.\n\nRest helps. ([nhs.uk](https://www.nhs.uk/a?utm_source=openai))"
+    s = text.index("([nhs")
+    env = stored_env("gpt-6.1-sol", Q1)
+    env["responses"] = [
+        {
+            "model": "gpt-6.1-sol",
+            "output": [
+                {
+                    "type": "web_search_call",
+                    "action": {
+                        "type": "search",
+                        "sources": [
+                            {"type": "url", "url": "https://www.nhs.uk/a?utm_source=openai"},
+                            {"type": "url", "url": "https://www.gov.uk/b"},
+                        ],
+                    },
+                },
+                {
+                    "type": "web_search_call",
+                    "action": {"type": "find", "url": "https://found.example/f", "pattern": "x"},
+                },
+                {
+                    "type": "message",
+                    "content": [
+                        {
+                            "type": "output_text",
+                            "text": text,
+                            "annotations": [
+                                {
+                                    "type": "url_citation",
+                                    "url": "https://www.nhs.uk/a?utm_source=openai",
+                                    "title": "NHS A",
+                                    "start_index": s,
+                                    "end_index": len(text),
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ],
+        }
+    ]
+    rec, cites, cons, _ = extract_envelope("a" * 64, env, CFG)
+    assert [(c.url, c.publisher, c.publisher_group, c.title, c.answer_span) for c in cites] == [
+        ("https://www.nhs.uk/a", "nhs.uk", None, "NHS A", "Rest helps.")
+    ]
+    assert sorted((s.url, s.publisher, s.cited) for s in cons) == [
+        ("https://found.example/f", "found.example", False),
+        ("https://www.gov.uk/b", "gov.uk", False),
+        ("https://www.nhs.uk/a", "nhs.uk", True),
+    ]
+    assert rec.answer_text == "Uncited intro para.\n\nRest helps." and rec.word_count == 5
+
+
+def test_literal_values_for_a_claude_citation():
+    ex = extract_claude(stored_env("claude-sonnet-5-5", Q1)["responses"])
+    first = ex.citations[0]
+    assert first.title == "NHS prescription charges frozen for second year in a row - The ..."
+    assert first.url_raw == (
+        "https://pharmaceutical-journal.com/article/news/nhs-prescription-charges-frozen-for-second-year-in-a-row"
+    )
+
+
+def test_punctuation_spacing_is_only_closed_where_a_marker_was_cut():
+    text = "Sites ending in .nhs.uk or .gov.uk are official. Wait ... Install .NET first ([a](https://a.example/))."
+    s = text.index("([a]")
+    ex = extract_openai(
+        _gpt(text, [_ann("https://a.example/", s, s + len("([a](https://a.example/))"))])
+    )
+    assert (
+        ex.answer_text
+        == "Sites ending in .nhs.uk or .gov.uk are official. Wait ... Install .NET first."
+    )
