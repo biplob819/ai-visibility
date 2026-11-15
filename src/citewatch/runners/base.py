@@ -85,7 +85,12 @@ def with_retries(
                 raise TransportError(
                     f"{type(exc).__name__} after {attempts} attempts: {exc}"
                 ) from exc
-            sleep(min(60.0, 2 ** (attempt - 1)) + rng.uniform(0, 1))
+            delay = min(60.0, 2 ** (attempt - 1)) + rng.uniform(0, 1)
+            if stop is not None:
+                if stop.wait(delay):  # Ctrl-C during the backoff: no further request (v5 M1)
+                    raise TransportError(f"{type(exc).__name__}; stopped during backoff") from exc
+            else:
+                sleep(delay)
     raise AssertionError("unreachable")
 
 

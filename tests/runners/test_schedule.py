@@ -574,3 +574,42 @@ def test_a_cheap_first_call_never_shrinks_reservations_below_the_plan():
     assert r is not None
     cap.settle(r, 0.01)  # a quick refusal
     assert cap.reserve_each == 0.1
+
+
+def test_a_worker_bug_stops_queued_calls(tmp_path):
+    """v5 L3 (#18): after a bug no queued call starts; in-flight ones finish."""
+
+    class Garbage(FakeRunner):
+        def call(self, q, cfg):  # type: ignore[override]
+            super().call(q, cfg)
+            return None
+
+    qs = [
+        StudyQuestion(id=f"v-{i:03d}", text=f"Q{i}?", intent="fitness", time_sensitive=False)
+        for i in range(1, 21)
+    ]
+    rs = {m: Garbage(m, delay=0.05) for m in CFG.models}
+    box = _bounded(lambda: go(tmp_path, rs, qs=qs, per_provider=1))
+    assert isinstance(box.get("error"), AttributeError)
+    made = sum(len(r.calls) for r in rs.values())
+    assert made <= 4 and len(spend_lines(tmp_path)) == made
+
+
+def test_the_stop_event_reaches_the_runners(tmp_path):
+    class Stoppable(FakeRunner):
+        stop = None
+
+    rs = {m: Stoppable(m) for m in CFG.models}
+    stop = threading.Event()
+    go(tmp_path, rs, qs=QS[:1], stop=stop)
+    assert all(r.stop is stop for r in rs.values())
+
+
+def test_an_unpriceable_call_is_charged_at_least_the_first_reservation(tmp_path):
+    class Odd(FakeRunner):
+        def usage(self, responses):
+            raise ValueError("odd")
+
+    rs = {m: Odd(m) for m in CFG.models}
+    res = go(tmp_path, rs, qs=QS[:1])
+    assert res.spent_usd >= 2 * 0.095 * INITIAL_RESERVE_FACTOR * 0.99

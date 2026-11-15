@@ -21,6 +21,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import random
+import sys
 import threading
 import time
 from collections.abc import Mapping, Sequence
@@ -377,12 +378,20 @@ def ask_run(
         """Wait for in-flight calls; a second Ctrl-C never abandons one mid-call, which would
         lose its spend line and answer (`shutdown(wait=True)` can be interrupted; v4 M1)."""
         pend = {f for f in futures if not f.done()}
+        told = False
         while pend:
             try:
                 _, pend = _drain_wait(pend, timeout=0.5)
             except KeyboardInterrupt:
+                if not told:  # say why Ctrl-C seems to do nothing (v5 L1)
+                    print(
+                        f"waiting for {len(pend)} call(s) in flight so their spend is recorded",
+                        file=sys.stderr,
+                    )
+                    told = True
                 continue
 
+    completed = False
     try:
         futures.extend(pool.submit(one, q, m) for q in order for m in cfg.models)  # v3 L6
         pending = set(futures)
@@ -390,6 +399,7 @@ def ask_run(
             done, pending = wait(pending, timeout=0.5, return_when=FIRST_COMPLETED)
             for f in done:
                 f.result()  # one() catches per-call errors; anything here is a bug
+        completed = True
     except KeyboardInterrupt:
         stop.set()
         result.interrupted = True
@@ -397,6 +407,8 @@ def ask_run(
         stop.set()  # a bug stops new calls; in-flight ones still finish and are recorded
         raise
     finally:
+        if not completed:
+            stop.set()  # even if a second interrupt landed before the handler ran (v5 L2)
         stop_queued = stop.is_set()
         if stop_queued:
             for f in futures:

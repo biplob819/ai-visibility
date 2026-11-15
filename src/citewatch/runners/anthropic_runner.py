@@ -154,6 +154,10 @@ class AnthropicRunner:
             responses.append(raw)
             if raw.get("stop_reason") != "pause_turn":
                 break
+            if self.stop is not None and self.stop.is_set():  # keep what was paid, ask no more
+                return RawCall(
+                    self.model, request, responses, error="stopped during continuation: Ctrl-C"
+                )
             # continue the paused server-tool turn by sending its content back (§3.4)
             messages = [*messages, {"role": "assistant", "content": raw.get("content") or []}]
         return RawCall(self.model, request, responses)

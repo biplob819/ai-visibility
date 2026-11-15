@@ -142,6 +142,7 @@ def test_sigterm_stops_like_ctrl_c_and_records_every_call(study, capsys, monkeyp
     import signal
     import threading
 
+    before = signal.getsignal(signal.SIGTERM)
     _fake(monkeypatch, delay=0.3)
     timer = threading.Timer(0.2, os.kill, args=(os.getpid(), signal.SIGTERM))
     timer.start()
@@ -151,7 +152,7 @@ def test_sigterm_stops_like_ctrl_c_and_records_every_call(study, capsys, monkeyp
     out = json.loads(capsys.readouterr().out)
     spend = (study / "data" / "spend-ledger.jsonl").read_text(encoding="utf-8").splitlines()
     assert code == 2 and out["interrupted"] is True and len(spend) == out["asked"]
-    assert signal.getsignal(signal.SIGTERM) is not None  # the old handler is back
+    assert signal.getsignal(signal.SIGTERM) == before  # the old handler is back (v5 L3)
 
 
 def test_a_resume_where_every_missing_call_fails_exits_2(study, capsys, monkeypatch):
@@ -165,3 +166,27 @@ def test_a_resume_where_every_missing_call_fails_exits_2(study, capsys, monkeypa
     assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 2
     out = json.loads(capsys.readouterr().out)
     assert out["cached"] == 2 and out["asked"] == 0 and out["ok"] is False
+
+
+def test_the_study_cap_applies_without_max_cost(study, capsys, monkeypatch):
+    """v5 M2: max_cost_usd in study.yaml caps the run (OWNER D-19's guard)."""
+    yml = study / "study.yaml"
+    text = yml.read_text(encoding="utf-8")
+    assert "max_cost_usd: 5" in text
+    yml.write_text(text.replace("max_cost_usd: 5", "max_cost_usd: 1.0"), encoding="utf-8")
+    _fake(monkeypatch, tokens_in=400_000, tokens_out=8_000)
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 3
+    out = json.loads(capsys.readouterr().out)
+    assert out["cap_usd"] == 1.0 and out["stopped_at_cap"] is True
+
+
+def test_partial_errors_still_exit_0(study, capsys, monkeypatch):
+    """D-41: some answers plus some errors is a run to resume, not a failure."""
+    from .helpers import StatusError
+
+    _fake(monkeypatch, fail={"q-002": StatusError(400)})
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["asked"] == 2 and len(out["errors"]) == 2

@@ -108,3 +108,44 @@ def test_a_stop_ends_retries_at_once():
     with pytest.raises(TransportError, match="stopped"):
         with_retries(flaky, sleep=slept.append, stop=stop)
     assert len(calls) == 1 and slept == []
+
+
+def test_a_stop_during_the_backoff_makes_no_further_request():
+    """v5 M1: Ctrl-C while a worker sleeps between retries ends the retries at once."""
+    import threading
+    import time
+
+    from citewatch.runners.base import TransportError, with_retries
+
+    from .helpers import StatusError
+
+    stop = threading.Event()
+    calls: list[float] = []
+    t0 = time.monotonic()
+
+    def flaky():
+        calls.append(time.monotonic() - t0)
+        raise StatusError(529)
+
+    threading.Timer(0.3, stop.set).start()
+    with pytest.raises(TransportError, match="during backoff"):
+        with_retries(flaky, stop=stop)
+    assert len(calls) == 1 and time.monotonic() - t0 < 1.5
+
+
+def test_a_stop_ends_a_paused_turn_and_keeps_what_was_paid():
+    import threading
+
+    from citewatch.runners.anthropic_runner import AnthropicRunner
+
+    from .helpers import CFG, Q1, FakeAnthropic, claude_raw
+
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    fake = FakeAnthropic([paused, claude_raw()])
+    r = AnthropicRunner("claude-sonnet-5-5", client=fake)
+    r.stop = threading.Event()
+    r.stop.set()
+    rc = r.call(Q1, CFG)
+    assert len(fake.calls) == 1 and len(rc.responses) == 1
+    assert rc.error is not None and rc.error.startswith("stopped during continuation")
