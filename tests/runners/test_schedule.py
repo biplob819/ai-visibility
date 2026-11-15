@@ -50,7 +50,7 @@ class FakeRunner:
             if q.id in self.fail:
                 raise self.fail[q.id]
             resp = {"id": q.id, "usage": {"in": self.tokens_in, "out": self.tokens_out}}
-            err = "transport during continuation" if q.id in self.partial else None
+            err = "transport during continuation: gone" if q.id in self.partial else None
             return RawCall(self.model, {"q": q.id}, [resp], error=err)
         finally:
             with self._lock:
@@ -92,7 +92,7 @@ def test_every_question_is_asked_on_both_models_and_stored_verbatim(tmp_path):
     store = RawStore(tmp_path)
     for q in QS:
         for m in CFG.models:
-            env = store.get("ask", ask_key(CFG, 1, q.id, m))
+            env = store.get("ask", ask_key(CFG, 1, q, m))
             assert env["question_id"] == q.id and env["model"] == m
             assert env["responses"] == [{"id": q.id, "usage": {"in": 20000, "out": 500}}]
             assert env["answered_at"].endswith("Z") and env["cost_usd"] > 0
@@ -165,13 +165,13 @@ def test_an_unpriceable_response_is_charged_its_reservation(tmp_path):
     res = go(tmp_path, rs, qs=QS[:1])
     assert {e["error"] for e in res.errors} == {"unpriced"} and res.spent_usd > 0
     assert len(spend_lines(tmp_path)) == 2
-    assert RawStore(tmp_path).has("ask", ask_key(CFG, 1, "v-001", CFG.models[0]))  # raw kept
+    assert RawStore(tmp_path).has("ask", ask_key(CFG, 1, QS[0], CFG.models[0]))  # raw kept
 
 
 def test_a_failed_continuation_keeps_what_was_paid_and_asks_again(tmp_path):
     res = go(tmp_path, runners(partial={"v-001"}), qs=QS[:1])
     store = RawStore(tmp_path)
-    key = ask_key(CFG, 1, "v-001", CFG.models[0])
+    key = ask_key(CFG, 1, QS[0], CFG.models[0])
     assert not store.has("ask", key) and store.has("ask_partial", key)
     assert {e["error"] for e in res.errors} == {"transport"} and len(spend_lines(tmp_path)) == 2
     assert go(tmp_path, runners(), qs=QS[:1]).asked == 2
@@ -265,4 +265,110 @@ def test_a_failing_spend_file_still_keeps_the_paid_response(tmp_path, monkeypatc
     monkeypatch.setattr(sch, "record_spend", broken)
     res = go(tmp_path, runners(), qs=QS[:1])
     assert {e["error"] for e in res.errors} == {"spend-ledger"} and res.asked == 2
-    assert RawStore(tmp_path).has("ask", ask_key(CFG, 1, "v-001", CFG.models[0]))
+    assert RawStore(tmp_path).has("ask", ask_key(CFG, 1, QS[0], CFG.models[0]))
+
+
+def test_a_failed_continuation_of_any_kind_keeps_what_was_paid(tmp_path):
+    """N1.2 v2 H1: the real Claude runner, a paid paused turn, then a 400 on the continuation."""
+    from citewatch.runners.anthropic_runner import AnthropicRunner
+
+    from .helpers import FakeAnthropic, claude_raw
+
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    claude, gpt = CFG.models
+    rs = {
+        claude: AnthropicRunner(claude, client=FakeAnthropic([paused, StatusError(400)])),
+        gpt: FakeRunner(gpt),
+    }
+    res = go(tmp_path, rs, qs=QS[:1])
+    key = ask_key(CFG, 1, QS[0], claude)
+    env = RawStore(tmp_path).get("ask_partial", key)
+    assert env["responses"] == [paused] or env["responses"][0]["stop_reason"] == "pause_turn"
+    assert env["cost_usd"] > 0 and not RawStore(tmp_path).has("ask", key)
+    errs = [e for e in res.errors if e["model"] == claude]
+    assert [e["error"] for e in errs] == ["provider:400"] and errs[0]["cost_usd"] > 0
+    lines = spend_lines(tmp_path)
+    assert len(lines) == 2 and round(sum(x["spent_usd"] for x in lines), 6) == res.spent_usd
+
+
+def test_a_bad_key_on_a_continuation_stops_that_model(tmp_path):
+    from citewatch.runners.anthropic_runner import AnthropicRunner
+
+    from .helpers import FakeAnthropic, claude_raw
+
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    claude, gpt = CFG.models
+    fake = FakeAnthropic([paused, StatusError(401)] + [StatusError(401)] * 10)
+    rs = {claude: AnthropicRunner(claude, client=fake), gpt: FakeRunner(gpt)}
+    res = go(tmp_path, rs, per_provider=1)
+    assert len(fake.calls) == 2 and res.cancelled == len(QS) - 1
+
+
+def test_editing_a_question_text_asks_it_again(tmp_path):
+    go(tmp_path, runners(), qs=QS[:1])
+    edited = [QS[0].model_copy(update={"text": "A different question?"})]
+    assert go(tmp_path, runners(), qs=edited).asked == 2  # same id, new text: never the old answer
+    assert go(tmp_path, runners(), qs=QS[:1]).cached == 2
+
+
+def test_a_smoke_sized_run_under_a_tight_cap_asks_everything(tmp_path):
+    """N1.2 v2 M2: refusals caused only by in-flight reservations wait instead of skipping."""
+    from citewatch.cost import answer_cost
+
+    one = max(
+        answer_cost(PRICES[m], tokens_in=20000, tokens_out=500, searches=1) for m in CFG.models
+    )
+    cap = round(len(QS) * len(CFG.models) * one * 1.05, 6)
+    assert cap < 8 * 0.095 * INITIAL_RESERVE_FACTOR  # the first reservations alone would refuse
+    res = go(tmp_path, runners(delay=0.02), cap=cap)
+    assert res.asked == 12 and not res.stopped_at_cap and res.spent_usd <= cap
+
+
+def test_the_cap_counts_reservations_held_by_calls_in_flight():
+    cap = SpendCap(1.0, initial_reserve=0.4)
+    assert cap.reserve() == 0.4 and cap.reserve() == 0.4
+    assert cap.reserve() is None  # 0.8 reserved + 0.4 > 1.0 although nothing is spent yet
+    stop = threading.Event()
+    stop.set()
+    assert cap.reserve_wait(stop) is None  # a stop never waits
+    cap.settle(0.4, 0.1)
+    assert cap.reserve_wait(threading.Event()) == 0.1  # settles make room again
+
+
+def test_workers_waiting_for_a_slot_start_nothing_after_stop(tmp_path):
+    """N1.2 v2 M1: a slow provider piles workers on its slot; a stop must not let them go."""
+    starts: list[float] = []
+
+    class Timed(FakeRunner):
+        def call(self, q, cfg):
+            starts.append(time.monotonic())
+            return super().call(q, cfg)
+
+    claude, gpt = CFG.models
+    qs = [
+        StudyQuestion(id=f"v-{i:03d}", text=f"Q{i}?", intent="fitness", time_sensitive=False)
+        for i in range(1, 31)
+    ]
+    rs = {claude: Timed(claude, delay=0.5), gpt: Timed(gpt, delay=0.0)}
+    stop = threading.Event()
+    stopped_at: list[float] = []
+
+    def fire():
+        stopped_at.append(time.monotonic())
+        stop.set()
+
+    timer = threading.Timer(0.15, fire)
+    timer.start()
+    res = go(tmp_path, rs, qs=qs, per_provider=2, stop=stop)
+    timer.cancel()
+    late = [s for s in starts if s > stopped_at[0] + 0.15]  # waiters would start at +0.35s
+    assert late == [] and res.cancelled > 0
+    assert len(spend_lines(tmp_path)) == res.asked == sum(len(r.calls) for r in rs.values())
+
+
+def test_a_paid_response_without_tokens_is_charged_its_reservation(tmp_path):
+    rs = runners(tokens_in=0, tokens_out=0)
+    res = go(tmp_path, rs, qs=QS[:1])
+    assert {e["error"] for e in res.errors} == {"unpriced"} and res.spent_usd > 0

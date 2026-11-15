@@ -133,21 +133,23 @@ def answer_cost(
 
 
 def estimate_run(
-    n_questions: int,
+    n_questions: int | Mapping[str, int],
     models: Iterable[str],
     prices: Mapping[str, Price],
     assumptions: Mapping[str, int] = ASSUMPTIONS,
 ) -> dict[str, Any]:
-    """Calls and estimated USD per model and in total, before any call is made."""
+    """Calls and estimated USD per model and in total, before any call is made. `n_questions`
+    may be a count per model (a resumed run counts only the calls not yet stored)."""
     per_model = {}
     for m in models:
+        n = n_questions.get(m, 0) if isinstance(n_questions, Mapping) else n_questions
         one = answer_cost(
             price_for(m, prices),
             tokens_in=assumptions["tokens_in"],
             tokens_out=assumptions["tokens_out"],
             searches=assumptions["searches"],
         )
-        per_model[m] = {"calls": n_questions, "usd": check_money(round(one * n_questions, 6))}
+        per_model[m] = {"calls": n, "usd": check_money(round(one * n, 6))}
     total = check_money(math.fsum(v["usd"] for v in per_model.values()))
     return {"per_model": per_model, "total_usd": round(total, 6), "assumptions": dict(assumptions)}
 

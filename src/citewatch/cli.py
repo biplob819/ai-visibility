@@ -233,8 +233,14 @@ def ask(
         if unknown:
             _fail(as_json, "ask", f"unknown question ids: {', '.join(unknown)}")
         qs = [q for q in qs if q.id in wanted]
+    from citewatch.runners.schedule import ask_key
+
+    stored = RawStore(path.parent)
+    missing = {
+        m: sum(not stored.has("ask", ask_key(cfg, run, q, m)) for q in qs) for m in cfg.models
+    }
     try:
-        est = estimate_run(len(qs), cfg.models, prices)
+        est = estimate_run(missing, cfg.models, prices)  # a resume counts only what is missing
     except PriceError as exc:
         _fail(as_json, "ask", str(exc))
     cap = max_cost if max_cost is not None else cfg.max_cost_usd

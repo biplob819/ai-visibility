@@ -63,3 +63,19 @@ def test_a_full_run_with_fake_runners_records_spend_and_order(study, capsys, mon
     assert len(spend) == 4  # one line per paid call (D-19)
     assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["cached"] == 4
+
+
+def test_a_resumed_run_estimates_only_what_is_missing(study, capsys, monkeypatch):
+    """N1.2 v2 low: a finished run under a cap that fits only one call still resumes."""
+    from citewatch import runners as runners_pkg
+
+    from .test_schedule import FakeRunner
+
+    monkeypatch.setattr(runners_pkg, "make_runner", lambda m: FakeRunner(m))
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 0
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--dry-run", "--study", str(study), "--json"]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["estimate"]["total_usd"] == 0
+    assert all(v["calls"] == 0 for v in plan["estimate"]["per_model"].values())
+    assert cli.main(["ask", "--run", "0", "--max-cost", "0.01", "--study", str(study)]) == 0

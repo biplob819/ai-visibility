@@ -12,7 +12,8 @@ Every per-call failure is caught and recorded, never allowed to stop the other c
 cancels the queued calls and lets only those already in flight finish. Spend is reserved
 before each call and settled after it; the reservation starts at four times the planning
 estimate and becomes the largest real cost seen so far, so the cap is passed by at most the
-in-flight calls' excess over that (D-37).
+in-flight calls' excess over that (D-37). A call refused only because other calls hold
+reservations waits for them to settle; it is skipped only when money already spent leaves no room.
 """
 
 from __future__ import annotations
@@ -35,9 +36,10 @@ from citewatch.store import RawStore, canonical_json, stage_key
 
 from .base import RawCall, Runner, TransportError, instruction, prompt_hash
 
-ASK_CODE_VERSION = "ask-2"
+ASK_CODE_VERSION = "ask-3"  # ask-3: the question text is in the key
 INITIAL_RESERVE_FACTOR = 4
 STOP_MODEL_AFTER = {401, 403}  # a bad key or a refused account: stop asking that model
+_STOP_KINDS = {f"provider:{s}" for s in STOP_MODEL_AFTER}
 
 
 def answer_config_hash(cfg: StudyConfig) -> str:
@@ -63,8 +65,10 @@ def question_order(questions: Sequence[StudyQuestion], seed: int, run: int) -> l
     return order
 
 
-def ask_key(cfg: StudyConfig, run: int, question_id: str, model: str) -> str:
-    unit = {"run": run, "question_id": question_id, "model": model}
+def ask_key(cfg: StudyConfig, run: int, question: StudyQuestion, model: str) -> str:
+    """Editing a question's text asks it again, even under the same id (N1.2 v2 M4)."""
+    text_sha = hashlib.sha256(question.text.encode("utf-8")).hexdigest()[:16]
+    unit = {"run": run, "question_id": question.id, "text_sha": text_sha, "model": model}
     return stage_key(
         "ask", ASK_CODE_VERSION, unit, answer_config_hash(cfg), prompt_hash(instruction(cfg))
     )
@@ -93,25 +97,41 @@ class SpendCap:
         self.max_seen = 0.0
         self.spent = 0.0
         self.reserved = 0.0
-        self._lock = threading.Lock()
+        self._cond = threading.Condition()
+
+    def _try(self) -> float | None:
+        est = self.reserve_each
+        if self.cap is not None and self.spent + self.reserved + est > self.cap:
+            return None
+        self.reserved += est
+        return est
 
     def reserve(self) -> float | None:
-        """The amount reserved, or None when the call would pass the cap."""
-        with self._lock:
-            est = self.reserve_each
-            if self.cap is not None and self.spent + self.reserved + est > self.cap:
-                return None
-            self.reserved += est
-            return est
+        """The amount reserved, or None when the call would pass the cap right now."""
+        with self._cond:
+            return self._try()
+
+    def reserve_wait(self, stop: threading.Event, poll: float = 0.2) -> float | None:
+        """Reserve, waiting while other calls' reservations are what blocks it (N1.2 v2 M2).
+        None only when spent money alone leaves no room, or on stop."""
+        with self._cond:
+            while True:
+                got = self._try()
+                if got is not None:
+                    return got
+                if self.reserved <= 0 or stop.is_set():
+                    return None
+                self._cond.wait(poll)
 
     def settle(self, reserved: float, actual: float) -> None:
         actual = check_money(actual, "actual")
-        with self._lock:
+        with self._cond:
             self.reserved = max(0.0, self.reserved - reserved)
             self.spent += actual
             if actual > self.max_seen:
                 self.max_seen = actual
                 self.reserve_each = actual  # never reserve less than the worst real call so far
+            self._cond.notify_all()
 
 
 def ask_run(
@@ -173,7 +193,7 @@ def ask_run(
         )
 
     def one(q: StudyQuestion, model: str) -> None:
-        key = ask_key(cfg, run, q.id, model)
+        key = ask_key(cfg, run, q, model)
         if store.has("ask", key):
             with lock:
                 result.cached += 1
@@ -191,14 +211,24 @@ def ask_run(
             with lock:
                 result.cancelled += 1
             return
-        reserved = cap.reserve()
+        reserved = cap.reserve_wait(stop)
         if reserved is None:
             with lock:
-                result.stopped_at_cap = True
-                result.skipped_for_cap += 1
+                if stop.is_set():
+                    result.cancelled += 1
+                else:
+                    result.stopped_at_cap = True
+                    result.skipped_for_cap += 1
             return
         runner = runners[model]
         with sems[provider_of(model)]:
+            # a worker may have waited for this slot: check again so Ctrl-C or a bad key
+            # starts nothing new (N1.2 v2 M1)
+            if stop.is_set() or model in stopped_models:
+                cap.settle(reserved, 0.0)
+                with lock:
+                    result.cancelled += 1
+                return
             start = time.monotonic()
             try:
                 rc: RawCall = runner.call(q, cfg)
@@ -219,9 +249,13 @@ def ask_run(
                 note_error(q, model, kind, str(exc), key)
                 return
             latency = int((time.monotonic() - start) * 1000)
+            if rc.error is not None and rc.error.split(" during", 1)[0] in _STOP_KINDS:
+                stopped_models.add(model)  # before the slot is released, so no waiter starts
         # 2. cost first, written down at once
         try:
             u = runner.usage(rc.responses)
+            if not (u.tokens_in or u.tokens_out):
+                raise ValueError("a paid response reported no tokens")
             actual = answer_cost(
                 price_for(model, prices),
                 tokens_in=u.tokens_in,
@@ -272,7 +306,8 @@ def ask_run(
             note_error(q, model, "store", f"{type(exc).__name__}: {exc}", key, cost=actual)
             return
         if rc.error is not None:
-            note_error(q, model, "transport", rc.error, key, cost=actual)
+            kind = rc.error.split(" during", 1)[0]
+            note_error(q, model, kind, rc.error, key, cost=actual)
             return
         ledger.event(
             "ask",

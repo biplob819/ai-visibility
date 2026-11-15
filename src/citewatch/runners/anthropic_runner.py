@@ -38,6 +38,18 @@ def build_request(question: StudyQuestion, cfg: StudyConfig) -> dict[str, Any]:
     }
 
 
+def continuation_error(exc: BaseException) -> str:
+    """`<kind> during continuation: <detail>`; the scheduler reads the kind before ` during`."""
+    status = getattr(exc, "status_code", None)
+    if isinstance(exc, TransportError):
+        kind = "transport"
+    elif isinstance(status, int):
+        kind = f"provider:{status}"
+    else:
+        kind = f"internal:{type(exc).__name__}"
+    return f"{kind} during continuation: {str(exc)[:200]}"
+
+
 def _int(v: Any) -> int:
     return v if isinstance(v, int) and not isinstance(v, bool) and v >= 0 else 0
 
@@ -131,12 +143,11 @@ class AnthropicRunner:
                 resp = with_retries(
                     lambda b=body: self.client.messages.create(model=self.model, **b), **kwargs
                 )
-            except TransportError:
+            except Exception as exc:
                 if not responses:
                     raise
-                return RawCall(
-                    self.model, request, responses, error="transport during continuation"
-                )
+                # anything after a paid response returns what was paid for (N1.2 v2 H1)
+                return RawCall(self.model, request, responses, error=continuation_error(exc))
             raw = resp.model_dump(mode="json")
             responses.append(raw)
             if raw.get("stop_reason") != "pause_turn":

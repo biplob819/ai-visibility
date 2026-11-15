@@ -126,3 +126,28 @@ def test_provider_facts_are_recorded_as_decisions():
         "utm_source=openai",
     ):
         assert needle in text, needle
+
+
+def test_usage_is_summed_over_every_continuation():
+    """N1.2 v2: pricing only the last response would under-record spend."""
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    final = claude_raw()
+    one = anthropic_runner.usage([final])
+    both = anthropic_runner.usage([paused, final])
+    assert both.tokens_in == 2 * one.tokens_in and both.tokens_out == 2 * one.tokens_out
+    assert both.searches == 2 * one.searches and one.tokens_in > 0
+
+
+def test_any_error_after_a_paid_response_returns_what_was_paid():
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    from .helpers import StatusError
+
+    rc = AnthropicRunner(
+        "claude-sonnet-5-5", client=FakeAnthropic([paused, StatusError(413)])
+    ).call(Q1, CFG)
+    assert len(rc.responses) == 1 and rc.error is not None
+    assert rc.error.startswith("provider:413 during continuation")
+    with pytest.raises(StatusError):  # before anything is paid, the error is raised as before
+        AnthropicRunner("claude-sonnet-5-5", client=FakeAnthropic([StatusError(400)])).call(Q1, CFG)
