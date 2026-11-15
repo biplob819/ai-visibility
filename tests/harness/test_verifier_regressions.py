@@ -547,3 +547,12 @@ def test_pass_five_survivors_are_pinned(tmp_path, monkeypatch):
     f.write_text(f"example {key}  # secret-scan: allow\nreal = '{key}'\n", encoding="utf-8")
     hits = secret_scan.scan([f])
     assert len(hits) == 1 and ":2:" in hits[0]
+
+
+@pytest.mark.safety
+def test_pipe_separated_headers_count_and_txt_prose_does_not(tmp_path):
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "notes.txt").write_text("Mind, body, and soul\n", encoding="utf-8")
+    assert sa.audit(tmp_path, tmp_path / "none", IDLE) == []
+    (tmp_path / "data" / "t.psv").write_text("ref|body\nv-1|x\n", encoding="utf-8")
+    assert any("t.psv" in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))

@@ -1,6 +1,6 @@
 # W0.1 run state
 
-**Now:** pass 5 medium finding fixed; focused verifier check, then green.
+**Now:** green.
 
 ## History
 - 2026-11-15 — records generated from the Tech Spec (20 nodes, 96 capabilities, D-1 to D-20).
@@ -13,10 +13,14 @@
 - 2026-11-15 — verifier pass 4 confirmed HAR-01/02/03/05/06/07; disproved HAR-04 on Windows only (a missing tool's OS message did not name the tool; CI red on 3 Windows jobs). 282 mutants, 52 survived (about 10 equivalent). Fixed: `_run` names the tool (L-20); tests for tracked-file scanning and every CLI exit code CI relies on (L-21); keyless smoke proven through a built package with planted credentials (incl. `*_TOKEN`, `ANTHROPIC_PROFILE`); the Python 3.11 golden leg tested through an injected runner (failed, all-skipped, timed out, wrong command); timeouts and multi-line details; fetch audit time ordering, bad timestamps, percent-encoding, status range, repeated keys, refusal lines, bytes 0, robots.txt with a query; storage audit BOM CSVs, `, body` / `;body` headers on any line, YAML list items, UTF-16, end-of-file markers; gate 3 module-level skips, unittest imports, aliases, skipTest, raised SkipTest, `__test__ = False`, classes with `__init__`; gate 11 counts only real test files. D-26 sets the green bar.
 - 2026-11-15 — verifier pass 5 CONFIRMED all seven criteria; 106 bar-focused mutants, 102 killed. One medium open: the CSV-header rule matched prose on any line ("mind, body, and mood" in a stored answer would fail gate 9). Fixed: header cells are checked only on the first line of CSV/TSV/semicolon files; ordinary prose, JSON arrays and CSV cells saying "body" pass (self-test and regression). The 4 surviving low mutants are pinned with tests; the verifier prompt now rates findings against D-26.
 
-## Known limits (D-26, low)
-- The fetch audit trusts each line's robots field; a robots.txt 401/403/5xx making the whole host disallowed is enforced by the fetcher and pinned by A2.2's polite tests (Tech Spec §7.2).
-- `at` must be the request start time (Tech Spec §7.2); A2.2 tests it.
-- Storage audit does not parse YAML flow mappings, UTF-16 without a BOM, zstd, parquet or DuckDB files, keys other than body/html/page_text, or a CSV header inside a zip member; none is a format the study writes.
-- `keyless_env` strips `*_API_KEY`, `*_TOKEN`, `*_SECRET` and `ANTHROPIC_PROFILE`; cloud-provider credentials (AWS, GCP) are not used by this project.
-- Fetch-log discovery finds `data/**/fetch_log*.jsonl[.gz]` only; the fetcher (A2.2) writes exactly that name.
-- Gate 10 smoke runs `citewatch --version` only until N1.3 adds `report --example`, `ask --dry-run` and `doctor`.
+- 2026-11-15 — focused verifier pass 6: medium finding CLOSED, no high or medium open, HAR-06 confirmed, CI 9/9 green. Green bar (D-26) met; `.txt` dropped from tabular files (a false-positive source); known limits now name their closing tests. Converged twice; rows flipped green.
+
+## Known limits (D-26, low) — each with the test that would close it
+- Fetch audit trusts each line's robots field; a robots.txt 401/403/5xx disallowing the whole host is enforced by the fetcher. Closing test: A2.2 `polite` test "robots.txt 403 makes every page on the host robots_disallowed" (Tech Spec §7.2).
+- `at` must be the request start time. Closing test: A2.2 `polite` test "a slow response still logs request starts 1 s apart".
+- Storage audit header rule only reads the first line of `.csv/.tsv/.psv` (after one compression suffix, BOM stripped); a body CSV with no tabular extension, a comment line before the header, CR-only line endings or stacked compression suffixes passes. The study writes only `data/labels/*.csv` with the csv module. Closing test: `test_storage_audit_reads_headers_after_comments_and_stacked_suffixes` (not written).
+- Storage audit does not parse YAML flow mappings, UTF-16 without a BOM, zstd, parquet or DuckDB files, keys other than body/html/page_text, or a CSV header inside a zip member. Closing test: one fixture per format in `test_storage_audit_catches_disguised_bodies` (not written; none is a format the study writes).
+- A stored answer quoting a literal `<body>` tag fails the HTML-marker rule (a false positive). Closing test: M3.2 `test_raw_answers_quoting_html_tags_are_flagged_for_review` once real answers exist; the fix would be an allow-list per stored field.
+- `keyless_env` strips `*_API_KEY`, `*_TOKEN`, `*_SECRET` and `ANTHROPIC_PROFILE`; AWS/GCP credentials are not used by this project. Closing test: `test_smoke_commands_run_without_provider_keys` extended with `AWS_*` and `GOOGLE_APPLICATION_CREDENTIALS` if a cloud provider is ever added.
+- Fetch-log discovery finds `data/**/fetch_log*.jsonl[.gz]` only. Closing test: A2.2 contract test "the fetcher writes exactly data/runs/<run>/fetch_log.jsonl".
+- Gate 10 smoke runs `citewatch --version` only. Closing test: N1.3 adds `report --example` (exit 0), `ask --dry-run` (exit 0) and `doctor` with no keys (exit 2) to `SMOKE_COMMANDS`.

@@ -59,7 +59,7 @@ BODY_KEYS = re.compile(
 # A header cell named body/html/page_text, checked only on the first line of a CSV, TSV or
 # semicolon file, so prose such as "mind, body, and mood" in stored answers never matches.
 HEADER_CELL = re.compile(rb"^\s*\"?(?:body|html|page_text)\"?\s*$", re.I)
-TABULAR = (".csv", ".tsv", ".psv", ".txt")
+TABULAR = (".csv", ".tsv", ".psv")
 COMPRESSED = (".gz", ".bz2", ".xz", ".zip")
 
 
