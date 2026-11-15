@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from .history import PageHistory
-from .keys import host_of
+from .keys import host_of, plain_host
 from .log import FetchLog
 from .rate import HostLimiter
 from .robots import MAX_ROBOTS_BYTES, RobotsCache
@@ -265,7 +265,13 @@ class PoliteClient:
                     with contextlib.suppress(Exception):
                         http.close()
                 res.detail, res.transient = "timeout for the whole request", True
-            except (httpx.HTTPError, httpx.InvalidURL, httpx.StreamError, ValueError) as exc:
+            except (
+                httpx.HTTPError,
+                httpx.InvalidURL,
+                httpx.StreamError,
+                ValueError,
+                RuntimeError,  # a worker abandoned at the instant it sent (v5 L4)
+            ) as exc:
                 res.detail = type(exc).__name__
                 res.transient = isinstance(exc, TRANSIENT)
             else:
@@ -340,6 +346,8 @@ class PoliteClient:
         """Fetch `url` politely; `kind` is "page" (HTML only, 5 MB) or "sitemap"."""
         limit = self.max_page_bytes
         current, hops = url, []
+        if not plain_host(url):
+            return FetchResult(url, url, "fetch_error", detail="not a plain host name")
         for _ in range(MAX_REDIRECTS + 1):
             try:
                 entry = self.history.entry(current)
@@ -378,7 +386,7 @@ class PoliteClient:
                     return FetchResult(
                         url, current, "fetch_error", r.status, hops=hops, detail="bad redirect"
                     )
-                if bad:
+                if bad or not plain_host(nxt):
                     return FetchResult(
                         url,
                         current,
@@ -399,6 +407,8 @@ class PoliteClient:
                 hops.append(nxt)
                 current = nxt
                 continue
+            if r.status in REDIRECTS:  # a 3xx with no usable Location (v5 L1)
+                r.outcome, r.detail = "fetch_error", "redirect without a Location"
             r.url, r.final_url, r.hops = url, current, hops
             return r
         return FetchResult(url, current, "fetch_error", hops=hops, detail="too many redirects")

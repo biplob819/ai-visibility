@@ -671,3 +671,85 @@ def test_a_wall_clock_step_back_still_spaces_logged_times():
             ats.append(at)
             n["grants"] += 1
     assert all((b - a).total_seconds() >= 1.0 for a, b in itertools.pairwise(ats))
+
+
+# --- pass 5 -------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "routes",
+    [
+        {
+            "https://a.example/p": httpx.Response(
+                200, headers={**HTML, "etag": "\\u003chtml x"}, content=PAGE
+            )
+        },
+        {"https://a.example/p": httpx.Response(302, headers={"location": "/\\u003chtml x"})},
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /\\u003chtml x\n"
+            )
+        },
+        {"https://a.example/p": httpx.Response(302, headers={"location": "http://a&b.example/p"})},
+        {
+            "https://a.example/p": httpx.Response(
+                302, headers={"location": "http://a<html>.example/p"}
+            )
+        },
+    ],
+)
+def test_escapes_and_odd_hosts_never_reach_the_store_or_break_the_audit(tmp_path, routes):
+    """v5 M1, M2."""
+    store = RawStore(tmp_path)
+    web = FakeWeb(routes)
+    client, log, _ = make(tmp_path, web, store=store)
+    fetch_pages(["https://a.example/p"], client=client, store=store)
+    files = [*list((tmp_path / "data" / "raw").rglob("*.gz")), log.path]
+    assert all(storage_audit.file_problems(f, tmp_path) == [] for f in files)
+    assert audit(log) == []
+    assert all(r.url.host == "a.example" for r in web.requests)  # never an odd host
+
+
+def test_a_url_with_an_odd_host_is_never_requested(tmp_path):
+    web = FakeWeb()
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("http://a&b.example/p").detail == "not a plain host name"
+    assert web.requests == []
+    from citewatch.fetch.keys import plain_host
+
+    assert plain_host("https://www.nhs.uk/x") and plain_host("https://bücher.example/")
+    assert plain_host("http://[::1]:8080/x") and not plain_host("http://a'b.example/")
+
+
+def test_an_idle_wall_clock_step_back_still_spaces_logged_times():
+    """v5 M3: the step back happens while the host is idle and monotonic time is past due."""
+    from citewatch.fetch import HostLimiter
+
+    from .web import BASE
+
+    clock = VClock()
+    back = {"s": 0.0}
+    lim = HostLimiter(
+        clock=clock.now,
+        sleep=clock.sleep,
+        wall=lambda: BASE + dt.timedelta(seconds=clock.now() - back["s"]),
+    )
+    ats = []
+    with lim.request("a.example") as at:
+        ats.append(at)
+    clock.sleep(1.1)  # idle: the next monotonic grant is already due
+    back["s"] = 0.5  # NTP steps the wall clock back
+    with lim.request("a.example") as at:
+        ats.append(at)
+    assert (ats[1] - ats[0]).total_seconds() >= 1.0
+
+
+def test_a_redirect_without_location_is_an_error_not_a_new_outcome(tmp_path):
+    store = RawStore(tmp_path)
+    web = FakeWeb({"https://a.example/p": httpx.Response(302)})
+    client, _log, _ = make(tmp_path, web, store=store)
+    fetch_pages(["https://a.example/p"], client=client, store=store)
+    from citewatch.fetch import fetch_key
+
+    rec = store.get("fetch", fetch_key("https://a.example/p"))
+    assert rec["outcome"] == "fetch_error" and rec["status"] == 302

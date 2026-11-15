@@ -3,6 +3,7 @@ never makes a request the audit would count against it (FET-08)."""
 
 from __future__ import annotations
 
+import re
 from urllib.parse import unquote, urlsplit, urlunsplit
 
 DEFAULT_PORTS = {"http": 80, "https": 443}
@@ -39,7 +40,25 @@ def page_key(url: str) -> str:
     return path + ("?" + "&".join(sorted(query.split("&"))) if query else "")
 
 
-_MARKUP = str.maketrans({"&": "%26", "<": "%3C", ">": "%3E", '"': "%22", "'": "%27"})
+_MARKUP = str.maketrans(
+    {"&": "%26", "<": "%3C", ">": "%3E", '"': "%22", "'": "%27", "\\": "%5C"}
+)  # backslash too: a literal `\u003chtml` is markup to the storage audit (v5 M1)
+_PLAIN_HOST = re.compile(r"^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)*\.?|\[[0-9a-f:.]+\])$")
+
+
+def plain_host(url: str) -> bool:
+    """A host made only of letters, digits, hyphens and dots (IDN as punycode), or an IPv6
+    literal: anything else cannot be a real host and is never requested (v5 M2)."""
+    try:
+        netloc = urlsplit(url).netloc.rsplit("@", 1)[-1]
+    except ValueError:
+        return False
+    host = netloc[1 : netloc.index("]")] if netloc.startswith("[") and "]" in netloc else netloc
+    if not netloc.startswith("["):
+        host = netloc.split(":", 1)[0]
+        host = ascii_host(host)
+        return bool(host) and _PLAIN_HOST.match(host) is not None
+    return _PLAIN_HOST.match(f"[{host.lower()}]") is not None
 
 
 def clean(text: str) -> str:

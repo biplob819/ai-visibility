@@ -120,7 +120,7 @@ class RobotsCache:
                         "robots",
                         key,
                         {
-                            "origin": origin,
+                            "origin": clean(origin),
                             "status": status,
                             "directives": [] if text is None else text.splitlines(),
                         },
