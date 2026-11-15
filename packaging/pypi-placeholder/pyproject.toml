@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "citewatch"
+version = "0.0.1"
+description = "Name reserved for citewatch: measure which sources AI answer engines cite. v0.1.0 is in progress."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+classifiers = ["Development Status :: 1 - Planning"]
+
+[project.urls]
+Source = "https://github.com/biplob819/ai-visibility"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/citewatch"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/citewatch", "README.md", "pyproject.toml"]
+exclude = [".gitignore"]
