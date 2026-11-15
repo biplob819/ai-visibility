@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [N1.2] — verified over six skeptical passes (L-27, L-29 to L-31; D-37 to D-41); money recorded for every paid call under errors, interrupts and signals
 - [FEAT] [A2.2] — polite fetcher: protego robots per origin kept for the study, 1 req/s per host and 8 in flight, hand-followed redirects re-checking robots, retries and page history that keep gate 8's rules across runs, HTML-only capped bodies held in memory, gating, fetch log, `citewatch fetch` with `--dry-run`
 - [GREEN] [N1.3] — verified over four skeptical passes (L-28); CI green on all three systems
 - [FEAT] [N1.2] — Claude and OpenAI runners with native web search, cost model, scheduler, `citewatch ask` (dry run, cap, resume), real fixtures

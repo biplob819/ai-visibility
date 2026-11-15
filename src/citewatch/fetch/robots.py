@@ -18,6 +18,8 @@ from protego import Protego
 
 from citewatch.store import stage_key
 
+from .keys import ascii_host
+
 ROBOTS_TOKEN = "citewatch"
 MAX_ROBOTS_BYTES = 512 * 1024  # RFC 9309 asks crawlers to parse at least 500 KiB
 
@@ -50,7 +52,7 @@ def rules_from(status: int | None, text: str | None) -> RobotsRules:
 
 def origin_of(url: str) -> str:
     p = urlsplit(url)
-    host = (p.hostname or "").lower().rstrip(".")
+    host = ascii_host(p.hostname or "")
     shown = f"[{host}]" if ":" in host else host
     port = p.port
     default = {"http": 80, "https": 443}.get(p.scheme.lower())
@@ -69,7 +71,9 @@ def directives(text: str) -> list[str]:
     for line in text.splitlines():
         line = line.split("#", 1)[0].strip()
         if _DIRECTIVE.match(line) and len(line) <= 2000:
-            out.append(line)
+            # percent-encode angle brackets: no markup is ever stored (v2 M-2), and request
+            # paths carry them encoded anyway, so matching is unchanged
+            out.append(line.replace("<", "%3C").replace(">", "%3E"))
             if len(out) >= MAX_DIRECTIVES:
                 break
     return out

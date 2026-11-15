@@ -613,3 +613,22 @@ def test_an_unpriceable_call_is_charged_at_least_the_first_reservation(tmp_path)
     rs = {m: Odd(m) for m in CFG.models}
     res = go(tmp_path, rs, qs=QS[:1])
     assert res.spent_usd >= 2 * 0.095 * INITIAL_RESERVE_FACTOR * 0.99
+
+
+def test_every_response_of_a_continued_turn_is_stored(tmp_path):
+    """N1.2 v6 M-2: the paused responses are kept in the envelope, not only the last (D-2)."""
+    from citewatch.runners.anthropic_runner import AnthropicRunner
+
+    from .helpers import FakeAnthropic, claude_raw
+
+    paused = claude_raw()
+    paused["stop_reason"] = "pause_turn"
+    claude, gpt = CFG.models
+    rs = {
+        claude: AnthropicRunner(claude, client=FakeAnthropic([paused, paused, claude_raw()])),
+        gpt: FakeRunner(gpt),
+    }
+    res = go(tmp_path, rs, qs=QS[:1])
+    env = RawStore(tmp_path).get("ask", ask_key(CFG, 1, QS[0], claude))
+    assert res.asked == 2 and len(env["responses"]) == 3
+    assert [x["stop_reason"] for x in env["responses"]] == ["pause_turn", "pause_turn", "end_turn"]

@@ -12,9 +12,9 @@ import contextlib
 import datetime as dt
 import email.utils
 import re
+import threading
 import time
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, field, replace
 from typing import Any
@@ -112,12 +112,11 @@ class PoliteClient:
         self.max_page_bytes = max_page_bytes
         self._transport = transport
         self._timeout_cfg = httpx.Timeout(timeout)
-        self._pool = ThreadPoolExecutor(max_workers=16, thread_name_prefix="citewatch-fetch")
         for host, at in self.history.last_at.items():
             self.limiter.seed(host, at)  # a resumed run never comes back too soon (v1 H1)
 
     def close(self) -> None:
-        self._pool.shutdown(wait=False, cancel_futures=True)
+        """Nothing is pooled: each request has its own client and thread."""
 
     # -- robots ---------------------------------------------------------------------------
     def _fetch_robots(self, robots_url: str) -> tuple[int | None, str | None]:
@@ -188,9 +187,26 @@ class PoliteClient:
         with self.limiter.request(host_of(url)) as at:
             res.fetched_at = at
             holder: list[Any] = []
-            fut = self._pool.submit(self._send, url, kind, limit, holder)
+            box: dict[str, Any] = {}
+
+            def work() -> None:
+                try:
+                    box["out"] = self._send(url, kind, limit, holder)
+                except BaseException as exc:
+                    box["exc"] = exc
+
+            # a fresh daemon thread per request, started right after the grant: a stuck
+            # request (a DNS lookup has no timeout) never delays later ones, and `at` is the
+            # real send time (v2 H-1)
+            th = threading.Thread(target=work, daemon=True, name="citewatch-fetch")
+            th.start()
+            th.join(self.timeout + 1.0)
             try:
-                out = fut.result(timeout=self.timeout + 1.0)
+                if th.is_alive():
+                    raise FutureTimeout
+                if "exc" in box:
+                    raise box["exc"]
+                out = box["out"]
             except FutureTimeout:
                 for http in holder:  # best effort: drop the stalled connection
                     with contextlib.suppress(Exception):

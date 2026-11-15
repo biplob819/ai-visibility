@@ -266,7 +266,7 @@ def ask(
         ]
         lines.append(
             f"  total about ${est['total_usd']:.2f}"
-            + (f" (cap ${cap:.2f})" if cap else " (no cap)")
+            + (f" (cap ${cap:.2f})" if cap is not None else " (no cap)")
         )
         _emit(as_json, {"ok": True, "command": "ask", "dry_run": True, **plan}, "\n".join(lines))
         raise typer.Exit(EXIT_OK)
@@ -368,6 +368,23 @@ def extract(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
     _not_built("extract", as_json)
 
 
+def fetch_logs_for(base: Path) -> list[Path]:
+    """Every fetch log the gate-8 audit would read alongside this study's: its own, and its
+    sibling studies' when it lives in a `studies/` folder, since the audit's rules hold across
+    all of them (A2.2 v2 M-3)."""
+    roots = [base / "data"]
+    if base.parent.name == "studies":
+        roots = [s / "data" for s in sorted(base.parent.iterdir()) if s.is_dir()]
+        repo_data = base.parent.parent / "data"
+        if repo_data.is_dir():
+            roots.append(repo_data)
+    found: set[Path] = set()
+    for r in roots:
+        if r.is_dir():
+            found |= {*r.rglob("fetch_log*.jsonl"), *r.rglob("fetch_log*.jsonl.gz")}
+    return sorted(found)
+
+
 @app.command()
 def fetch(
     dry_run: Annotated[
@@ -429,7 +446,7 @@ def fetch(
     client = PoliteClient(
         cfg.user_agent,
         FetchLog(log_path),
-        history=PageHistory.from_logs(sorted((base / "data").rglob("fetch_log*.jsonl"))),
+        history=PageHistory.from_logs(fetch_logs_for(base)),
         store=store,
     )
     try:

@@ -39,5 +39,15 @@ def page_key(url: str) -> str:
     return path + ("?" + "&".join(sorted(query.split("&"))) if query else "")
 
 
+def ascii_host(host: str) -> str:
+    """The punycode form, so `bücher.example` and `xn--bcher-kva.example` are one host for
+    the rate limit and robots (v2 M-4)."""
+    h = norm_host(host)
+    try:
+        return h.encode("idna").decode("ascii")
+    except (UnicodeError, ValueError):
+        return h
+
+
 def host_of(url: str) -> str:
     return norm_host(urlsplit(url).hostname or "")

@@ -1,6 +1,8 @@
 """A2.2 verifier pass 1 findings, each pinned (no network)."""
 
+import datetime as dt
 import gzip
+import itertools
 import time
 
 import httpx
@@ -187,3 +189,135 @@ def test_the_cap_reads_at_most_one_byte_past_the_limit(tmp_path):
     fetch_pages(["https://a.example/big"], client=client, store=store)
     row = next(r for r in log.rows() if r["url"].endswith("/big"))
     assert row["bytes"] == 1001 and row["outcome"] == "too_large"
+
+
+def test_stalled_hosts_never_bunch_up_requests_to_healthy_ones(tmp_path):
+    """v2 H-1: requests stuck past the deadline (e.g. DNS) never delay or bunch later ones."""
+    import threading
+
+    from citewatch.fetch import FetchLog, HostLimiter, PoliteClient
+
+    arrivals: list[float] = []
+    lock = threading.Lock()
+
+    def handler(request):
+        if request.url.host.startswith("dead"):
+            time.sleep(8.0)
+        elif request.url.host == "good.example" and request.url.path != "/robots.txt":
+            with lock:
+                arrivals.append(time.monotonic())
+        return httpx.Response(
+            404 if request.url.path == "/robots.txt" else 200, headers=HTML, content=PAGE
+        )
+
+    log = FetchLog(tmp_path / "fetch_log.jsonl")
+    client = PoliteClient(
+        "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)",
+        log,
+        limiter=HostLimiter(interval=0.3, margin=0.02),
+        transport=httpx.MockTransport(handler),
+        timeout=0.2,
+    )
+    urls = [f"https://good.example/{i}" for i in range(20)] + [
+        f"https://dead{i}.example/p" for i in range(40)
+    ]
+    fetch_pages(urls, client=client, store=RawStore(tmp_path))
+    assert len(arrivals) == 20
+    gaps = [b - a for a, b in itertools.pairwise(arrivals)]
+    assert min(gaps) >= 0.25, gaps  # spaced on the wire, not only in the log
+
+
+def test_a_pause_between_clock_reads_never_shrinks_logged_gaps():
+    """v2 M-1: the logged `at` is the wall time the spacing was checked against."""
+    from citewatch.fetch import HostLimiter
+
+    from .web import BASE
+
+    clock = VClock()
+    first = {"done": False}
+
+    def wall():
+        if not first["done"]:
+            first["done"] = True
+            return BASE + dt.timedelta(seconds=clock.now() + 0.1)  # the process paused here
+        return BASE + dt.timedelta(seconds=clock.now())
+
+    lim = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=wall)
+    ats = []
+    for _ in range(3):
+        with lim.request("a.example") as at:
+            ats.append(at)
+    assert all((b - a).total_seconds() >= 1.0 for a, b in itertools.pairwise(ats))
+
+
+def test_stored_robots_directives_never_carry_markup():
+    from citewatch.fetch.robots import directives, rules_from
+
+    lines = directives("Sitemap: <a href=x> <body>\nUser-agent: *\nDisallow: /<html>/\n")
+    assert not any("<" in x or ">" in x for x in lines)
+    r = rules_from(200, "\n".join(lines))
+    assert not r.allows("https://a.example/%3Chtml%3E/x")
+
+
+def test_sibling_studies_share_the_fetch_history(tmp_path):
+    from citewatch.cli import fetch_logs_for
+
+    for s in ("a", "b"):
+        (tmp_path / "studies" / s / "data").mkdir(parents=True)
+    (tmp_path / "studies" / "a" / "data" / "fetch_log.jsonl").write_text("", encoding="utf-8")
+    (tmp_path / "studies" / "b" / "data" / "old").mkdir()
+    (tmp_path / "studies" / "b" / "data" / "old" / "fetch_log.1.jsonl.gz").write_bytes(
+        gzip.compress(b"")
+    )
+    logs = fetch_logs_for(tmp_path / "studies" / "b")
+    assert {p.parent.parent.name if p.parent.name == "data" else "b" for p in logs} == {"a", "b"}
+    assert len(logs) == 2
+    lone = tmp_path / "lone"
+    (lone / "data").mkdir(parents=True)
+    assert fetch_logs_for(lone) == []
+
+
+def test_an_international_name_and_its_punycode_are_one_host(tmp_path):
+    """v2 M-4: one rate bucket and one robots.txt for both spellings."""
+    web = FakeWeb(
+        {
+            "https://xn--bcher-kva.example/a": httpx.Response(
+                301, headers={"location": "https://xn--bcher-kva.example/b"}
+            )
+        }
+    )
+    client, log, _ = make(tmp_path, web)
+    client.get("https://bücher.example/a")
+    client.get("https://xn--bcher-kva.example/c")
+    assert [u for u in web.urls() if u.endswith("/robots.txt")] == [
+        "https://xn--bcher-kva.example/robots.txt"
+    ]
+    ats = [dt.datetime.fromisoformat(r["at"]) for r in log.rows()]
+    assert all((b - a).total_seconds() >= 1.0 for a, b in itertools.pairwise(ats))
+
+
+def test_robots_requests_respect_the_page_budget(tmp_path):
+    h = PageHistory()
+    for _ in range(3):
+        h.seed(
+            {
+                "url": "https://a.example/robots.txt",
+                "status": 503,
+                "outcome": "fetch_error",
+                "at": "2026-11-15T11:00:00Z",
+            }
+        )
+    web = FakeWeb()
+    client, _log, _ = make(tmp_path, web, history=h)
+    assert client.get("https://a.example/p").outcome == "robots_disallowed"
+    assert web.requests == []
+
+
+def test_archived_gz_logs_seed_the_history(tmp_path):
+    p = tmp_path / "fetch_log.1.jsonl.gz"
+    row = (
+        b'{"url": "https://a.example/p", "status": 451, "outcome": "blocked", '
+        b'"at": "2026-11-15T12:00:00Z"}\n'
+    )
+    p.write_bytes(gzip.compress(row))
+    assert PageHistory.from_logs([p]).may_request("https://a.example/p") == "blocked earlier"

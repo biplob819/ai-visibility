@@ -1,6 +1,6 @@
 # N1.2 run state
 
-**Now:** pass 5 fixes in; converging, then verifier pass 6.
+**Now:** green.
 
 ## History
 - 2026-11-15 — spec and criteria written.
@@ -14,6 +14,8 @@
 
 - 2026-11-15 — verifier pass 5 CONFIRMED ASK-01..08 (92 real-signal trials and a 400-run fault fuzz: billed = spend lines, no hang, no leak; cap at the estimate: 0 overrun for 1–50 questions). OPEN 2: a Ctrl-C during a retry backoff still made one more paid request after the sleep (M1); nothing tested that the study's own `max_cost_usd` caps a run (M2). Fixed: the backoff waits on the stop event and a paused Claude turn is not continued after stop (kept as a partial); tests for the study cap, partial errors exiting 0, a worker bug stopping queued calls, the stop event reaching runners, the unpriced charge floor and the SIGTERM handler being restored; stop is set in `finally` whenever the loop did not finish (L2); the drain says why Ctrl-C waits (L1).
 
+- 2026-11-15 — verifier pass 6 CONFIRMED ASK-01..08 (real-signal probes of the pass-5 fixes: 0 paid retries and 0 continuations after stop; 210-run fault and interrupt fuzz: stored = paid, spend lines = spent, no request after stop, no hang). OPEN 2, both test gaps: no runner-level test that each runner passes `stop` to its retries (M-1), and none that a continued turn stores every response (M-2). Closing tests added exactly as the verifier specified; each kills its mutant (checked by applying the mutants: anthropic and openai stop wiring, `responses[-1:]`). Lows: a $0 cap is shown as a cap in the dry run (L5, fixed); an estimate equal to the cap runs (L4, pinned). D-26 met: rows flipped green.
+
 ## Known limits
 - A second partial response for the same key is not stored (first writer wins); its spend line is written. Closing test: store partials under an attempt number (not written).
 - `--questions` rewrites `order.json` with the subset's order; the cap applies to one command, not the whole run. Closing test: a subset run that keeps the full order file, and a run-level cap from the spend ledger (not written).
@@ -23,3 +25,4 @@
 - Surviving mutants with no spend or storage effect: removing `notify_all` (slower only), the reset of `reserved` when idle (masked by the integer count), the cancelled-call count, `f.result()` in the main loop, `_check_cap` before any call. Closing tests: one per mutant (not written).
 - Further Ctrl-C while calls are in flight are held until those calls end (bounded by the SDK's read timeout, up to 4 requests for a continued Claude turn); a message says so. Python started in the background from a non-interactive shell ignores SIGINT (SIGTERM works). A resume with nothing missing and a broken run.log exits 2 with a hint about keys. A request that times out on our side after the provider billed it, then retried, records only the retry. A NaN inside a verbatim response makes the store refuse it (only the spend line remains; real JSON has no NaN). Closing tests: not written; the timeout case cannot be observed from the client.
 - Surviving mutants after pass 5 with no spend or storage effect: the instruction hash in the answer key (masked: the instruction depends only on settings already hashed), `word_limit` in the hash (masked by the instruction), the estimate check factor, the order of spend and settle. Closing tests: one per mutant (not written).
+- Pass-6 surviving mutants that matter only after a separate bug or cannot change data today: the runner-bug path charging $0 (the line is still written), an unpriceable call charged `cap.initial` rather than the larger of that and its reservation, the envelope's `usage`/`request`/`error` replaced (each rebuilt from config or stage, unread by `src` today). Closing tests: one per mutant (not written).

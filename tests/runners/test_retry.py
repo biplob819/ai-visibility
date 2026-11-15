@@ -149,3 +149,28 @@ def test_a_stop_ends_a_paused_turn_and_keeps_what_was_paid():
     rc = r.call(Q1, CFG)
     assert len(fake.calls) == 1 and len(rc.responses) == 1
     assert rc.error is not None and rc.error.startswith("stopped during continuation")
+
+
+@pytest.mark.parametrize("which", ["anthropic", "openai"])
+def test_each_runner_hands_its_stop_to_the_retries(which):
+    """N1.2 v6 M-1: a Ctrl-C during a runner's backoff makes no further paid request."""
+    import threading
+
+    from citewatch.runners.anthropic_runner import AnthropicRunner
+    from citewatch.runners.openai_runner import OpenAIRunner
+
+    from .helpers import CFG, Q1, FakeAnthropic, FakeOpenAI, StatusError, claude_raw, openai_raw
+
+    if which == "anthropic":
+        fake = FakeAnthropic([StatusError(529), claude_raw()])
+        r = AnthropicRunner("claude-sonnet-5-5", client=fake)
+    else:
+        fake = FakeOpenAI([StatusError(529), openai_raw()])
+        r = OpenAIRunner("gpt-6.1-sol", client=fake)
+    r.stop = threading.Event()
+    threading.Timer(0.2, r.stop.set).start()
+    from citewatch.runners.base import TransportError
+
+    with pytest.raises(TransportError, match="during backoff"):
+        r.call(Q1, CFG)
+    assert len(fake.calls) == 1

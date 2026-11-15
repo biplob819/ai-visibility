@@ -8,6 +8,7 @@ refusal, and reuses a result already fetched in this run.
 from __future__ import annotations
 
 import datetime as dt
+import gzip
 import json
 import threading
 from collections.abc import Iterable
@@ -49,7 +50,10 @@ class PageHistory:
         for p in paths:
             if not Path(p).is_file():
                 continue
-            for line in Path(p).read_text(encoding="utf-8").splitlines():
+            raw = Path(p).read_bytes()
+            if raw[:2] == b"\x1f\x8b":  # an archived .jsonl.gz counts too (v2 L-4)
+                raw = gzip.decompress(raw)
+            for line in raw.decode("utf-8", errors="replace").splitlines():
                 if not line.strip():
                     continue
                 try:

@@ -190,3 +190,20 @@ def test_partial_errors_still_exit_0(study, capsys, monkeypatch):
     assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["asked"] == 2 and len(out["errors"]) == 2
+
+
+def test_an_estimate_equal_to_the_cap_runs_and_a_zero_cap_is_shown(study, capsys, monkeypatch):
+    """v6 L4, L5."""
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--dry-run", "--study", str(study), "--json"]) == 0
+    est = json.loads(capsys.readouterr().out)["estimate"]["total_usd"]
+    _fake(monkeypatch)
+    assert cli.main(["ask", "--run", "0", "--max-cost", str(est), "--study", str(study)]) == 0
+    yml = study / "study.yaml"
+    yml.write_text(
+        yml.read_text(encoding="utf-8").replace("max_cost_usd: 5", "max_cost_usd: 0"),
+        encoding="utf-8",
+    )
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "1", "--dry-run", "--study", str(study)]) == 0
+    assert "(cap $0.00)" in capsys.readouterr().out
