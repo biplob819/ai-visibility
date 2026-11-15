@@ -367,7 +367,7 @@ class PoliteClient:
             if refused:
                 self.log.write(
                     url=current,
-                    at=dt.datetime.now(dt.UTC),
+                    at=self.limiter.wall(),  # the clock request rows use (v7 L1)
                     attempt=1,
                     status=None,
                     nbytes=None,

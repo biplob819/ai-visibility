@@ -41,6 +41,10 @@ class HostLimiter:
         self._sent: dict[str, float] = {}
         self.live = self.max_live = 0
 
+    def wall(self) -> dt.datetime:
+        """The wall clock this limiter stamps grants with."""
+        return self._wall()
+
     def seed(self, host: str, last_at: dt.datetime) -> None:
         """A request to `host` started at `last_at` (wall clock), e.g. in an earlier run."""
         wait = last_at + dt.timedelta(seconds=self.interval + self.margin) - self._wall()

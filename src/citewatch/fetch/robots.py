@@ -7,7 +7,6 @@ error, too many redirects or a redirect away from a robots.txt disallow everythi
 
 from __future__ import annotations
 
-import re
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -59,25 +58,19 @@ def origin_of(url: str) -> str:
     return f"{p.scheme.lower()}://{shown}" + ("" if port in (None, default) else f":{port}")
 
 
-ROBOTS_CODE_VERSION = "robots-2"  # robots-2: only directive lines are kept
-_DIRECTIVE = re.compile(r"^\s*(user-agent|allow|disallow|sitemap|crawl-delay)\s*:", re.I)
-MAX_DIRECTIVES = 5000
+ROBOTS_CODE_VERSION = "robots-3"  # robots-3: every non-comment line kept, encoded
 
 
 def directives(text: str) -> list[str]:
-    """The robots.txt lines protego reads, nothing else: a soft-404 HTML page served as
-    robots.txt keeps no markup (NFR6) and reads as allow-all, as protego would read it."""
+    """Every robots.txt line protego could read (comments and blank lines dropped, nothing
+    filtered by keyword and no line cap), with markup characters percent-encoded so no page
+    markup is ever stored (NFR6). Filtering by keyword lost `User-agent *`, `Dissallow` and
+    every rule after a cap, so disallowed pages were fetched (v7 H1)."""
     out = []
     for line in text.splitlines():
         line = line.split("#", 1)[0].strip()
-        if _DIRECTIVE.match(line) and len(line) <= 2000:
-            # percent-encode angle brackets: no markup is ever stored (v2 M-2), and request
-            # paths carry them encoded anyway, so matching is unchanged
-            out.append(
-                clean(line)
-            )  # escaped markup (`&lt;html`) and JSON- or dict-looking keys too (v3 M3, v4 M1)
-            if len(out) >= MAX_DIRECTIVES:
-                break
+        if line:
+            out.append(clean(line))
     return out
 
 

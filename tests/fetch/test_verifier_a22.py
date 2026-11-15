@@ -39,7 +39,7 @@ def test_a_soft_404_html_robots_is_never_stored(tmp_path):
     assert client.get("https://a.example/p").outcome == "ok"
     for f in (tmp_path / "data" / "raw").rglob("*.gz"):
         raw = gzip.decompress(f.read_bytes())
-        assert b"<" not in raw and b"doctype" not in raw.lower()
+        assert b"<" not in raw  # encoded, never markup
         assert storage_audit.file_problems(f, tmp_path) == []
 
 
@@ -853,3 +853,58 @@ def test_robots_redirect_loops_stay_within_the_page_budget(tmp_path):
     client, _log, _ = make(tmp_path, web, history=h)
     assert client.get("https://a.example/p").outcome == "robots_disallowed"
     assert web.urls().count("https://a.example/robots.txt") == 1
+
+
+# --- pass 7 -------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"User-agent *\nDisallow: /\n",
+        b"User-agent: *\nDisallow /\n",
+        b"User agent: citewatch\nDisallow: /\n",
+        b"Useragent: *\nDisallow: /\n",
+        b"User-agent: *\nDissallow: /\n",
+        b"User-agent: *\n" + b"Allow: /a\n" * 5100 + b"Disallow: /\n",
+    ],
+)
+def test_the_fetcher_applies_exactly_protegos_verdict(tmp_path, body):
+    """v7 H1: no line protego reads is dropped before it reaches protego, stored or not."""
+    from protego import Protego
+
+    url = "https://a.example/page"
+    assert Protego.parse(body.decode()).can_fetch(url, "citewatch") is False
+    store = RawStore(tmp_path)
+    web = FakeWeb({"https://a.example/robots.txt": httpx.Response(200, content=body)})
+    client, log, _ = make(tmp_path, web, store=store)
+    assert client.get(url).outcome == "robots_disallowed"
+    later, _l, _ = make(tmp_path / "r2", FakeWeb(), store=store)  # the stored answer, re-read
+    assert later.get(url).outcome == "robots_disallowed"
+    assert "https://a.example/page" not in web.urls() and audit(log) == []
+
+
+def test_an_unexpected_robots_failure_disallows():
+    """v7 L2."""
+    from citewatch.fetch import RobotsCache
+
+    def boom(url):
+        raise KeyError("bug")
+
+    assert RobotsCache(boom).allows("https://a.example/p") is False
+
+
+def test_refusal_rows_use_the_limiter_clock(tmp_path):
+    """v7 L1: a request after a refusal would sort after it in the audit."""
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /no\n"
+            )
+        }
+    )
+    client, log, _clock = make(tmp_path, web)
+    client.get("https://a.example/yes")
+    client.get("https://a.example/no")
+    refused = next(r for r in log.rows() if r["outcome"] == "robots_disallowed")
+    assert refused["at"].startswith("2026-11-15T12:00")  # the virtual wall clock, not now()
