@@ -429,7 +429,7 @@ def fetch(
     client = PoliteClient(
         cfg.user_agent,
         FetchLog(log_path),
-        history=PageHistory.from_logs(sorted((base / "data").glob("fetch_log*.jsonl"))),
+        history=PageHistory.from_logs(sorted((base / "data").rglob("fetch_log*.jsonl"))),
         store=store,
     )
     try:

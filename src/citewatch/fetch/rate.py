@@ -38,6 +38,14 @@ class HostLimiter:
         self._slots = threading.BoundedSemaphore(max_in_flight)
         self.live = self.max_live = 0
 
+    def seed(self, host: str, last_at: dt.datetime) -> None:
+        """A request to `host` started at `last_at` (wall clock), e.g. in an earlier run."""
+        wait = last_at + dt.timedelta(seconds=self.interval + self.margin) - self._wall()
+        with self._lock:
+            key = norm_host(host)
+            nxt = self._clock() + max(0.0, wait.total_seconds())
+            self._next[key] = max(self._next.get(key, float("-inf")), nxt)
+
     @contextmanager
     def request(self, host: str) -> Iterator[dt.datetime]:
         """Hold one in-flight slot and this host's next grant; yields the request start time."""

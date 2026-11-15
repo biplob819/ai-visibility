@@ -1,10 +1,15 @@
 # A2.2 run state
 
-**Now:** built and converged twice; verifier pass 1.
+**Now:** pass 1 fixes in; converging, then verifier pass 2.
 
 ## History
 - 2026-11-15 — spec and criteria written; started after N1.3 green. HTTP client: httpx with redirects followed by hand (D-42).
 
 - 2026-11-15 — built `src/citewatch/fetch/` (keys, log, rate, history, robots, client, pages) and `citewatch fetch`; 53 fetch tests on a fake web with a virtual clock, every log replayed through the gate-8 audit, plus one real-socket test against a local server (real 1 s limiter, gzip bomb cut at the decoded size). robots kept per origin in the store for the study (D-42).
 
+- 2026-11-15 — verifier pass 1 CONFIRMED FET-03/05/07; DISPROVED FET-01/02/04/06/08. High: back-to-back runs (resume after Ctrl-C) hit a host 0.4 s after the last run's request, because each run's limiter started empty (H1); a soft-404 HTML page served as robots.txt was stored, failing the storage audit (H2). Medium: robots redirect loops made 6 requests for one robots.txt (M3); a robots redirect to `file:` logged an empty host or was refetched per page (M4); the 10 s timeout was per socket read, so slow headers held one get for 136 s (M5); a shared client could send a cookie back to a host mid-stream (M6); `/dir` -> `/dir/` and http -> https redirects replayed a cached 301 into "too many redirects" (M7). Fixed: the limiter is seeded with each host's last request time from earlier logs; only robots directive lines are stored (`robots-2`); robots redirects need a web scheme, a host, an unseen URL and the page budget; each request runs on its own client under a hard deadline for the whole exchange; results are cached per exact URL; lows: 503 Retry-After honoured, redirects carrying credentials refused, gating ignores comments and reads either meta attribute order, a torn log line is skipped, fetch logs found recursively, politeness constants pinned. 12 of the 15 new tests fail on the old code (the cookie leak needs overlapping requests; per-request clients remove its cause).
+
 ## Known limits
+- A request abandoned at the hard deadline keeps its worker thread until the server closes or the socket times out; its result is discarded and it was logged once. Closing test: a stalled server held open past the run (not written).
+- Two origins of one host (http and https) whose robots.txt disagree can race: a refusal logged for one scheme between the other's budget check and its grant gives an audit "requested after robots refused" line. Closing test: a two-scheme race (not written).
+- Changing the citewatch version mid-study changes the user agent, which the audit flags; a study keeps one version for its fetches (§13 runbook). Closing test: `doctor` warning on a user agent that differs from the fetch log (not written).

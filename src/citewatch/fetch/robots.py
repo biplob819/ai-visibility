@@ -7,6 +7,7 @@ error, too many redirects or a redirect away from a robots.txt disallow everythi
 
 from __future__ import annotations
 
+import re
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -56,7 +57,22 @@ def origin_of(url: str) -> str:
     return f"{p.scheme.lower()}://{shown}" + ("" if port in (None, default) else f":{port}")
 
 
-ROBOTS_CODE_VERSION = "robots-1"
+ROBOTS_CODE_VERSION = "robots-2"  # robots-2: only directive lines are kept
+_DIRECTIVE = re.compile(r"^\s*(user-agent|allow|disallow|sitemap|crawl-delay)\s*:", re.I)
+MAX_DIRECTIVES = 5000
+
+
+def directives(text: str) -> list[str]:
+    """The robots.txt lines protego reads, nothing else: a soft-404 HTML page served as
+    robots.txt keeps no markup (NFR6) and reads as allow-all, as protego would read it."""
+    out = []
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if _DIRECTIVE.match(line) and len(line) <= 2000:
+            out.append(line)
+            if len(out) >= MAX_DIRECTIVES:
+                break
+    return out
 
 
 class RobotsCache:
@@ -86,12 +102,22 @@ class RobotsCache:
             key = stage_key("robots", ROBOTS_CODE_VERSION, {"origin": origin}, "")
             if self._store is not None and self._store.has("robots", key):
                 saved = self._store.get("robots", key)
-                status, text = saved["status"], saved["robots_txt"]
+                status, text = saved["status"], "\n".join(saved["directives"])
             else:
-                status, text = self._fetch(origin + "/robots.txt")
+                try:
+                    status, text = self._fetch(origin + "/robots.txt")
+                except Exception:  # an unexpected failure disallows, and is cached
+                    status, text = None, None
+                text = None if text is None else "\n".join(directives(text))
                 if self._store is not None:
                     self._store.put(
-                        "robots", key, {"origin": origin, "status": status, "robots_txt": text}
+                        "robots",
+                        key,
+                        {
+                            "origin": origin,
+                            "status": status,
+                            "directives": [] if text is None else text.splitlines(),
+                        },
                     )
             r = rules_from(status, text)
             with self._lock:

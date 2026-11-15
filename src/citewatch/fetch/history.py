@@ -7,6 +7,7 @@ refusal, and reuses a result already fetched in this run.
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import threading
 from collections.abc import Iterable
@@ -14,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .keys import page_key
+from .keys import host_of, norm_url, page_key
 
 MAX_REQUESTS = 3  # one try and two retries, for the whole study
 BLOCK_STATUSES = frozenset({401, 403, 451})
@@ -29,9 +30,17 @@ class _Entry:
     lock: threading.Lock = field(default_factory=threading.Lock)
 
 
+@dataclass
+class _Slot:
+    result: Any = None
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+
 class PageHistory:
     def __init__(self) -> None:
         self._pages: dict[str, _Entry] = {}
+        self._slots: dict[str, _Slot] = {}
+        self.last_at: dict[str, dt.datetime] = {}  # host -> last request start, all runs
         self._lock = threading.Lock()
 
     @classmethod
@@ -41,8 +50,14 @@ class PageHistory:
             if not Path(p).is_file():
                 continue
             for line in Path(p).read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    h.seed(json.loads(line))
+                if not line.strip():
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue  # a torn line never stops later fetches; the audit reports it
+                if isinstance(row, dict) and isinstance(row.get("url"), str):
+                    h.seed(row)
         return h
 
     def seed(self, row: dict[str, Any]) -> None:
@@ -53,6 +68,12 @@ class PageHistory:
             e.requests += 1
             if row.get("status") in BLOCK_STATUSES:
                 e.blocked = True
+            try:
+                at = dt.datetime.fromisoformat(str(row.get("at")).replace("Z", "+00:00"))
+            except ValueError:
+                return
+            if at.tzinfo is not None:
+                self._note_at(row["url"], at)
 
     def entry(self, url: str) -> _Entry:
         key = page_key(url)
@@ -70,11 +91,25 @@ class PageHistory:
             return "request budget for this page used"
         return None
 
-    def record(self, url: str, status: int | None) -> None:
+    def record(self, url: str, status: int | None, at: dt.datetime | None = None) -> None:
         e = self.entry(url)
         e.requests += 1
         if status in BLOCK_STATUSES:
             e.blocked = True
+        if at is not None:
+            self._note_at(url, at)
+
+    def _note_at(self, url: str, at: dt.datetime) -> None:
+        host = host_of(url)
+        with self._lock:
+            if host not in self.last_at or at > self.last_at[host]:
+                self.last_at[host] = at
+
+    def slot(self, url: str) -> _Slot:
+        """This run's result for one exact (normalised) URL."""
+        key = norm_url(url)
+        with self._lock:
+            return self._slots.setdefault(key, _Slot())
 
     def refuse(self, url: str) -> None:
         self.entry(url).robots_refused = True

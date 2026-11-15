@@ -91,9 +91,10 @@ def make(
     *,
     history: PageHistory | None = None,
     store: RawStore | None = None,
+    vclock: VClock | None = None,
     **kw: Any,
 ) -> tuple[PoliteClient, FetchLog, VClock]:
-    clock = VClock()
+    clock = vclock or VClock()
     limiter = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=clock.wall)
     log = FetchLog(tmp_path / "data" / "fetch_log.jsonl")
     client = PoliteClient(

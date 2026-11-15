@@ -123,7 +123,7 @@ def test_the_timeout_is_ten_seconds_and_a_slow_body_is_cut(tmp_path):
     ticks = itertools.count(step=4)
     web = FakeWeb()
     client, log, _ = make(tmp_path, web, clock=lambda: next(ticks))
-    assert client.timeout == 10.0 and client._http.timeout.read == 10.0
+    assert client.timeout == 10.0 and client._timeout_cfg.read == 10.0
     big = b"<html>" + b"x" * 300_000
 
     def stream(request):
