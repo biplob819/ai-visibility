@@ -55,7 +55,7 @@ def test_secret_scan_reads_names_git_would_quote_and_gz(tmp_path):
         ({"status": True}, "status must be"),
         ({"bytes": -1}, "bytes must be"),
         ({"attempt": 0}, "attempt must be"),
-        ({"outcome": "robots_disallowed", "robots": "disallowed"}, "status must be null"),
+        ({"outcome": "robots_disallowed", "robots": "disallowed"}, "status and bytes must be null"),
     ],
 )
 def test_fetch_audit_rejects_bad_field_values(over, needle):
@@ -142,3 +142,86 @@ def test_proofs_gate_rejects_every_kind_of_skipped_test(tmp_path):
         "test_xf": True,
         "test_real": False,
     }
+
+
+# ---- W0.1 verifier pass 2 ----
+
+
+def test_skip_detection_has_no_false_positives_or_negatives(tmp_path):
+    (tmp_path / "test_m.py").write_text(
+        "import pytest\nfrom pytest import skip\n\n"
+        '@pytest.mark.parametrize("mode", ["skip_header", "xfail_mode"])\n'
+        "def test_param(mode):\n    assert mode\n\n"
+        "def test_fail_branch():\n    if 1 + 1 != 2:\n        pytest.fail('maths broke')\n\n"
+        "def test_bare_skip():\n    skip('later')\n\n"
+        "class TestOuter:\n    class TestInner:\n"
+        "        def test_nested(self):\n            pass\n",
+        encoding="utf-8",
+    )
+    assert nc._test_functions(tmp_path / "test_m.py") == {
+        "test_param": False,
+        "test_fail_branch": False,
+        "test_bare_skip": True,
+        "test_nested": False,
+    }
+
+
+@pytest.mark.parametrize("bad", ["a\rb", "a\x0cb", "a\x85b", "a b", " lead", "trail "])
+def test_catalog_writer_refuses_cells_it_could_not_read_back(tmp_path, bad):
+    from harness_lib import HarnessError
+
+    with pytest.raises(HarnessError):
+        write_catalog([Cap("HAR-01", "W0.1", "green", bad, "n")], tmp_path / "c.tsv")
+
+
+@pytest.mark.polite
+def test_fetch_audit_pass_two_rules():
+    skipped = {
+        "robots": "disallowed",
+        "outcome": "robots_disallowed",
+        "status": None,
+        "bytes": None,
+    }
+    later = "2026-11-15T10:00:05+00:00"
+    assert any("robots refused" in p for p in fa.audit([fa._line(**skipped), fa._line(at=later)]))
+    assert any("more than 2 retries" in p for p in fa.audit([fa._line(attempt=4)]))
+    blocked = fa._line(status=401, outcome="blocked")
+    assert any("after it was blocked" in p for p in fa.audit([blocked, fa._line(at=later)]))
+    ipv6 = fa._line(url="https://[2001:db8::1]:8443/a", host="[2001:db8::1]")
+    assert fa.audit([ipv6]) == []
+    assert any("malformed url" in p for p in fa.audit([fa._line(url="https://[::1/x")]))
+
+
+@pytest.mark.safety
+def test_unpack_fails_closed_on_bombs_depth_and_encryption():
+    import io
+    import zipfile
+
+    from harness_lib import MAX_UNPACKED, HarnessError, unpack
+
+    with pytest.raises(HarnessError, match="MiB"):
+        unpack(gzip.compress(b" " * (MAX_UNPACKED + 1)))
+    deep = b"x"
+    for _ in range(4):
+        deep = gzip.compress(deep)
+    with pytest.raises(HarnessError, match="nested"):
+        unpack(deep)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("a.txt", b"<html>")
+    raw = bytearray(buf.getvalue())
+    raw[6] |= 0x1  # mark the local header encrypted
+    cd = raw.rfind(b"PK\x01\x02")
+    raw[cd + 8] |= 0x1  # and the central directory entry
+    with pytest.raises(HarnessError):
+        unpack(bytes(raw))
+    assert unpack(b"BZh is plain text") == b"BZh is plain text"
+
+
+def test_gate_golden_never_passes_without_the_minimum_python(tmp_path, monkeypatch):
+    (tmp_path / "test_g.py").write_text(
+        "import pytest\n\n@pytest.mark.golden\ndef test_g():\n    pass\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(nc.shutil, "which", lambda _name: None)
+    r = nc.gate_golden(nc.Ctx("W0.1", tmp_path, {}, [], tmp_path))
+    assert r.status == "FAIL" and "uv not found" in r.detail

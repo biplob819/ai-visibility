@@ -1,4 +1,4 @@
-"""AI Visibility: which pages AI answers cite for UK health questions, and how fresh they are."""
+"""citewatch: measure which web pages AI answers with web search cite, and how fresh they are."""
 
 from importlib.metadata import PackageNotFoundError, version
 

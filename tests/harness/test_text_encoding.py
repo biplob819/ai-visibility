@@ -12,7 +12,9 @@ def offenders():
     found = []
     for base in ("src", "scripts", "tests"):
         for path in (ROOT / base).rglob("*.py"):
-            tree = ast.parse(path.read_text(encoding="utf-8"))
+            source = path.read_text(encoding="utf-8")
+            lines = source.splitlines()
+            tree = ast.parse(source)
             for node in ast.walk(tree):
                 if not isinstance(node, ast.Call):
                     continue
@@ -36,6 +38,8 @@ def offenders():
                         continue
                 if any(k.arg == "encoding" for k in node.keywords):
                     continue
+                if "# binary:" in lines[node.lineno - 1]:
+                    continue  # documented binary open, e.g. a zip member
                 positional = {"read_text": 1, "write_text": 2, "open": 4}[name]
                 if len(node.args) >= positional:
                     continue  # encoding passed positionally, e.g. read_text("utf-8")

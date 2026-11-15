@@ -34,6 +34,7 @@ def test_a_skipped_disallowed_url_is_not_a_request():
             robots="disallowed",
             outcome="robots_disallowed",
             status=None,
+            bytes=None,
         ),
     ]
     assert fa.audit(lines) == []

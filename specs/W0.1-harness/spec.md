@@ -10,7 +10,7 @@ A uv project for the `citewatch` package and the lean Kova build harness ported 
 - `.github/workflows/ci.yml`: ruff, ruff format, pyright, pytest (all markers including golden), secret scan, storage audit, graph eligibility, `uv build`, on Python 3.11–3.13 × Linux, macOS and Windows, on push and PR, `contents: read` only (HAR-02).
 - `scripts/harness_lib.py`, `verify_graph_eligibility.py`, `node_start.py` ported from EvalKit with node ids `[WNAMSBD]n.n` (HAR-03).
 - `scripts/node_converge.py` with the gate list of Tech Spec §12.6: gate 7 golden, gate 8 politeness (`pytest -m polite` plus `scripts/fetch_audit.py` over committed fetch logs), gate 9 safety (`pytest -m safety`, secret scan, `scripts/storage_audit.py`), gate 10 build with the smoke commands that exist so far (HAR-04).
-- `docs/graph/graph.md` and `catalog.tsv` generated from Tech Spec §12.2 and §12.4; `docs/decisions.md` (D-1 to D-20); `docs/lessons.md` (L-1 to L-12 inherited, §12.8); `changelog.md`; `scripts/status.py` (HAR-05).
+- `docs/graph/graph.md` and `catalog.tsv` generated from Tech Spec §12.2 and §12.4; `docs/decisions.md` (D-1 to D-25); `docs/lessons.md` (L-1 to L-12 inherited, §12.8); `changelog.md`; `scripts/status.py` (HAR-05).
 - `scripts/secret_scan.py` (ported) and `scripts/storage_audit.py` (new) (HAR-06).
 - `docs/harness/verifier-prompt.md` (HAR-07).
 

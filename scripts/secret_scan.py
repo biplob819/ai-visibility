@@ -39,7 +39,6 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     ),
 }
 ALLOW = "secret-scan: allow"
-SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".whl", ".ico"}  # archives are unpacked
 
 
 def candidate_files(root: Path) -> list[Path]:
@@ -53,7 +52,7 @@ def candidate_files(root: Path) -> list[Path]:
 def scan(files: list[Path]) -> list[str]:
     hits: list[str] = []
     for f in files:
-        if f.suffix.lower() in SKIP_SUFFIXES or not f.is_file():
+        if not f.is_file():  # every file is scanned: a suffix proves nothing
             continue
         try:
             # never skip a file for its encoding: undecodable bytes become U+FFFD

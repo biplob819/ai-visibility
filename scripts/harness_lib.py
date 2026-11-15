@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import typing
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -135,8 +136,13 @@ def write_catalog(caps: list[Cap], path: Path = CATALOG_TSV) -> None:
         fh.write("\t".join(CATALOG_FIELDS) + "\n")
         for c in caps:
             cells = [c.cap_id, c.node, c.status, c.proof, c.note]
-            if any("\t" in x or "\n" in x for x in cells):
-                raise HarnessError(f"catalog row {c.cap_id}: a cell contains a tab or newline")
+            for x in cells:
+                # anything str.splitlines splits on, or edge whitespace, would not read back
+                if "\t" in x or x.splitlines() not in ([x], []) or x != x.strip():
+                    raise HarnessError(
+                        f"catalog row {c.cap_id}: cell {x[:30]!r} has a tab, line break "
+                        "or leading/trailing whitespace"
+                    )
             fh.write("\t".join(cells) + "\n")
 
 
@@ -251,25 +257,82 @@ def git_files(root: Path, *paths: str) -> list[Path] | None:
     return sorted({root / n for n in names if (root / n).is_file()})
 
 
-MAX_UNPACKED = 200 * 1024 * 1024  # stop decompression bombs
+MAX_UNPACKED = 200 * 1024 * 1024  # bytes audited per file; more is a failure, never a skip
+MAX_LAYERS = 3  # nested compression layers unpacked; a fourth layer is a failure
+CHUNK = 1024 * 1024
 
 
-def unpack(raw: bytes, depth: int = 0) -> bytes:
-    """Decompress gzip, bzip2, xz and zip by their magic bytes (any file name, nested up to
-    three layers) so an audit cannot be dodged by renaming or double compressing."""
-    if depth >= 3:
+def _is_bz2(raw: bytes) -> bool:
+    return raw[:3] == b"BZh" and raw[3:4] in b"123456789" and raw[4:10] == b"1AY&SY"
+
+
+def _kind(raw: bytes) -> str | None:
+    if raw[:2] == b"\x1f\x8b":
+        return "gzip"
+    if _is_bz2(raw):
+        return "bzip2"
+    if raw[:6] == b"\xfd7zXZ\x00":
+        return "xz"
+    if raw[:4] == b"PK\x03\x04":
+        return "zip"
+    return None
+
+
+def _read_capped(stream: typing.IO[bytes] | io.BufferedIOBase, budget: int) -> bytes:
+    """Read a decompressing stream in chunks, never holding more than budget + 1 chunk."""
+    out = bytearray()
+    while True:
+        chunk = stream.read(CHUNK)
+        if not chunk:
+            return bytes(out)
+        out += chunk
+        if len(out) > budget:
+            raise HarnessError(f"unpacks to more than {MAX_UNPACKED // (1024 * 1024)} MiB")
+
+
+def unpack(raw: bytes, depth: int = 0, budget: int = MAX_UNPACKED) -> bytes:
+    """Decompress gzip, bzip2, xz and zip by their magic bytes, whatever the file is called,
+    so an audit cannot be dodged by renaming or nesting. Streams with a size cap; a file that
+    is too large, too deeply nested, encrypted or corrupt raises HarnessError, so audits fail
+    closed instead of passing content they never read."""
+    kind = _kind(raw)
+    if kind is None:
         return raw
+    if depth >= MAX_LAYERS:
+        raise HarnessError(f"more than {MAX_LAYERS} nested compression layers")
     try:
-        if raw[:2] == b"\x1f\x8b":
-            return unpack(gzip.decompress(raw)[:MAX_UNPACKED], depth + 1)
-        if raw[:3] == b"BZh":
-            return unpack(bz2.decompress(raw)[:MAX_UNPACKED], depth + 1)
-        if raw[:6] == b"\xfd7zXZ\x00":
-            return unpack(lzma.decompress(raw)[:MAX_UNPACKED], depth + 1)
-        if raw[:4] == b"PK\x03\x04":
+        if kind == "zip":
+            parts: list[bytes] = []
+            left = budget
             with zipfile.ZipFile(io.BytesIO(raw)) as zf:
-                parts = [unpack(zf.read(n)[:MAX_UNPACKED], depth + 1) for n in zf.namelist()]
+                for info in zf.infolist():
+                    if info.flag_bits & 0x1:
+                        raise HarnessError(f"encrypted zip member {info.filename!r}")
+                    with zf.open(info) as member:  # binary: zip members are bytes
+                        data = unpack(_read_capped(member, left), depth + 1, left)
+                    left -= len(data)
+                    parts.append(data)
             return b"\n".join(parts)
-    except (OSError, EOFError, ValueError, lzma.LZMAError, zipfile.BadZipFile) as exc:
-        raise HarnessError(f"cannot decompress: {exc}") from exc
-    return raw
+        buf = io.BytesIO(raw)
+        if kind == "gzip":
+            with gzip.GzipFile(fileobj=buf) as gz:
+                data = _read_capped(gz, budget)
+        elif kind == "bzip2":
+            with bz2.BZ2File(buf) as bz:
+                data = _read_capped(bz, budget)
+        else:
+            with lzma.LZMAFile(buf) as xz:
+                data = _read_capped(xz, budget)
+        return unpack(data, depth + 1, budget)
+    except HarnessError:
+        raise
+    except (
+        OSError,
+        EOFError,
+        ValueError,
+        RuntimeError,
+        NotImplementedError,
+        lzma.LZMAError,
+        zipfile.BadZipFile,
+    ) as exc:
+        raise HarnessError(f"cannot decompress {kind}: {exc}") from exc

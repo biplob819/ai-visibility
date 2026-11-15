@@ -21,14 +21,18 @@ from __future__ import annotations
 import argparse
 import bz2
 import gzip
+import io
+import lzma
 import os
 import re
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 from harness_lib import (
     CATALOG_TSV,
+    MAX_UNPACKED,
     ROOT,
     Cap,
     HarnessError,
@@ -42,9 +46,9 @@ from harness_lib import (
 
 AUDITED_DIRS = ("data", "results")
 # "<" may also appear JSON-escaped as \u003c or HTML-escaped as &lt;
-LT = rb"(?:<|\\u003c|&lt;)"
+LT = rb"(?:<|\\u003c|&lt;|&#0*60;|&#x0*3c;)"
 HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html[\s>/]|body[\s>/])", re.I)
-BODY_KEYS = re.compile(rb'"(?:body|html|page_text)"\s*:', re.I)
+BODY_KEYS = re.compile(rb"[\"'](?:body|html|page_text)[\"']\s*:", re.I)
 BODY_NODE = "M3.2"
 
 
@@ -94,6 +98,13 @@ def audit(root: Path, cache: Path, caps: list[Cap]) -> list[str]:
     return [*problems, cp] if cp else problems
 
 
+def _zip(content: bytes) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("inner.txt", content)
+    return buf.getvalue()
+
+
 def self_test() -> int:
     failures = 0
 
@@ -141,6 +152,12 @@ def self_test() -> int:
             "double.gz": gzip.compress(gzip.compress(b"<body>")),
             "packed.bz2": bz2.compress(b'{"PAGE_TEXT": 1}'),
             "escaped.json": b'{"x": "\\u003chtml lang=en>"}',
+            "entity_lt.txt": b"&lt;body class=x>",
+            "entity_dec.txt": b"&#60;html>",
+            "entity_hex.txt": b"&#x3C;BODY>",
+            "repr.py": b"{'html': 1}",
+            "packed.xz": lzma.compress(b"<html>"),
+            "packed.zip": _zip(b"<body>"),
         }
         for name, content in sneaky.items():
             (root / "data" / name).write_bytes(content)
@@ -154,6 +171,27 @@ def self_test() -> int:
             "a non-empty body cache fails", any("body cache" in p for p in audit(root, cache, idle))
         )
         check("the body cache is allowed while M3.2 builds", audit(root, cache, busy) == [])
+        done = parse_catalog(hdr + "SUP-01\tM3.2\tgreen\t\t\n")
+        check(
+            "the body cache must be empty once M3.2 is green",
+            any("body cache" in p for p in audit(root, cache, done)),
+        )
+        (cache / "page.txt").unlink()
+        bomb = gzip.compress(b" " * (MAX_UNPACKED + 1) + b"<html>")
+        (root / "data" / "bomb").write_bytes(bomb)
+        check(
+            "a decompression bomb fails, never passes",
+            any("bomb" in p for p in audit(root, cache, idle)),
+        )
+        (root / "data" / "bomb").unlink()
+        deep = b"<html>"
+        for _ in range(4):
+            deep = gzip.compress(deep)
+        (root / "data" / "deep.gz").write_bytes(deep)
+        check("four nested layers fail", any("nested" in p for p in audit(root, cache, idle)))
+        (root / "data" / "deep.gz").unlink()
+        (root / "data" / "notes.txt").write_bytes(b"BZh is how bzip2 files start")
+        check("plain text starting with BZh passes", audit(root, cache, idle) == [])
     print("self-test", "PASSED" if failures == 0 else f"FAILED ({failures})")
     return 0 if failures == 0 else 1
 

@@ -63,7 +63,7 @@ Each decision seeds `docs/decisions.md` as D-1 to D-25. `OWNER D-n` marks a ruli
 | D-13 | Lean Kova harness ported from EvalKit: one builder plus a fresh-context skeptical verifier, with verifier rounds repeated until a pass confirms every criterion, as in EvalKit | Rounds capped at two; tests only | With no dated schedule (OWNER D-16) nothing justifies cutting verification; quality first |
 | D-14 | Build status comes from `scripts/status.py` in the repo | A plan file in the statusnow skill | statusnow is wired to the Kova and VOC repos (EvalKit D-13) |
 | D-15 | Dashboard and post are static HTML on Cloudflare Pages; the demo lives in the shared `portfolio-demos` Streamlit app and reads `domain_cards.json` | GitHub Pages (EvalKit's choice) | Free static hosting with a global CDN for the dashboard and post; lookups never call a model |
-| OWNER D-16 | No dated schedule: all 20 nodes are built now, in dependency order (§12.3), and the study runs when S3.1 becomes eligible | Offline nodes Mon–Tue, runs Wednesday; everything on one build day (PRD milestones) | The owner's ruling ("strip off dates, we build all now"); dates had been driving scope, not quality |
+| OWNER D-16 | No dated schedule: all nodes are built now, in dependency order (§12.3), and the study runs when S3.1 becomes eligible | Offline nodes Mon–Tue, runs Wednesday; everything on one build day (PRD milestones) | The owner's ruling ("strip off dates, we build all now"); dates had been driving scope, not quality |
 | D-17 | Live demo mode shows each model's citations (URL, publisher, quoted span), never the answer prose | Show full answers (US8 wording) | B6 wins over US8's wording (H12) |
 | D-18 | Python 3.12 only; CI on Linux and macOS (**superseded by OWNER D-23**: Python 3.11–3.13 on Linux, macOS and Windows) | EvalKit's 3.11–3.13 × three OS matrix | Written when this was a study repo, not a tool others install |
 | OWNER D-19 | Study budget about $45 (two runs of about $19, smoke about $2, support check about $3), measured by the smoke run first; any single run over $25 still needs the owner's go-ahead | Hold to the PRD's $24 | The measured cost, not a guess, sets the bar; quality over cost |
@@ -681,7 +681,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | HAR-02 | CI on Python 3.11–3.13 × Linux, macOS and Windows: lint, types, tests, golden replay, build on every push; least-privilege workflow permissions | §11 |
 | HAR-03 | Ported `verify_graph_eligibility.py` and `node_start.py` with self-tests (cycles, dependencies green, spec and criteria present, check-only writes nothing) | D-13 |
 | HAR-04 | Ported `node_converge.py` with the 12 gates of §12.6, every gate reported, each with a self-test that names the planted defect | D-13 |
-| HAR-05 | Records: `graph.md`, `catalog.tsv`, `decisions.md` seeded with D-1 to D-18, `lessons.md` seeded per §12.8, `changelog.md`, `scripts/status.py` | D-14 |
+| HAR-05 | Records: `graph.md`, `catalog.tsv`, `decisions.md` seeded with D-1 to D-25, `lessons.md` seeded per §12.8, `changelog.md`, `scripts/status.py` | D-14 |
 | HAR-06 | Secret scan and storage audit gates | NFR6, B7 |
 | HAR-07 | Verifier prompt template: skeptical, fresh context, criteria + code + gate output only, private `UV_PROJECT_ENVIRONMENT` | §12.7 |
 

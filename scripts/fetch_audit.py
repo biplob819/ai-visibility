@@ -34,7 +34,7 @@ import tempfile
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 from harness_lib import ROOT, HarnessError, safe_console, unpack
 
@@ -42,6 +42,7 @@ FIELDS = ("url", "host", "at", "attempt", "status", "bytes", "robots", "outcome"
 ROBOTS_VALUES = {"allowed", "disallowed"}
 MIN_GAP_S = 1.0
 BLOCK_STATUSES = {401, 403, 451}
+MAX_ATTEMPTS = 3  # one try plus at most two retries (FR5)
 NO_REQUEST = "robots_disallowed"
 DEFAULT_PORTS = {"http": 80, "https": 443}
 
@@ -54,20 +55,24 @@ def log_files(root: Path) -> list[Path]:
 
 
 def norm_host(host: str) -> str:
-    return host.strip().lower().rstrip(".")
+    return host.strip().lower().rstrip(".").strip("[]")
 
 
 def norm_url(url: str) -> str:
-    """Same page, same key: lower-case scheme and host, no default port, no fragment."""
+    """Same page, same key: lower-case scheme and host (IPv6 kept in brackets), no default
+    port, no fragment, percent-encoding decoded. Raises ValueError on a malformed URL."""
     parts = urlsplit(url.strip())
     scheme = parts.scheme.lower()
     host = norm_host(parts.hostname or "")
-    try:
-        port = parts.port
-    except ValueError:
-        port = None
-    netloc = host if port in (None, DEFAULT_PORTS.get(scheme)) else f"{host}:{port}"
-    return urlunsplit((scheme, netloc, parts.path or "/", parts.query, ""))
+    port = parts.port  # ValueError on a bad port
+    shown = f"[{host}]" if ":" in host else host
+    netloc = shown if port in (None, DEFAULT_PORTS.get(scheme)) else f"{shown}:{port}"
+    return urlunsplit((scheme, netloc, unquote(parts.path) or "/", unquote(parts.query), ""))
+
+
+def page_key(norm: str) -> str:
+    """The retry and robots rules treat http and https as the same page."""
+    return norm.split("://", 1)[-1]
 
 
 def _is_int(x: object) -> bool:
@@ -87,8 +92,10 @@ def _type_problems(row: dict) -> list[str]:
         problems.append(f"status must be null or an HTTP status code, got {row['status']!r}")
     if row["bytes"] is not None and not (_is_int(row["bytes"]) and row["bytes"] >= 0):
         problems.append(f"bytes must be null or a non-negative integer, got {row['bytes']!r}")
-    if row["outcome"] == NO_REQUEST and row["status"] is not None:
-        problems.append(f"a {NO_REQUEST} line made no request, so its status must be null")
+    if row["outcome"] == NO_REQUEST and (row["status"] is not None or row["bytes"]):
+        problems.append(f"a {NO_REQUEST} line made no request, so status and bytes must be null")
+    if _is_int(row["attempt"]) and row["attempt"] > MAX_ATTEMPTS:
+        problems.append(f"attempt {row['attempt']} means more than {MAX_ATTEMPTS - 1} retries")
     return problems
 
 
@@ -123,9 +130,14 @@ def parse(lines: Iterable[str], source: str) -> tuple[list[dict], list[str]]:
         if at.tzinfo is None:
             problems.append(f"{where}: timestamp {row['at']!r} has no time zone")
             continue
+        try:
+            row["_url"] = norm_url(row["url"])
+        except ValueError as exc:
+            problems.append(f"{where}: malformed url {row['url']!r} ({exc})")
+            continue
         row["_at"] = at
         row["_where"] = where
-        row["_url"] = norm_url(row["url"])
+        row["_key"] = page_key(row["_url"])
         row["_host"] = norm_host(row["host"])
         rows.append(row)
     return rows, problems
@@ -155,12 +167,18 @@ def rules(rows: list[dict], source: str) -> list[str]:
                     f"(minimum {MIN_GAP_S:.1f} s; previous at {prev['_where']})"
                 )
 
-    blocked_at: dict[str, dt.datetime] = {}
-    for r in sorted(requests, key=lambda r: r["_at"]):
-        if r["_url"] in blocked_at:
+    blocked: set[str] = set()
+    refused: set[str] = set()
+    for r in sorted(rows, key=lambda r: r["_at"]):
+        if r["outcome"] == NO_REQUEST:
+            refused.add(r["_key"])
+            continue
+        if r["_key"] in refused:
+            problems.append(f"{r['_where']}: requested {r['url']} after robots refused it")
+        if r["_key"] in blocked:
             problems.append(f"{r['_where']}: retried {r['url']} after it was blocked")
         elif r["status"] in BLOCK_STATUSES:
-            blocked_at[r["_url"]] = r["_at"]
+            blocked.add(r["_key"])
 
     agents = sorted({r["user_agent"] for r in requests})
     if len(agents) > 1:
@@ -232,7 +250,7 @@ def self_test() -> int:
     check(
         "a skipped line with a status fails",
         audit([_line(**{**SKIPPED, "status": 200})]),
-        "status must be null",
+        "status and bytes must be null",
     )
     check(
         "two requests 0.5 s apart fail",
@@ -275,6 +293,38 @@ def self_test() -> int:
         ),
         "after it was blocked",
     )
+    check(
+        "retrying after a 401 fails",
+        audit([_line(status=401, outcome="blocked"), _line(at="2026-11-15T10:00:05+00:00")]),
+        "after it was blocked",
+    )
+    check(
+        "retrying over http after an https 451 fails",
+        audit(
+            [
+                _line(status=451, outcome="blocked"),
+                _line(url="http://www.nhs.uk/conditions/flu/", at="2026-11-15T10:00:05+00:00"),
+            ]
+        ),
+        "after it was blocked",
+    )
+    check(
+        "requesting a URL robots refused earlier fails",
+        audit([_line(**SKIPPED), _line(at="2026-11-15T10:00:05+00:00")]),
+        "after robots refused it",
+    )
+    check(
+        "a skipped line with bytes fails",
+        audit([_line(**{**SKIPPED, "bytes": 512})]),
+        "status and bytes must be null",
+    )
+    check("a fourth attempt fails", audit([_line(attempt=4)]), "more than 2 retries")
+    check(
+        "IPv6 hosts are handled",
+        audit([_line(url="https://[2001:db8::1]/a", host="[2001:db8::1]")]),
+        None,
+    )
+    check("a malformed url fails", audit([_line(url="https://[::1/x")]), "malformed url")
     check(
         "two user agents fail",
         audit([_line(), _line(host="a.com", url="https://a.com/", user_agent="Other/1.0")]),
