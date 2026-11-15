@@ -19,12 +19,8 @@ def robots(body: bytes, status: int = 200) -> httpx.Response:
 
 
 def test_the_longest_match_disallows_what_urllib_would_allow(tmp_path):
-    """H4: urllib's first-match reads `Allow: /` first and fetches /private; RFC 9309 does not."""
-    import urllib.robotparser
-
-    rp = urllib.robotparser.RobotFileParser()
-    rp.parse(LONGEST.decode().splitlines())
-    assert rp.can_fetch("citewatch", "https://a.example/private/x")  # the bug we avoid
+    """H4: first-match parsers (urllib before Python 3.13) read `Allow: /` first and fetch
+    /private; RFC 9309's longest match, which protego implements, does not."""
     web = FakeWeb({"https://a.example/robots.txt": robots(LONGEST)})
     client, log, _ = make(tmp_path, web)
     assert client.get("https://a.example/private/x").outcome == "robots_disallowed"
