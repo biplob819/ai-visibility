@@ -7,12 +7,15 @@ text is never a citation (B2). Consulted sources are what the search returned or
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit
 
 from .urls import UrlError, canonical_url, publisher_of
+
+_SPACE_BEFORE_MARK = re.compile(r"\s+([.,;:!?])")
 
 
 @dataclass
@@ -72,7 +75,7 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                 for src in action.get("sources") or []:
                     if src.get("url"):
                         out.consulted.setdefault(src["url"], None)
-                if action.get("type") == "open_page" and action.get("url"):
+                if action.get("type") in ("open_page", "find") and action.get("url"):
                     out.consulted.setdefault(action["url"], None)
             elif kind == "message":
                 for part in item.get("content") or []:
@@ -100,7 +103,9 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                         if not (0 <= s <= e <= len(text)) or s < cursor:
                             s = e = cursor  # out of order or out of range: no span of its own
                         before = text[cursor:s]
-                        para = before.rsplit("\n\n", 1)[-1].strip()
+                        para = before.rsplit("\n\n", 1)[-1].strip().lstrip(".,;:!?)] ").strip()
+                        if not any(ch.isalnum() for ch in para):
+                            para = ""  # punctuation between markers is no claim (v2 L-a)
                         kept.append(before)
                         # a marker right after another one supports the same claim (v1 M1)
                         span = para or last_span
@@ -118,7 +123,9 @@ def extract_openai(responses: Sequence[Mapping[str, Any]]) -> Extracted:
                         cursor = max(cursor, e)
                     kept.append(text[cursor:])
     joined = "".join(kept)
-    out.answer_text = "\n\n".join(" ".join(p.split()) for p in joined.split("\n\n") if p.strip())
+    paras = (" ".join(p.split()) for p in joined.split("\n\n") if p.strip())
+    # a removed marker leaves "claim ." or "claim ," behind; a lone mark is not a word (v2 L-a)
+    out.answer_text = "\n\n".join(_SPACE_BEFORE_MARK.sub(r"\1", p) for p in paras)
     return out
 
 

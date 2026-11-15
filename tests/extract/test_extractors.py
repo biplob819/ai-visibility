@@ -184,12 +184,12 @@ def test_the_stage_rebuilds_identical_files_and_reports_odd_envelopes(tmp_path):
     bad = stored_env("claude-sonnet-5-5", Q2)
     del bad["answered_at"]
     store.put("ask", ask_key(CFG, 1, Q2, "claude-sonnet-5-5"), bad)
-    r1 = run_extract(tmp_path, CFG)
+    r1 = run_extract(tmp_path, CFG, [Q1, Q2])
     first = {
         n: (tmp_path / "data" / n).read_bytes()
         for n in ("answers.jsonl", "citations.jsonl", "consulted.jsonl")
     }
-    r2 = run_extract(tmp_path, CFG)
+    r2 = run_extract(tmp_path, CFG, [Q1, Q2])
     assert first == {n: (tmp_path / "data" / n).read_bytes() for n in first}
     assert len(r1.answers) == 3 and len(r1.problems) == 1 and r2.problems == r1.problems
     rows = [json.loads(x) for x in first["citations.jsonl"].decode().splitlines()]

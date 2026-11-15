@@ -139,23 +139,24 @@ def unique_cited_urls(citations: list[Citation]) -> dict[tuple[int, str, str], l
     return out
 
 
-def run_extract(
-    base: Path, cfg: StudyConfig, questions: Sequence[StudyQuestion] | None = None
-) -> ExtractResult:
-    """Extract every current answer. With `questions`, an envelope counts only when its key
-    is the one the current questions and settings give: answers to an edited question or under
-    old settings stay in the store but are never pooled with the new ones (v1 M2)."""
+def run_extract(base: Path, cfg: StudyConfig, questions: Sequence[StudyQuestion]) -> ExtractResult:
+    """Extract every current answer: an envelope counts only when its key is the one the
+    current questions, settings and models give. Answers to an edited question, under old
+    settings or from a dropped model stay in the store but are never pooled (v1 M2, v2 M-A)."""
     store = RawStore(base)
     res = ExtractResult()
-    by_id = {q.id: q for q in questions or ()}
+    by_id = {q.id: q for q in questions}
     for key in sorted(store.keys("ask")):
         try:
             env = store.get("ask", key)  # an unreadable file is reported, never fatal (v1 M3)
-            if questions is not None:
-                q = by_id.get(env.get("question_id"))
-                if q is None or ask_key(cfg, env["run"], q, env["model"]) != key:
-                    res.stale += 1
-                    continue
+            q = by_id.get(env.get("question_id"))
+            if (
+                q is None
+                or env.get("model") not in cfg.models
+                or ask_key(cfg, env["run"], q, env["model"]) != key
+            ):
+                res.stale += 1
+                continue
             rec, cites, cons, skipped = extract_envelope(key, env, cfg)
         except Exception as exc:  # one odd envelope never stops the stage; it is reported
             res.problems.append(f"{key[:12]}: {type(exc).__name__}: {exc}"[:300])
