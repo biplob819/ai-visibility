@@ -111,6 +111,7 @@ class PoliteClient:
         self.timeout = timeout
         self.max_page_bytes = max_page_bytes
         self._transport = transport
+        self.limiter_clock = getattr(self.limiter, "_clock", time.monotonic)
         self._timeout_cfg = httpx.Timeout(timeout)
         for host, at in self.history.last_at.items():
             self.limiter.seed(host, at)  # a resumed run never comes back too soon (v1 H1)
@@ -143,7 +144,9 @@ class PoliteClient:
         return None, None
 
     # -- one request ----------------------------------------------------------------------
-    def _send(self, url: str, kind: str, limit: int, holder: list[Any]) -> dict[str, Any]:
+    def _send(
+        self, url: str, kind: str, limit: int, holder: list[Any], state: dict[str, Any]
+    ) -> dict[str, Any]:
         """The HTTP exchange, on a fresh client per request (no cookies or connections are
         shared between requests, v1 M6). Runs on a worker so the caller can bound it."""
         out: dict[str, Any] = {"status": None, "headers": {}, "body": None, "nbytes": None}
@@ -156,7 +159,14 @@ class PoliteClient:
             trust_env=False,
         ) as http:
             holder.append(http)
-            with http.stream("GET", url) as resp:
+
+            def trace(event: str, info: Any) -> None:
+                if event.endswith("send_request_headers.started"):
+                    if state["abandoned"].is_set():  # past its deadline: never send late
+                        raise RuntimeError("request abandoned before it was sent")
+                    state["sent"] = self.limiter_clock()
+
+            with http.stream("GET", url, extensions={"trace": trace}) as resp:
                 out["status"] = resp.status_code
                 out["headers"] = {
                     k: resp.headers[k]
@@ -184,14 +194,24 @@ class PoliteClient:
         exchange (headers included, v1 M5), read a capped body, log it."""
         res = FetchResult(url=url, final_url=url, outcome="fetch_error")
         nbytes: int | None = None
-        with self.limiter.request(host_of(url)) as at:
+        host = host_of(url)
+        with self.limiter.request(host) as at:
+            # checked again after the wait: another worker may have been refused or blocked
+            # on this page meanwhile (v3 M2)
+            reason = self.history.may_request(url)
+            if reason is not None:
+                gone = "blocked" if "blocked" in reason else "robots_disallowed"
+                if "budget" in reason:
+                    gone = "fetch_error"
+                return FetchResult(url=url, final_url=url, outcome=gone, detail=reason)
             res.fetched_at = at
             holder: list[Any] = []
             box: dict[str, Any] = {}
+            state: dict[str, Any] = {"abandoned": threading.Event(), "sent": None}
 
             def work() -> None:
                 try:
-                    box["out"] = self._send(url, kind, limit, holder)
+                    box["out"] = self._send(url, kind, limit, holder, state)
                 except BaseException as exc:
                     box["exc"] = exc
 
@@ -201,6 +221,10 @@ class PoliteClient:
             th = threading.Thread(target=work, daemon=True, name="citewatch-fetch")
             th.start()
             th.join(self.timeout + 1.0)
+            if th.is_alive():
+                state["abandoned"].set()
+            if state["sent"] is not None:
+                self.limiter.mark_sent(host, state["sent"])
             try:
                 if th.is_alive():
                     raise FutureTimeout
@@ -253,7 +277,7 @@ class PoliteClient:
         exact URL, so `/dir` -> `/dir/` and http -> https redirects are followed (v1 M7); the
         request budget is still counted per page, as the audit counts it."""
         slot = self.history.slot(url)
-        with slot.lock:
+        with self.history.entry(url).lock, slot.lock:  # one page identity at a time (v3 M2)
             if slot.result is not None:
                 return replace(slot.result, hops=[])
             r = self._attempts(url, kind, limit)
@@ -288,8 +312,15 @@ class PoliteClient:
         limit = self.max_page_bytes
         current, hops = url, []
         for _ in range(MAX_REDIRECTS + 1):
-            if self.history.entry(current).robots_refused or not self.robots.allows(current):
-                self.history.refuse(current)
+            try:
+                entry = self.history.entry(current)
+            except ValueError:  # a malformed redirect target (bad port): stored, not lost
+                return FetchResult(url, current, "fetch_error", hops=hops, detail="bad redirect")
+            with entry.lock:
+                refused = entry.robots_refused or not self.robots.allows(current)
+                if refused:
+                    self.history.refuse(current)
+            if refused:
                 self.log.write(
                     url=current,
                     at=dt.datetime.now(dt.UTC),

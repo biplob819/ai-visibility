@@ -73,7 +73,9 @@ def directives(text: str) -> list[str]:
         if _DIRECTIVE.match(line) and len(line) <= 2000:
             # percent-encode angle brackets: no markup is ever stored (v2 M-2), and request
             # paths carry them encoded anyway, so matching is unchanged
-            out.append(line.replace("<", "%3C").replace(">", "%3E"))
+            out.append(
+                line.replace("&", "%26").replace("<", "%3C").replace(">", "%3E").replace('"', "%22")
+            )  # escaped markup (`&lt;html`) and JSON-looking keys are encoded too (v3 M3)
             if len(out) >= MAX_DIRECTIVES:
                 break
     return out

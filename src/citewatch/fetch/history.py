@@ -15,8 +15,9 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
-from .keys import host_of, norm_url, page_key
+from .keys import ascii_host, host_of, norm_url, page_key
 
 MAX_REQUESTS = 3  # one try and two retries, for the whole study
 BLOCK_STATUSES = frozenset({401, 403, 451})
@@ -35,6 +36,18 @@ class _Entry:
 class _Slot:
     result: Any = None
     lock: threading.Lock = field(default_factory=threading.Lock)
+
+
+def _ascii_url(url: str) -> str:
+    try:
+        p = urlsplit(url)
+        host = p.hostname or ""
+        if not host or host.isascii():
+            return url
+        netloc = ascii_host(host) + (f":{p.port}" if p.port else "")
+        return urlunsplit((p.scheme, netloc, p.path, p.query, ""))
+    except ValueError:
+        return url
 
 
 class PageHistory:
@@ -80,7 +93,7 @@ class PageHistory:
                 self._note_at(row["url"], at)
 
     def entry(self, url: str) -> _Entry:
-        key = page_key(url)
+        key = page_key(_ascii_url(url))  # one page for both spellings of a host (v3 L4)
         with self._lock:
             return self._pages.setdefault(key, _Entry())
 

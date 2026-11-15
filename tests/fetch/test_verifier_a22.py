@@ -321,3 +321,229 @@ def test_archived_gz_logs_seed_the_history(tmp_path):
     )
     p.write_bytes(gzip.compress(row))
     assert PageHistory.from_logs([p]).may_request("https://a.example/p") == "blocked earlier"
+
+
+# --- pass 3 -------------------------------------------------------------------------------
+
+
+def test_a_slow_first_connection_never_shrinks_the_gap_on_the_wire(tmp_path, monkeypatch):
+    """v3 M1: the next request is spaced from when the last one actually left."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    import httpcore._backends.sync as backend
+
+    from citewatch.fetch import FetchLog, PoliteClient
+
+    seen: list[float] = []
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_GET(self):
+            seen.append(time.monotonic())
+            body = b"" if self.path == "/robots.txt" else PAGE
+            self.send_response(404 if self.path == "/robots.txt" else 200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    real = backend.SyncBackend.connect_tcp
+    calls = {"n": 0}
+
+    def slow_first(self, *a, **k):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            time.sleep(0.8)  # a cold DNS lookup or a SYN retransmit
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(backend.SyncBackend, "connect_tcp", slow_first)
+    try:
+        log = FetchLog(tmp_path / "fetch_log.jsonl")
+        client = PoliteClient("citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)", log)
+        client.get(f"http://127.0.0.1:{srv.server_address[1]}/page")
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    assert len(seen) == 2 and seen[1] - seen[0] >= 0.98, seen
+    assert audit(log) == []
+
+
+def test_a_request_past_its_deadline_is_never_sent_late(tmp_path, monkeypatch):
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    import httpcore._backends.sync as backend
+
+    from citewatch.fetch import FetchLog, PoliteClient
+
+    seen: list[str] = []
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_GET(self):
+            seen.append(self.path)
+            self.send_response(404)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    real = backend.SyncBackend.connect_tcp
+
+    def stall(self, *a, **k):
+        time.sleep(1.8)  # longer than the 0.2 s timeout plus its 1 s grace
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(backend.SyncBackend, "connect_tcp", stall)
+    try:
+        client = PoliteClient(
+            "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)",
+            FetchLog(tmp_path / "fetch_log.jsonl"),
+            timeout=0.2,
+        )
+        assert client._fetch_robots(f"http://127.0.0.1:{srv.server_address[1]}/robots.txt") == (
+            None,
+            None,
+        )
+        time.sleep(1.5)  # the abandoned worker connects now, and must not send
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    assert seen == []
+
+
+def test_a_block_seen_by_one_worker_stops_another_on_the_same_page(tmp_path):
+    """v3 M2: the page history is checked after the wait, and one page goes at a time."""
+    import threading
+
+    def slow_403(request):
+        time.sleep(0.2)
+        return httpx.Response(403)
+
+    web = FakeWeb(
+        {
+            "https://h.example/dir/": slow_403,
+            "https://a.example/r": httpx.Response(
+                301, headers={"location": "https://h.example/dir"}
+            ),
+        }
+    )
+    client, log, _ = make(tmp_path, web)
+    t1 = threading.Thread(target=client.get, args=("https://h.example/dir/",))
+    t1.start()
+    time.sleep(0.05)
+    client.get("https://a.example/r")
+    t1.join()
+    assert [u for u in web.urls() if u.startswith("https://h.example/dir")] == [
+        "https://h.example/dir/"
+    ]
+    assert audit(log) == []
+
+
+def test_escaped_markup_in_robots_lines_is_never_stored(tmp_path):
+    body = (
+        b"User-agent: *\nDisallow: /&lt;html lang=en&gt;\n"
+        b'Disallow: /search?q=&lt;body onload\nAllow: /"body": x\n'
+    )
+    store = RawStore(tmp_path)
+    web = FakeWeb({"https://a.example/robots.txt": httpx.Response(200, content=body)})
+    client, _log, _ = make(tmp_path, web, store=store)
+    client.get("https://a.example/p")
+    files = list((tmp_path / "data" / "raw").rglob("*.gz"))
+    assert files and all(storage_audit.file_problems(f, tmp_path) == [] for f in files)
+
+
+def test_a_malformed_redirect_target_is_a_stored_error(tmp_path):
+    web = FakeWeb(
+        {
+            "https://a.example/p": httpx.Response(
+                302, headers={"location": "https://a.example:99999/x"}
+            )
+        }
+    )
+    store = RawStore(tmp_path)
+    client, _log, _ = make(tmp_path, web, store=store)
+    res = fetch_pages(["https://a.example/p"], client=client, store=store)
+    from citewatch.fetch import fetch_key
+
+    assert (
+        res.errors == []
+        and store.get("fetch", fetch_key("https://a.example/p"))["outcome"] == "fetch_error"
+    )
+
+
+def test_the_wall_clock_wait_applies_after_a_later_pause():
+    from citewatch.fetch import HostLimiter
+
+    from .web import BASE
+
+    clock = VClock()
+    n = {"i": 0}
+
+    def wall():
+        n["i"] += 1
+        extra = 0.1 if n["i"] == 2 else 0.0  # pause on the second grant's read
+        return BASE + dt.timedelta(seconds=clock.now() + extra)
+
+    lim = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=wall)
+    ats = []
+    for _ in range(3):
+        with lim.request("a.example") as at:
+            ats.append(at)
+    assert all((b - a).total_seconds() >= 1.0 for a, b in itertools.pairwise(ats))
+
+
+def test_the_body_stream_stops_at_the_cap(tmp_path):
+    pulled = {"n": 0}
+
+    class Counting(httpx.SyncByteStream):
+        def __iter__(self):
+            for _ in range(1000):
+                pulled["n"] += 4096
+                yield b"x" * 4096
+
+    web = FakeWeb(
+        {"https://a.example/big": lambda r: httpx.Response(200, headers=HTML, stream=Counting())}
+    )
+    client, _log, _ = make(tmp_path, web, max_page_bytes=10_000)
+    assert client.get("https://a.example/big").outcome == "too_large"
+    assert pulled["n"] <= 10_000 + 2 * 4096
+
+
+def test_seeding_uses_the_logged_time():
+    from citewatch.fetch import HostLimiter
+
+    from .web import BASE
+
+    clock = VClock()
+    lim = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=clock.wall)
+    lim.seed("a.example", BASE - dt.timedelta(seconds=0.5))  # 0.5 s before "now"
+    with lim.request("a.example"):
+        pass
+    assert 0.5 <= clock.now() <= 0.6
+    lim2 = HostLimiter(clock=clock.now, sleep=clock.sleep, wall=clock.wall)
+    before = clock.now()
+    lim2.seed("b.example", BASE - dt.timedelta(hours=1))
+    with lim2.request("b.example"):
+        pass
+    assert clock.now() == before
+
+
+def test_a_block_on_one_spelling_of_a_host_covers_the_other():
+    h = PageHistory()
+    h.seed(
+        {
+            "url": "https://bücher.example/p",
+            "status": 403,
+            "outcome": "blocked",
+            "at": "2026-11-15T12:00:00Z",
+        }
+    )
+    assert h.may_request("https://xn--bcher-kva.example/p") == "blocked earlier"

@@ -37,6 +37,8 @@ class HostLimiter:
         self._last_wall: dict[str, dt.datetime] = {}
         self._lock = threading.Lock()
         self._slots = threading.BoundedSemaphore(max_in_flight)
+        self._host_locks: dict[str, threading.Lock] = {}
+        self._sent: dict[str, float] = {}
         self.live = self.max_live = 0
 
     def seed(self, host: str, last_at: dt.datetime) -> None:
@@ -54,7 +56,11 @@ class HostLimiter:
         """Hold one in-flight slot and this host's next grant; yields the request start time."""
         host = ascii_host(host)
         gap = self.interval + self.margin
-        with self._slots:
+        with self._lock:
+            hlock = self._host_locks.setdefault(host, threading.Lock())
+        # one request per host at a time, so the next grant can be spaced from when this
+        # request actually left (a cold DNS lookup delays the first send, v3 M1)
+        with hlock, self._slots:
             while True:
                 with self._lock:
                     now = self._clock()
@@ -73,8 +79,17 @@ class HostLimiter:
                         break
                     wait = max(nxt - now, wall_wait)
                 self._sleep(wait)
+            self._sent.pop(host, None)
             try:
                 yield at
             finally:
                 with self._lock:
                     self.live -= 1
+                    sent = self._sent.pop(host, None)
+                    if sent is not None:
+                        self._next[host] = max(self._next.get(host, float("-inf")), sent + gap)
+
+    def mark_sent(self, host: str, when: float) -> None:
+        """The request held for `host` left at `when` (this limiter's monotonic clock)."""
+        with self._lock:
+            self._sent[ascii_host(host)] = when
