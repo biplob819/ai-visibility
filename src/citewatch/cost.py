@@ -47,8 +47,12 @@ def load_prices(path: Path | None = None) -> dict[str, Price]:
         if path
         else files("citewatch").joinpath("prices.yaml").read_text(encoding="utf-8")
     )
+    from citewatch.schemas.config import ConfigError, _UniqueKeyLoader
+
     try:
-        raw = yaml.safe_load(text) or {}
+        raw = yaml.load(text, Loader=_UniqueKeyLoader) or {}
+    except ConfigError as exc:  # a duplicated model silently kept the last entry (v3 L3)
+        raise PriceError(f"prices.yaml: {exc}") from exc
     except yaml.YAMLError as exc:
         raise PriceError(f"prices.yaml is not valid YAML ({exc})") from exc
     if not isinstance(raw, dict):
@@ -56,6 +60,8 @@ def load_prices(path: Path | None = None) -> dict[str, Price]:
     prices = {}
     for model, p in raw.items():
         try:
+            if not isinstance(model, str) or not model:
+                raise PriceError(f"prices.yaml: model names must be text, got {model!r}")
             if not isinstance(p, dict):
                 raise PriceError(f"prices.yaml: {model} must be a mapping of prices")
             p = cast(dict[str, Any], p)
@@ -76,13 +82,21 @@ def load_prices(path: Path | None = None) -> dict[str, Price]:
                 p.get(k) for k in ("long_threshold", "long_input", "long_output")
             )
             if threshold is not None:
+                if isinstance(threshold, bool) or not isinstance(threshold, int) or threshold <= 0:
+                    raise PriceError(
+                        f"prices.yaml: {model}.long_threshold must be a positive whole number of "
+                        f"tokens, got {threshold!r} (write 150000, not 1.5e5)"
+                    )
                 for k, v in (("long_input", long_in), ("long_output", long_out)):
                     try:
                         if v is None:
                             raise ValueError(f"{model}.{k} is required with long_threshold")
-                        check_money(v, f"{model}.{k}")
+                        if check_money(v, f"{model}.{k}") == 0:
+                            raise ValueError(f"{model}.{k} cannot be 0")
                     except ValueError as exc:
                         raise PriceError(f"prices.yaml: {exc}") from exc
+            elif long_in is not None or long_out is not None:
+                raise PriceError(f"prices.yaml: {model} has long prices but no long_threshold")
             prices[model] = Price(
                 model=model,
                 input=float(fields["input"]),

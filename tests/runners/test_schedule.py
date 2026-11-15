@@ -210,7 +210,9 @@ def test_spend_cap_reservation_adapts_to_the_worst_real_call():
     assert r1 == 0.2
     assert r1 is not None
     cap.settle(r1, 0.6)
-    assert cap.reserve_each == 0.6 and cap.reserve() is None  # 0.6 spent + 0.6 > 1.0
+    assert cap.reserve_each == 0.6
+    assert cap.reserve() == pytest.approx(0.4)  # nothing in flight: reserve the room left (v3 M1)
+    assert cap.reserve() is None  # 0.6 spent + 0.4 held + 0.6 > 1.0
     with pytest.raises(ValueError):
         cap.settle(0.0, float("nan"))
     assert SpendCap(None, 1.0).reserve() == 1.0
@@ -250,9 +252,10 @@ def test_keyboard_interrupt_in_the_main_loop_cancels_queued_calls(tmp_path, monk
         for i in range(1, 41)
     ]
     rs = runners(delay=0.05)
-    res = go(tmp_path, rs, qs=qs, per_provider=1)
+    stop = threading.Event()
+    res = go(tmp_path, rs, qs=qs, per_provider=1, stop=stop)
     made = sum(len(r.calls) for r in rs.values())
-    assert res.interrupted and made < 80
+    assert res.interrupted and made < 80 and stop.is_set()  # workers see the stop (v3 M3)
     assert len(spend_lines(tmp_path)) == res.asked == made
 
 
@@ -372,3 +375,88 @@ def test_a_paid_response_without_tokens_is_charged_its_reservation(tmp_path):
     rs = runners(tokens_in=0, tokens_out=0)
     res = go(tmp_path, rs, qs=QS[:1])
     assert {e["error"] for e in res.errors} == {"unpriced"} and res.spent_usd > 0
+
+
+def test_mixed_reservation_sizes_never_leave_the_cap_waiting_forever():
+    """v3 H1: 0.1 + 0.2 - 0.1 - 0.2 is not 0.0 in floats; in-flight calls are counted instead."""
+    cap = SpendCap(1.74, initial_reserve=0.1)
+    held = [cap.reserve(), cap.reserve()]
+    first = held.pop(0)
+    assert first is not None
+    cap.settle(first, 0.2)  # reservations now 0.2 each
+    held += [cap.reserve(), cap.reserve()]
+    for r, actual in zip(held, (0.3, 0.17, 0.29), strict=True):
+        assert r is not None
+        cap.settle(r, actual)
+    assert cap.in_flight == 0 and cap.reserved == 0.0
+    out: list[float | None] = [0.0]
+    cap.spent = 1.70  # a little room, less than one call
+    cap.reserve_each = 0.3
+    th = threading.Thread(
+        target=lambda: out.__setitem__(0, cap.reserve_wait(threading.Event())), daemon=True
+    )
+    th.start()
+    th.join(2)
+    assert not th.is_alive()
+    assert out[0] == pytest.approx(0.04)  # the last call gets the room left
+    cap.settle(0.04, 0.3)
+    th = threading.Thread(
+        target=lambda: out.__setitem__(0, cap.reserve_wait(threading.Event())), daemon=True
+    )
+    th.start()
+    th.join(2)
+    assert not th.is_alive() and out[0] is None  # spent money leaves no room: stop, never wait
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_runs_with_varying_costs_always_end_at_the_cap(tmp_path, seed):
+    import random
+
+    rng = random.Random(seed)
+    costs = {q.id: rng.choice([5_000, 21_000, 47_000, 133_000]) for q in QS * 3}
+
+    class Varying(FakeRunner):
+        def call(self, q, cfg):
+            self.tokens_in = costs[q.id]
+            return super().call(q, cfg)
+
+    qs = [
+        StudyQuestion(id=f"v-{i:03d}", text=f"Q{i}?", intent="fitness", time_sensitive=False)
+        for i in range(1, 19)
+    ]
+    costs = {q.id: rng.choice([5_000, 21_000, 47_000, 133_000]) for q in qs}
+    rs = {m: Varying(m, delay=0.002) for m in CFG.models}
+    box: list = []
+    th = threading.Thread(target=lambda: box.append(go(tmp_path, rs, qs=qs, cap=1.0)), daemon=True)
+    th.start()
+    th.join(20)
+    assert not th.is_alive(), "the run hung at the cap"
+    assert box[0].stopped_at_cap and box[0].asked + box[0].skipped_for_cap == 36
+
+
+def test_a_broken_run_log_never_loses_a_paid_response(tmp_path, monkeypatch):
+    """v3 L2: run.log unwritable and an unpriceable response: spend and the answer still land."""
+
+    def broken(self, *a, **k):
+        raise OSError("read-only file system")
+
+    monkeypatch.setattr(Ledger, "event", broken)
+
+    class Odd(FakeRunner):
+        def usage(self, responses):
+            raise ValueError("unexpected usage shape")
+
+    rs = {m: Odd(m) for m in CFG.models}
+    res = go(tmp_path, rs, qs=QS[:2], cap=5.0)
+    assert len(spend_lines(tmp_path)) == 4 and res.asked == 4
+    assert {e["error"] for e in res.errors} == {"unpriced", "run-log"}
+    assert all(
+        RawStore(tmp_path).has("ask", ask_key(CFG, 1, q, m)) for q in QS[:2] for m in CFG.models
+    )
+
+
+def test_moving_the_city_asks_again():
+    moved = CFG.model_copy(
+        update={"user_location": CFG.user_location.model_copy(update={"city": "Leeds"})}
+    )
+    assert answer_config_hash(moved) != answer_config_hash(CFG)

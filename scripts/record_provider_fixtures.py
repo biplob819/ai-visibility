@@ -56,14 +56,20 @@ def main() -> int:
             start = time.monotonic()
             rc = runner.call(q, cfg)
             latency = int((time.monotonic() - start) * 1000)
-            u = runner.usage(rc.responses)  # cost first, written down at once
-            cost = answer_cost(
-                prices[model],
-                tokens_in=u.tokens_in,
-                tokens_out=u.tokens_out,
-                cached_in=u.cached_in,
-                searches=u.searches,
-            )
+            try:  # cost first, written down at once
+                u = runner.usage(rc.responses)
+                cost = answer_cost(
+                    prices[model],
+                    tokens_in=u.tokens_in,
+                    tokens_out=u.tokens_out,
+                    cached_in=u.cached_in,
+                    searches=u.searches,
+                )
+            except Exception as exc:  # unpriceable: write a generous estimate, never nothing
+                cost = 4 * answer_cost(
+                    prices[model], tokens_in=25_000, tokens_out=1_500, searches=3
+                )
+                print(f"{model} {q.id}: could not price ({exc}); recording ${cost:.4f}")
             record_spend(
                 spend_file,
                 kind="fixtures",

@@ -313,8 +313,9 @@ def ask(
         cap_usd=cap,
         spend_ledger=base / "data" / "spend-ledger.jsonl",  # one line per paid call (D-19)
     )
+    nothing = res.asked == 0 and res.cached == 0 and bool(res.errors)  # every call failed (v3 M2)
     summary = {
-        "ok": not (res.stopped_at_cap or res.interrupted),
+        "ok": not (res.stopped_at_cap or res.interrupted or nothing),
         "command": "ask",
         **plan,
         "asked": res.asked,
@@ -339,8 +340,12 @@ def ask(
         )
     if res.interrupted:
         text += f"; interrupted, {res.cancelled} calls not made. Rerun to resume."
+    if nothing and not (res.stopped_at_cap or res.interrupted):
+        text += "; nothing was answered: check the keys and the errors above"
     _emit(as_json, summary, text)
-    raise typer.Exit(EXIT_CAP if res.stopped_at_cap else EXIT_ERROR if res.interrupted else EXIT_OK)
+    if res.stopped_at_cap:
+        raise typer.Exit(EXIT_CAP)
+    raise typer.Exit(EXIT_ERROR if res.interrupted or nothing else EXIT_OK)
 
 
 @app.command()

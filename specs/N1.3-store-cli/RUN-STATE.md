@@ -1,6 +1,6 @@
 # N1.3 run state
 
-**Now:** pass 3 fix in (Windows spend-ledger lock); converging, then a focused check.
+**Now:** green.
 
 ## History
 - 2026-11-15 — spec and criteria written.
@@ -10,6 +10,8 @@
 - 2026-11-15 — verifier pass 2 CONFIRMED STO-01..04; two medium: a store failure after a paid call (e.g. no hard links on exFAT) lost the spend record, and doctor did not check `prices.yaml` age. Fixed: atomic-rename fallback without hard links; spend written per call before storing (D-37); doctor checks prices (age > 7 days, missing models) and a study may carry its own `prices.yaml`; lows: whole-string key/stage matching, -0.0 written as 0.0, JSON output for unexpected errors in `--json` mode, cap message precision, cap test with a real study.
 - 2026-11-15 — verifier pass 3: medium #2 (prices age) CONFIRMED; medium #1 fixed for the store (exFAT/FAT32 images, ENOSPC, failed renames) but the per-call spend writes regressed on Windows: unlocked appends from worker threads tore and lost spend lines (CI red on windows py3.12). Fixed: one lock per spend file around each write, with a test that splits writes into pieces so it fails without the lock on any OS; a failing spend file now records an error and still stores the paid response; malformed prices.yaml (list, non-mapping, negative, future or datetime checked_on, bad YAML) gives a PriceError line instead of a crash (L-28).
 
+- 2026-11-15 — verifier pass 4 CONFIRMED STO-01..04; OPEN HIGH/MEDIUM: 0 (D-26 met). CI 9/9 green; 16-process hard-link race: one winner in 20 of 20. Cheap low fixes applied: prices.yaml rejects a non-integer, boolean or negative `long_threshold` (`1.5e5` is a string in YAML), a zero long price, long prices without a threshold, duplicate model keys and non-text model names (they passed `doctor` then crashed `ask` or priced wrong); the L-28 chunked-write test now covers `run.log` too. Rows flipped green.
+
 ## Known limits (D-26, low) — each with the test that would close it
 - A crash can leave `.tmp-*` files in the store; `keys()` ignores them. Closing test: a `citewatch doctor` check that lists and offers to remove stale temp files (not written).
 - `1` and `1.0` give different store keys; units are built by code, never typed by people. Closing test: `test_keys_are_stable_under_dict_order...` extended if a caller ever builds keys from parsed JSON numbers.
@@ -17,3 +19,4 @@
 - `Ledger.rows()` raises on a torn line (one writer per run makes this unlikely). Closing test: a torn-line fixture in `test_ledger.py` (not written).
 - The rename fallback (filesystems without hard links) keeps objects whole but is only best-effort first-writer-wins: two concurrent `ask` runs on such a filesystem can replace an answer with another answer to the same key; both calls are in the spend file. Closing test: an exclusive-rename (`renameat2`/`renamex_np`) or lock-file fallback with a 16-process race test (not written).
 - Untested mutants that cannot change a result today: the fallback's race re-check, a non-atomic copy in the fallback, `>=` vs `>` on the 7-day price threshold, `ask` ignoring a study `prices.yaml`, the stale-price warning in `ask`. Closing tests: one per mutant in `test_verifier_n13.py` (not written).
+- The spend-file lock holds within one process. Two `ask` processes (or the recorder and `ask`) appending to the same spend file at once on Windows can still tear lines. Closing test: a file lock (`msvcrt.locking`/`fcntl.flock`) with a two-process race test (not written).

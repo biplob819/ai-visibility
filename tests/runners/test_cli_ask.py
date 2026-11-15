@@ -79,3 +79,56 @@ def test_a_resumed_run_estimates_only_what_is_missing(study, capsys, monkeypatch
     assert plan["estimate"]["total_usd"] == 0
     assert all(v["calls"] == 0 for v in plan["estimate"]["per_model"].values())
     assert cli.main(["ask", "--run", "0", "--max-cost", "0.01", "--study", str(study)]) == 0
+
+
+def _fake(monkeypatch, **kw):
+    from citewatch import runners as runners_pkg
+
+    from .test_schedule import FakeRunner
+
+    monkeypatch.setattr(runners_pkg, "make_runner", lambda m: FakeRunner(m, **kw))
+
+
+def test_a_cap_the_estimate_accepts_asks_at_least_one_question(study, capsys, monkeypatch):
+    """v3 M1: the first reservation (4x planning) no longer refuses a small accepted cap."""
+    _fake(monkeypatch)
+    capsys.readouterr()
+    args = ["ask", "--run", "0", "--questions", "q-001", "--max-cost", "0.30"]
+    assert cli.main([*args, "--study", str(study), "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["asked"] == 2
+
+
+def test_a_run_where_every_call_fails_exits_2(study, capsys, monkeypatch):
+    """v3 M2: every call refused (a bad key) is not a success."""
+    from .helpers import StatusError
+
+    _fake(monkeypatch, fail={q: StatusError(401) for q in ("q-001", "q-002")})
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 2
+    out = json.loads(capsys.readouterr().out)
+    assert out["ok"] is False and out["asked"] == 0
+
+
+def test_a_cap_reached_during_the_run_exits_3(study, capsys, monkeypatch):
+    _fake(monkeypatch, tokens_in=400_000, tokens_out=8_000)  # about 10x the estimate per call
+    capsys.readouterr()
+    assert (
+        cli.main(["ask", "--run", "0", "--max-cost", "1.0", "--study", str(study), "--json"]) == 3
+    )
+    assert json.loads(capsys.readouterr().out)["stopped_at_cap"] is True
+
+
+def test_an_interrupted_run_exits_2(study, capsys, monkeypatch):
+    import concurrent.futures
+
+    real_wait = concurrent.futures.wait
+
+    def interrupt(*a, **k):
+        raise KeyboardInterrupt
+
+    _fake(monkeypatch, delay=0.05)
+    monkeypatch.setattr("citewatch.runners.schedule.wait", interrupt)
+    capsys.readouterr()
+    assert cli.main(["ask", "--run", "0", "--study", str(study), "--json"]) == 2
+    assert json.loads(capsys.readouterr().out)["interrupted"] is True
+    assert real_wait  # the real wait is untouched outside the scheduler

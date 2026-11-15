@@ -52,3 +52,43 @@ def test_bad_money_is_an_error(tmp_path, bad):
 def test_bad_latency(tmp_path, bad):
     with pytest.raises(LedgerError):
         Ledger(tmp_path).event("ask", "k", cache_hit=False, latency_ms=bad, cost_usd=0)
+
+
+def test_lines_never_tear_even_when_one_write_lands_in_pieces(tmp_path, monkeypatch):
+    """v3 L7: the L-28 pattern for run.log; fails without the lock on every OS."""
+    import time
+    from pathlib import Path
+
+    real_open = Path.open
+
+    def slow_open(self, mode="r", *a, **k):
+        fh = real_open(self, mode, *a, **k)
+        if "a" not in mode:
+            return fh
+        write = fh.write
+
+        def chunked(s):
+            for i in range(0, len(s), 7):
+                write(s[i : i + 7])
+                fh.flush()
+                time.sleep(0.0002)
+            return len(s)
+
+        fh.write = chunked  # type: ignore[method-assign]
+        return fh
+
+    monkeypatch.setattr(Path, "open", slow_open)
+    led = Ledger(tmp_path)
+
+    def worker(i):
+        for j in range(15):
+            led.event("ask", f"k{i}-{j}", cache_hit=False, latency_ms=1, cost_usd=0.01)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+    monkeypatch.undo()
+    rows = led.rows()
+    assert len(rows) == 120 and len({r["key"] for r in rows}) == 120

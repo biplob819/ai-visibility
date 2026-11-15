@@ -174,3 +174,41 @@ def test_a_datetime_checked_on_is_read_as_its_date(tmp_path):
         encoding="utf-8",
     )
     assert load_prices(p)["m"].checked_on == dt.date(2026, 11, 15)
+
+
+_BASE = (
+    "  input: 3\n  output: 15\n  cached_input: 0.3\n  search_per_1k: 10\n  checked_on: 2026-11-01\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("body", "needle"),
+    [
+        (
+            "m:\n" + _BASE + "  long_threshold: '150000'\n  long_input: 6\n  long_output: 22\n",
+            "whole number",
+        ),
+        ("m:\n" + _BASE + "  long_threshold: 1.5e5\n  long_input: 6\n  long_output: 22\n", "1.5e5"),
+        (
+            "m:\n" + _BASE + "  long_threshold: true\n  long_input: 6\n  long_output: 22\n",
+            "whole number",
+        ),
+        (
+            "m:\n" + _BASE + "  long_threshold: -5\n  long_input: 6\n  long_output: 22\n",
+            "whole number",
+        ),
+        (
+            "m:\n" + _BASE + "  long_threshold: 200000\n  long_input: 0\n  long_output: 22\n",
+            "cannot be 0",
+        ),
+        ("m:\n" + _BASE + "  long_input: 6\n", "no long_threshold"),
+        ("m:\n" + _BASE + "m:\n" + _BASE, "duplicate key"),
+        ("5:\n" + _BASE, "must be text"),
+    ],
+)
+def test_long_context_prices_and_model_names_are_checked(tmp_path, body, needle):
+    """v3 L3: these passed `doctor` and then crashed `ask`, or silently priced wrong."""
+    p = tmp_path / "prices.yaml"
+    p.write_text(body, encoding="utf-8")
+    with pytest.raises(PriceError, match=needle):
+        load_prices(p)

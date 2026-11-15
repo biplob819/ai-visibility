@@ -97,13 +97,20 @@ class SpendCap:
         self.max_seen = 0.0
         self.spent = 0.0
         self.reserved = 0.0
+        self.in_flight = 0  # counted, not inferred from `reserved`: float sums leave crumbs (v3 H1)
         self._cond = threading.Condition()
 
     def _try(self) -> float | None:
         est = self.reserve_each
+        if self.cap is not None and self.in_flight == 0:
+            room = self.cap - self.spent
+            if room <= 0:
+                return None
+            est = min(est, room)  # nothing held: a cap the estimate accepts still asks (v3 M1)
         if self.cap is not None and self.spent + self.reserved + est > self.cap:
             return None
         self.reserved += est
+        self.in_flight += 1
         return est
 
     def reserve(self) -> float | None:
@@ -119,14 +126,15 @@ class SpendCap:
                 got = self._try()
                 if got is not None:
                     return got
-                if self.reserved <= 0 or stop.is_set():
+                if self.in_flight == 0 or stop.is_set():
                     return None
                 self._cond.wait(poll)
 
     def settle(self, reserved: float, actual: float) -> None:
         actual = check_money(actual, "actual")
         with self._cond:
-            self.reserved = max(0.0, self.reserved - reserved)
+            self.in_flight = max(0, self.in_flight - 1)
+            self.reserved = 0.0 if self.in_flight == 0 else max(0.0, self.reserved - reserved)
             self.spent += actual
             if actual > self.max_seen:
                 self.max_seen = actual
@@ -181,31 +189,30 @@ def ask_run(
                     "cost_usd": cost,
                 }
             )
-        ledger.event(
-            "ask",
-            key,
-            cache_hit=False,
-            latency_ms=0,
-            cost_usd=cost,
-            error=kind,
-            question_id=q.id,
-            model=model,
-        )
+        log(q, model, key, cache_hit=False, latency_ms=0, cost_usd=cost, error=kind)
+
+    def log(q: StudyQuestion, model: str, key: str, **kw: Any) -> None:
+        """A broken run.log is recorded as an error and never blocks the money path (v3 L2)."""
+        try:
+            ledger.event("ask", key, question_id=q.id, model=model, **kw)
+        except OSError as exc:
+            with lock:
+                result.errors.append(
+                    {
+                        "question_id": q.id,
+                        "model": model,
+                        "error": "run-log",
+                        "detail": f"{type(exc).__name__}: {exc}"[:300],
+                        "cost_usd": 0.0,
+                    }
+                )
 
     def one(q: StudyQuestion, model: str) -> None:
         key = ask_key(cfg, run, q, model)
         if store.has("ask", key):
             with lock:
                 result.cached += 1
-            ledger.event(
-                "ask",
-                key,
-                cache_hit=True,
-                latency_ms=0,
-                cost_usd=0.0,
-                question_id=q.id,
-                model=model,
-            )
+            log(q, model, key, cache_hit=True, latency_ms=0, cost_usd=0.0)
             return
         if stop.is_set() or model in stopped_models:
             with lock:
@@ -252,6 +259,7 @@ def ask_run(
             if rc.error is not None and rc.error.split(" during", 1)[0] in _STOP_KINDS:
                 stopped_models.add(model)  # before the slot is released, so no waiter starts
         # 2. cost first, written down at once
+        unpriced: str | None = None
         try:
             u = runner.usage(rc.responses)
             if not (u.tokens_in or u.tokens_out):
@@ -266,7 +274,7 @@ def ask_run(
         except Exception as exc:  # cannot price it: charge the reservation so the cap stays safe
             actual = reserved
             u = None
-            note_error(q, model, "unpriced", f"{type(exc).__name__}: {exc}", key, cost=actual)
+            unpriced = f"{type(exc).__name__}: {exc}"
         cap.settle(reserved, actual)
         if spend_ledger is not None:
             try:
@@ -281,6 +289,8 @@ def ask_run(
                 note_error(
                     q, model, "spend-ledger", f"{type(exc).__name__}: {exc}", key, cost=actual
                 )
+        if unpriced is not None:  # noted only once the spend line is down (v3 L2)
+            note_error(q, model, "unpriced", unpriced, key, cost=actual)
         answered_at = clock().isoformat(timespec="seconds").replace("+00:00", "Z")
         env = {
             "schema_version": "1.0",
@@ -309,22 +319,15 @@ def ask_run(
             kind = rc.error.split(" during", 1)[0]
             note_error(q, model, kind, rc.error, key, cost=actual)
             return
-        ledger.event(
-            "ask",
-            key,
-            cache_hit=False,
-            latency_ms=latency,
-            cost_usd=actual,
-            question_id=q.id,
-            model=model,
-        )
         with lock:
             result.asked += 1
+        log(q, model, key, cache_hit=False, latency_ms=latency, cost_usd=actual)
 
     workers = max(1, per_provider * len(sems))
     pool = ThreadPoolExecutor(max_workers=workers)
-    futures: list[Future[None]] = [pool.submit(one, q, m) for q in order for m in cfg.models]
+    futures: list[Future[None]] = []
     try:
+        futures.extend(pool.submit(one, q, m) for q in order for m in cfg.models)  # v3 L6
         pending = set(futures)
         while pending:
             done, pending = wait(pending, timeout=0.5, return_when=FIRST_COMPLETED)
