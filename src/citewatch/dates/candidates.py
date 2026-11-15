@@ -65,9 +65,7 @@ def parse_date(text: str, *, dayfirst: bool = False) -> dt.date | None:
         return None
     if value.year < 1000:
         return None
-    if value.tzinfo is not None:
-        value = value.astimezone(dt.UTC)
-    return value.date()
+    return value.date()  # the date as the page states it, in its own time zone (not UTC)
 
 
 def page_age_date(page_age: str, answered_at: dt.datetime) -> dt.date | None:

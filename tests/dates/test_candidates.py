@@ -124,3 +124,9 @@ def test_media_review_dates_are_not_the_page_review_date():
         "visible_text",
     ) in got
     assert ("reviewed", "2024-11-06", "visible_text") in got
+
+
+def test_a_date_is_read_in_its_own_time_zone():
+    """Found on GOV.UK: 00:01 BST on 10 July is still 10 July, not 9 July in UTC."""
+    assert str(parse_date("2026-07-10T00:01:05+01:00")) == "2026-07-10"
+    assert str(parse_date("2026-07-09T23:30:00-05:00")) == "2026-07-09"
