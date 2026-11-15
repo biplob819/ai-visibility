@@ -908,3 +908,134 @@ def test_refusal_rows_use_the_limiter_clock(tmp_path):
     client.get("https://a.example/no")
     refused = next(r for r in log.rows() if r["outcome"] == "robots_disallowed")
     assert refused["at"].startswith("2026-11-15T12:00")  # the virtual wall clock, not now()
+
+
+# --- pass 8 -------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("start", "routes"),
+    [
+        ("https://a.example/public/../private", {}),
+        ("https://a.example/public/%2e%2e/private", {}),
+        ("https://a.example/./private", {}),
+        (
+            "https://a.example/r",
+            {
+                "https://a.example/r": httpx.Response(
+                    301, headers={"location": "https://a.example/x/../private"}
+                )
+            },
+        ),
+    ],
+)
+def test_dot_segments_never_get_past_robots(tmp_path, start, routes):
+    """v8 H1: robots is checked on the path the server will receive."""
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /private\n"
+            ),
+            **routes,
+        }
+    )
+    client, log, _ = make(tmp_path, web)
+    assert client.get(start).outcome == "robots_disallowed"
+    assert not any(r.url.path.startswith("/private") for r in web.requests)
+    assert audit(log) == []
+
+
+def test_a_block_is_remembered_through_dot_segments(tmp_path):
+    web = FakeWeb({"https://a.example/private": httpx.Response(403)})
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/private").outcome == "blocked"
+    assert client.get("https://a.example/x/../private").outcome == "blocked"
+    assert [r.url.path for r in web.requests].count("/private") == 1
+
+
+def test_the_audit_resolves_dot_segments():
+    import fetch_audit
+
+    assert (
+        fetch_audit.norm_url("https://a.example/public/../private") == "https://a.example/private"
+    )
+    assert fetch_audit.norm_url("https://a.example/a/%2e%2e/b") == "https://a.example/b"
+    import json
+
+    base = {"host": "a.example", "attempt": 1, "user_agent": "citewatch/0.1"}
+    rows = [
+        json.dumps(
+            {
+                **base,
+                "url": "https://a.example/private",
+                "at": "2026-11-15T12:00:00+00:00",
+                "status": None,
+                "bytes": None,
+                "robots": "disallowed",
+                "outcome": "robots_disallowed",
+            }
+        ),
+        json.dumps(
+            {
+                **base,
+                "url": "https://a.example/x/../private",
+                "at": "2026-11-15T12:00:05+00:00",
+                "status": 200,
+                "bytes": 10,
+                "robots": "allowed",
+                "outcome": "ok",
+            }
+        ),
+    ]
+    assert any("robots refused" in p for p in fetch_audit.audit(rows))
+
+
+def test_robots_rules_on_the_query_are_honoured(tmp_path):
+    """v8 M1: fresh and from the store."""
+    store = RawStore(tmp_path)
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /*?s=\n"
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web, store=store)
+    assert client.get("https://a.example/p?s=1").outcome == "robots_disallowed"
+    assert client.get("https://a.example/p?t=1").outcome == "ok"
+    later, _l, _ = make(tmp_path / "r2", FakeWeb(), store=store)
+    assert later.get("https://a.example/q?s=2").outcome == "robots_disallowed"
+
+
+def test_a_cut_robots_file_never_keeps_a_half_line(tmp_path):
+    """v8 L1: a truncated `Allow: /private-ok` must not become `Allow: /priv`."""
+    from citewatch.fetch.robots import MAX_ROBOTS_BYTES
+
+    head = b"User-agent: *\nDisallow: /pri\n"
+    pad = b"# " + b"x" * 60 + b"\n"
+    body = head + pad * ((MAX_ROBOTS_BYTES - len(head) - 10) // len(pad))
+    body += b"Allow: /private-ok\n"
+    web = FakeWeb({"https://a.example/robots.txt": httpx.Response(200, content=body)})
+    client, _log, _ = make(tmp_path, web)
+    assert client.get("https://a.example/private").outcome == "robots_disallowed"
+
+
+def test_answers_stored_under_an_older_robots_version_are_read_again(tmp_path):
+    """v8 L2: a robots-2 answer (allow-all here) is never used by robots-3."""
+    from citewatch.fetch.robots import ROBOTS_CODE_VERSION
+    from citewatch.store import stage_key
+
+    assert ROBOTS_CODE_VERSION == "robots-3"
+    store = RawStore(tmp_path)
+    old = stage_key("robots", "robots-2", {"origin": "https://a.example"}, "")
+    store.put("robots", old, {"origin": "https://a.example", "status": 404, "directives": []})
+    web = FakeWeb(
+        {
+            "https://a.example/robots.txt": httpx.Response(
+                200, content=b"User-agent: *\nDisallow: /\n"
+            )
+        }
+    )
+    client, _log, _ = make(tmp_path, web, store=store)
+    assert client.get("https://a.example/p").outcome == "robots_disallowed"
+    assert web.urls() == ["https://a.example/robots.txt"]

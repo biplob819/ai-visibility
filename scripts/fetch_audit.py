@@ -73,6 +73,21 @@ def norm_host(host: str) -> str:
     return h.rstrip(".")
 
 
+def remove_dot_segments(path: str) -> str:
+    """RFC 3986 section 5.2.4: `/a/./b/../c` is `/a/c`, the path a server will serve."""
+    out: list[str] = []
+    for seg in path.split("/"):
+        if seg == "..":
+            if len(out) > 1:
+                out.pop()
+        elif seg != ".":
+            out.append(seg)
+    if path.endswith(("/.", "/..")):
+        out.append("")
+    res = "/".join(out)
+    return res if res.startswith("/") else "/" + res
+
+
 def norm_url(url: str) -> str:
     """Same page, same key: lower-case scheme and host (IPv6 kept in brackets), no default
     port, no fragment, percent-encoding decoded. Raises ValueError on a malformed URL."""
@@ -82,7 +97,8 @@ def norm_url(url: str) -> str:
     port = parts.port  # ValueError on a bad port
     shown = f"[{host}]" if ":" in host else host
     netloc = shown if port in (None, DEFAULT_PORTS.get(scheme)) else f"{shown}:{port}"
-    return urlunsplit((scheme, netloc, unquote(parts.path) or "/", unquote(parts.query), ""))
+    path = remove_dot_segments(unquote(parts.path) or "/")  # what the server serves
+    return urlunsplit((scheme, netloc, path, unquote(parts.query), ""))
 
 
 def page_key(norm: str) -> str:

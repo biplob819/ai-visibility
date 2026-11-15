@@ -19,6 +19,21 @@ def norm_host(host: str) -> str:
     return h.rstrip(".")
 
 
+def remove_dot_segments(path: str) -> str:
+    """RFC 3986 section 5.2.4: `/a/./b/../c` is `/a/c`, the path a server will serve."""
+    out: list[str] = []
+    for seg in path.split("/"):
+        if seg == "..":
+            if len(out) > 1:
+                out.pop()
+        elif seg != ".":
+            out.append(seg)
+    if path.endswith(("/.", "/..")):
+        out.append("")
+    res = "/".join(out)
+    return res if res.startswith("/") else "/" + res
+
+
 def norm_url(url: str) -> str:
     """Lower-case scheme and host, no default port, no fragment, percent-encoding decoded.
     Raises ValueError on a malformed URL."""
@@ -28,7 +43,8 @@ def norm_url(url: str) -> str:
     port = parts.port
     shown = f"[{host}]" if ":" in host else host
     netloc = shown if port in (None, DEFAULT_PORTS.get(scheme)) else f"{shown}:{port}"
-    return urlunsplit((scheme, netloc, unquote(parts.path) or "/", unquote(parts.query), ""))
+    path = remove_dot_segments(unquote(parts.path) or "/")
+    return urlunsplit((scheme, netloc, path, unquote(parts.query), ""))
 
 
 def page_key(url: str) -> str:
@@ -92,3 +108,18 @@ def ascii_host(host: str) -> str:
 
 def host_of(url: str) -> str:
     return norm_host(urlsplit(url).hostname or "")
+
+
+_ENC_DOT = re.compile(r"%2e", re.IGNORECASE)
+
+
+def wire_url(url: str) -> str:
+    """The URL httpx will actually send: encoded dots decoded and dot segments resolved, so
+    robots, the page history and the log all see the path the server receives (v8 H1)."""
+    import httpx
+
+    parts = urlsplit(url)
+    path = _ENC_DOT.sub(".", parts.path)
+    return str(
+        httpx.Request("GET", urlunsplit((parts.scheme, parts.netloc, path, parts.query, ""))).url
+    )

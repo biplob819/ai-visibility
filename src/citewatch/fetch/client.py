@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from .history import PageHistory
-from .keys import host_of, plain_host
+from .keys import host_of, plain_host, wire_url
 from .log import FetchLog
 from .rate import HostLimiter
 from .robots import MAX_ROBOTS_BYTES, RobotsCache
@@ -169,6 +169,8 @@ class PoliteClient:
                 url = nxt
                 continue
             text = None if r.body is None else r.body.decode("utf-8", errors="replace")
+            if text is not None and r.outcome == "too_large" and "\n" in text:
+                text = text.rsplit("\n", 1)[0]  # never a half line: a cut Allow loosens rules
             return r.status, text  # a too_large body is parsed as far as it goes (RFC 9309)
         return None, None
 
@@ -355,6 +357,10 @@ class PoliteClient:
         current, hops = url, []
         if not plain_host(url):
             return FetchResult(url, url, "fetch_error", detail="not a plain host name")
+        try:
+            current = wire_url(url)  # check what will be sent, not what was written (v8 H1)
+        except (httpx.InvalidURL, ValueError):
+            return FetchResult(url, url, "fetch_error", detail="not a valid URL")
         for _ in range(MAX_REDIRECTS + 1):
             try:
                 entry = self.history.entry(current)
@@ -410,6 +416,12 @@ class PoliteClient:
                         r.status,
                         hops=hops,
                         detail="redirect carrying credentials",
+                    )
+                try:
+                    nxt = wire_url(nxt)
+                except (httpx.InvalidURL, ValueError):
+                    return FetchResult(
+                        url, current, "fetch_error", r.status, hops=hops, detail="bad redirect"
                     )
                 hops.append(nxt)
                 current = nxt
