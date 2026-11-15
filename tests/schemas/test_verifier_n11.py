@@ -274,3 +274,115 @@ def test_summary_hash_and_version_patterns(over):
 
 def test_count_words_splits_on_any_whitespace():
     assert count_words("one\ttwo") == 2
+
+
+# ---- N1.1 verifier pass 2 ----
+
+
+@pytest.mark.parametrize(
+    "url", ["https://www.nh\ns.uk/x", "https://www.nhs.uk/x\n", "https://www.nhs.uk/a b"]
+)
+def test_canonical_urls_have_no_whitespace(url):
+    with pytest.raises(ValidationError, match="whitespace"):
+        Citation.model_validate(s.citation(url=url))
+
+
+def test_page_status_is_strict_and_consulted_publisher_matches():
+    with pytest.raises(ValidationError):
+        PageMeta.model_validate(s.page(status="200"))
+    with pytest.raises(ValidationError, match="publisher"):
+        ConsultedSource.model_validate(s.consulted(publisher="bbc.co.uk"))
+    with pytest.raises(ValidationError, match="publisher"):
+        ConsultedSource.model_validate(s.consulted(publisher="hs.uk"))  # dot boundary
+
+
+def test_user_agent_is_printable_ascii(tmp_path):
+    with pytest.raises(ConfigError, match="ASCII"):
+        load_study_config(_cfg_file(tmp_path, user_agent="citewatch/0.1 (josé@example.org)"))
+
+
+@pytest.mark.parametrize(
+    ("model", "data"),
+    [
+        ("interval", {"point": "0.2", "lo": 0.1, "hi": 0.3, "n": 1}),
+        ("interval", {"point": True, "lo": 0.0, "hi": 1.0, "n": 1}),
+    ],
+)
+def test_finite_floats_are_strict(model, data):
+    from citewatch.schemas import Interval
+
+    with pytest.raises(ValidationError):
+        Interval.model_validate(data)
+
+
+@pytest.mark.parametrize("model", ["CLAUDE-sonnet", "claude sonnet", "gpt-6.1 sol"])
+def test_model_id_pattern(model):
+    with pytest.raises(ValidationError):
+        AnswerRecord.model_validate(s.answer(model=model))
+
+
+def test_verdict_literals():
+    with pytest.raises(ValidationError):
+        SupportVerdict.model_validate(s.verdict(verdict="maybe"))
+    with pytest.raises(ValidationError):
+        SupportVerdict.model_validate(s.verdict(hand_label="partly"))
+
+
+def test_page_vocabularies_match_the_tech_spec():
+    import re
+    import typing
+
+    from citewatch.schemas import pages
+    from harness_lib import ROOT
+
+    spec = (ROOT / "AI Visibility Tech Spec.md").read_text(encoding="utf-8")
+    sec = spec[
+        spec.index("class DateCandidate(BaseModel):") : spec.index("class Interval(BaseModel):")
+    ]
+
+    def literal(name: str) -> set[str]:
+        m = re.search(rf"{name}: Literal\[(.*?)\]", sec, re.S)
+        assert m, name
+        return set(re.findall(r'"(\w+)"', m.group(1)))
+
+    assert set(typing.get_args(pages.DateKind)) == literal("kind")
+    assert set(typing.get_args(pages.DateSource)) == literal("source")
+    assert set(typing.get_args(pages.Outcome)) == literal("outcome")
+
+
+def test_summary_money_and_counts_are_non_negative():
+    with pytest.raises(ValidationError):
+        StudySummary.model_validate(s.summary(spend_usd=-1))
+    with pytest.raises(ValidationError):
+        StudySummary.model_validate(s.summary(preregistration_sha256="ab" * 31))
+    with pytest.raises(ValidationError):
+        StudySummary.model_validate(s.summary(error_counts={"m": {"refusal": -1}}))
+
+
+def test_frozen_dict_blocks_update_and_merge():
+    card = DomainCard.model_validate(s.card())
+    with pytest.raises(TypeError):
+        card.share_by_model.update({})  # type: ignore[attr-defined]
+    m = card.share_by_model
+    with pytest.raises(TypeError):
+        m |= {}  # type: ignore[operator]
+
+
+def test_fixture_list_covers_every_top_level_spec_record():
+    from tests.schemas.test_format import TOP_LEVEL
+
+    nested = {
+        "DateCandidate",
+        "Interval",
+        "ShareRow",
+        "ConcentrationRow",
+        "FreshnessRow",
+        "StaleRow",
+        "OverlapRow",
+        "StabilityRow",
+        "AccuracyRow",
+        "SupportRow",
+    }
+    from tests.schemas.test_format import spec_schema_names
+
+    assert spec_schema_names() - nested == set(TOP_LEVEL.values())

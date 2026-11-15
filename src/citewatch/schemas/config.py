@@ -78,8 +78,10 @@ class StudyConfig(Model):
     @classmethod
     def _names_tool_and_contact(cls, v: str) -> str:
         # D-25 and §7.2: the agent names the tool and a contact; it cannot pose as a browser
-        if any(ord(c) < 32 or ord(c) == 127 for c in v):
-            raise ValueError("must not contain control characters")
+        if not all(32 <= ord(c) < 127 for c in v):
+            raise ValueError(
+                "must be printable ASCII (an HTTP header value), no control characters"
+            )
         if not re.match(r"^citewatch/\S+ ", v):
             raise ValueError("must start with 'citewatch/<version> ' so sites can see the tool")
         if not CONTACT.search(v):

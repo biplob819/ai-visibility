@@ -111,6 +111,8 @@ ModelId = Annotated[
 def canonical_problems(url: str) -> list[str]:
     """Invariants a canonical URL must satisfy (the full canonicaliser lands in A2.1)."""
     problems = []
+    if any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in url):
+        return ["no whitespace or control characters allowed"]  # urlsplit strips some silently
     try:
         parts = urlsplit(url)
     except ValueError as exc:

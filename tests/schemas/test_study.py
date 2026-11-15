@@ -49,7 +49,7 @@ def test_word_count_must_match_the_answer_text():
         {"cost_usd": -0.01},
         {"answered_at": "2026-11-15T10:00:00"},  # naive
         {"model": "llama-3"},  # no supported provider
-        {"refusal": True, "error": "transport"},
+        {"refusal": True, "error": "transport", "raw_key": None},
         {"raw_key": "XYZ"},
     ],
 )
@@ -64,7 +64,7 @@ def test_impossible_answers_are_rejected(over):
         ("https://WWW.NHS.UK/x", "WWW.NHS.UK"),
         ("https://www.nhs.uk/x#top", "www.nhs.uk"),
         ("ftp://www.nhs.uk/x", "www.nhs.uk"),
-        ("https://www.nhs.uk/x", "www.bbc.co.uk"),
+        ("https://www.bbc.co.uk/x", "www.nhs.uk"),  # host rule, publisher still matches host
     ],
 )
 def test_citations_need_a_canonical_url_matching_the_host(url, host):

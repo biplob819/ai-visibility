@@ -127,4 +127,7 @@ class ConsultedSource(Model):
     @model_validator(mode="after")
     def _url(self) -> ConsultedSource:
         _canonical(self.url)
+        host = urlsplit(self.url).hostname or ""
+        if not (host == self.publisher or host.endswith("." + self.publisher)):
+            raise ValueError(f"publisher {self.publisher!r} is not the host {host!r} or its parent")
         return self

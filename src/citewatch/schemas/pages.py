@@ -38,7 +38,7 @@ class PageMeta(Model):
     url: NonBlank
     fetched_at: Timestamp | None = None
     outcome: Outcome
-    status: Annotated[int, PosInt] | None = None
+    status: PosInt | None = None
     final_url: NonBlank | None = None
     candidates: tuple[DateCandidate, ...] = ()
     date_modified: dt.date | None = None
