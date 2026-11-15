@@ -225,3 +225,89 @@ def test_gate_golden_never_passes_without_the_minimum_python(tmp_path, monkeypat
     monkeypatch.setattr(nc.shutil, "which", lambda _name: None)
     r = nc.gate_golden(nc.Ctx("W0.1", tmp_path, {}, [], tmp_path))
     assert r.status == "FAIL" and "uv not found" in r.detail
+
+
+# ---- W0.1 verifier pass 3: mutants that survived every test ----
+
+
+def test_eligibility_rules_that_had_no_test():
+    from harness_lib import HarnessError, eligibility_problems, parse_graph
+
+    graph = parse_graph("| **W0.1** | A | — |\n| **N1.1** | B | W0.1 |\n")
+    caps = parse_catalog(HDR + "H\tW0.1\tbuilding\t\t\nS\tN1.1\tgreen\t\t\n")
+    assert any("N1.1" in p and "W0.1" in p for p in eligibility_problems(graph, caps))
+    with pytest.raises(HarnessError):
+        parse_graph("| **W0.1** | A | — |\n| **W0.1** | again | — |\n")
+    with pytest.raises(HarnessError):
+        parse_graph("| **W0.1** | A | — |\n| **N1.1** | B | W0.1x |\n")
+    with pytest.raises(HarnessError):
+        parse_catalog(HDR + "H\tW0.1\tgreen\t\t\nH\tW0.1\tgreen\t\t\n")
+
+
+@pytest.mark.safety
+def test_unpack_handles_xz_nested_zip_and_a_shared_zip_budget(monkeypatch):
+    import io
+    import lzma
+    import zipfile
+
+    import harness_lib
+    from harness_lib import HarnessError, unpack
+
+    filler = b"compressible filler " * 500
+    assert unpack(lzma.compress(filler + b"MARK")).endswith(b"MARK")
+    inner = io.BytesIO()
+    with zipfile.ZipFile(inner, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("inner.txt", filler + b"DEEP")
+    outer = io.BytesIO()
+    with zipfile.ZipFile(outer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("inner.zip", inner.getvalue())
+    assert b"DEEP" in unpack(outer.getvalue())
+    two = io.BytesIO()
+    with zipfile.ZipFile(two, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("a.txt", b"a" * 6000)
+        zf.writestr("b.txt", b"b" * 6000)
+    monkeypatch.setattr(harness_lib, "MAX_UNPACKED", 10_000)
+    monkeypatch.setattr(harness_lib, "CHUNK", 1000)
+    with pytest.raises(HarnessError):
+        unpack(two.getvalue(), budget=10_000)  # 12,000 bytes across members > 10,000
+
+
+@pytest.mark.polite
+def test_fetch_audit_field_types_and_unreadable_logs(tmp_path):
+    assert any("url must be" in p for p in fa.audit([fa._line(url=42)]))
+    assert any("attempt must be" in p for p in fa.audit([fa._line(attempt=True)]))
+    assert any("user_agent must be" in p for p in fa.audit([fa._line(user_agent="")]))
+    bad = tmp_path / "fetch_log.jsonl"
+    bad.write_bytes(b"\xff\xfe\x00 not utf-8")
+    assert any("cannot read" in p for p in fa.audit_paths([bad]))
+    assert any(
+        "requested 4 times" in p
+        for p in fa.audit([fa._line(at=f"2026-11-15T10:00:0{i}+00:00") for i in range(0, 8, 2)])
+    )
+    assert fa.audit([fa._line(host="www.nhs.uk:443")]) == []
+
+
+@pytest.mark.safety
+def test_secret_scan_reports_unreadable_archives_and_ignores_slugs(tmp_path):
+    (tmp_path / "x.gz").write_bytes(b"\x1f\x8b broken")
+    (tmp_path / "c.jsonl").write_text(
+        '{"url": "https://x.org/what-is-sk-ii-facial-treatment-essence-and-how-to-use-it"}\n',
+        encoding="utf-8",
+    )
+    hits = secret_scan.scan([tmp_path / "x.gz", tmp_path / "c.jsonl"])
+    assert len(hits) == 1 and "cannot unpack" in hits[0]
+
+
+@pytest.mark.safety
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        ("labels.csv", b"citation_ref,verdict,page_text\nv-1,supported,x\n"),
+        ("notes.yaml", b"url: https://x.org\nbody: x\n"),
+        ("double.json", b'{"rec": "{\\"html\\": 1}"}'),
+    ],
+)
+def test_storage_audit_catches_csv_yaml_and_double_encoded_keys(tmp_path, name, content):
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / name).write_bytes(content)
+    assert any(name in p for p in sa.audit(tmp_path, tmp_path / "none", IDLE))

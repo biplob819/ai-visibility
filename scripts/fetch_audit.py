@@ -55,7 +55,13 @@ def log_files(root: Path) -> list[Path]:
 
 
 def norm_host(host: str) -> str:
-    return host.strip().lower().rstrip(".").strip("[]")
+    """Lower case, no trailing dot, no port, IPv6 without brackets."""
+    h = host.strip().lower()
+    if h.startswith("["):
+        h = h[1 : h.index("]")] if "]" in h else h[1:]
+    elif h.count(":") == 1:
+        h = h.split(":", 1)[0]  # host:port
+    return h.rstrip(".")
 
 
 def norm_url(url: str) -> str:
@@ -71,8 +77,13 @@ def norm_url(url: str) -> str:
 
 
 def page_key(norm: str) -> str:
-    """The retry and robots rules treat http and https as the same page."""
-    return norm.split("://", 1)[-1]
+    """The retry, robots and attempt rules treat http/https, a trailing slash and the order
+    of query parameters as the same page."""
+    rest = norm.split("://", 1)[-1]
+    path, _, query = rest.partition("?")
+    if path.count("/") > 1:
+        path = path.rstrip("/")
+    return path + ("?" + "&".join(sorted(query.split("&"))) if query else "")
 
 
 def _is_int(x: object) -> bool:
@@ -179,6 +190,16 @@ def rules(rows: list[dict], source: str) -> list[str]:
             problems.append(f"{r['_where']}: retried {r['url']} after it was blocked")
         elif r["status"] in BLOCK_STATUSES:
             blocked.add(r["_key"])
+
+    per_page: dict[str, list[dict]] = defaultdict(list)
+    for r in requests:
+        per_page[r["_key"]].append(r)
+    for hits in per_page.values():
+        if len(hits) > MAX_ATTEMPTS:  # the logged attempt number is not trusted on its own
+            problems.append(
+                f"{hits[-1]['_where']}: {hits[-1]['url']} requested {len(hits)} times "
+                f"(at most {MAX_ATTEMPTS}: one try and two retries)"
+            )
 
     agents = sorted({r["user_agent"] for r in requests})
     if len(agents) > 1:
@@ -326,6 +347,24 @@ def self_test() -> int:
     )
     check("a malformed url fails", audit([_line(url="https://[::1/x")]), "malformed url")
     check(
+        "four requests for one page fail even if each says attempt 1",
+        audit([_line(at=f"2026-11-15T10:00:0{i}+00:00") for i in range(0, 8, 2)]),
+        "requested 4 times",
+    )
+    check("a host field with a port passes", audit([_line(host="www.nhs.uk:443")]), None)
+    check("a non-string url fails", audit([_line(url=42)]), "url must be")
+    check("a boolean attempt fails", audit([_line(attempt=True)]), "attempt must be")
+    check(
+        "retrying with a trailing slash or reordered query fails",
+        audit(
+            [
+                _line(url="https://a.org/p?x=1&y=2", host="a.org", status=403, outcome="blocked"),
+                _line(url="https://a.org/p/?y=2&x=1", host="a.org", at="2026-11-15T10:00:05+00:00"),
+            ]
+        ),
+        "after it was blocked",
+    )
+    check(
         "two user agents fail",
         audit([_line(), _line(host="a.com", url="https://a.com/", user_agent="Other/1.0")]),
         "different user agents",
@@ -348,6 +387,9 @@ def self_test() -> int:
             audit_paths(log_files(root)),
             "0.100 s apart",
         )
+        bad = root / "data" / "runs" / "fetch_log_3.jsonl"
+        bad.write_bytes(b"\xff\xfe not utf-8")
+        check("an unreadable log fails, never drops out", audit_paths([bad]), "cannot read")
     print("self-test", "PASSED" if failures == 0 else f"FAILED ({failures})")
     return 0 if failures == 0 else 1
 

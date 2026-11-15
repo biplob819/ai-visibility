@@ -48,7 +48,13 @@ AUDITED_DIRS = ("data", "results")
 # "<" may also appear JSON-escaped as \u003c or HTML-escaped as &lt;
 LT = rb"(?:<|\\u003c|&lt;|&#0*60;|&#x0*3c;)"
 HTML_MARKERS = re.compile(LT + rb"(?:!doctype\s+html|html[\s>/]|body[\s>/])", re.I)
-BODY_KEYS = re.compile(rb"[\"'](?:body|html|page_text)[\"']\s*:", re.I)
+# JSON or repr keys (also double-encoded \"body\":), YAML keys, and CSV/TSV header columns
+BODY_KEYS = re.compile(
+    rb"(?:\\?[\"'](?:body|html|page_text)\\?[\"']\s*:)"
+    rb"|(?m:^\s*(?:body|html|page_text)\s*:)"
+    rb"|(?:\A[^\n]*(?:^|[,\t])\"?(?:body|html|page_text)\"?(?:[,\t\r]|$))",
+    re.I | re.M,
+)
 BODY_NODE = "M3.2"
 
 
@@ -98,9 +104,18 @@ def audit(root: Path, cache: Path, caps: list[Cap]) -> list[str]:
     return [*problems, cp] if cp else problems
 
 
+FILLER = b"Compressible filler so the marker cannot survive as plain bytes. " * 200
+
+
+def _opaque(raw: bytes) -> bytes:
+    """A fixture only proves decompression if the marker is absent from the raw bytes."""
+    assert not HTML_MARKERS.search(raw) and not BODY_KEYS.search(raw), "fixture leaks its marker"
+    return raw
+
+
 def _zip(content: bytes) -> bytes:
     buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w") as zf:
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("inner.txt", content)
     return buf.getvalue()
 
@@ -156,8 +171,12 @@ def self_test() -> int:
             "entity_dec.txt": b"&#60;html>",
             "entity_hex.txt": b"&#x3C;BODY>",
             "repr.py": b"{'html': 1}",
-            "packed.xz": lzma.compress(b"<html>"),
-            "packed.zip": _zip(b"<body>"),
+            "packed.xz": _opaque(lzma.compress(FILLER + b"<html>")),
+            "packed.zip": _opaque(_zip(FILLER + b"<body>")),
+            "labels.csv": b"citation_ref,verdict,page_text\nv-1,supported,x\n",
+            "sheet.tsv": b"ref\tBody\nv-1\tx\n",
+            "notes.yaml": b"url: https://x.org\nbody: x\n",
+            "double.json": b'{"rec": "{\\"html\\": 1}"}',
         }
         for name, content in sneaky.items():
             (root / "data" / name).write_bytes(content)

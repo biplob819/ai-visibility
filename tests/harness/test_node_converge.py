@@ -183,4 +183,13 @@ def test_safety_gate_fails_on_a_stored_body_and_a_full_cache(tmp_path):
 
 
 def test_build_smoke_runs_the_citewatch_cli():
-    assert ["citewatch", "--version"] in nc.SMOKE_COMMANDS
+    assert (["citewatch", "--version"], 0) in nc.SMOKE_COMMANDS
+
+
+def test_smoke_commands_run_without_provider_keys(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    monkeypatch.setenv("OPENAI_API_KEY", "x")
+    monkeypatch.setenv("PATH", "/usr/bin")
+    env = nc.keyless_env()
+    assert "ANTHROPIC_API_KEY" not in env and "OPENAI_API_KEY" not in env
+    assert env["PATH"] == "/usr/bin"

@@ -59,7 +59,8 @@ from harness_lib import (
 )
 
 # Commands run inside the clean venv by gate 10. N1.3 adds `report --example` and `ask --dry-run`.
-SMOKE_COMMANDS: list[list[str]] = [["citewatch", "--version"]]
+# (command, expected exit code); run with no provider keys in the environment.
+SMOKE_COMMANDS: list[tuple[list[str], int]] = [(["citewatch", "--version"], 0)]
 PYTEST_UNIT_MARKERS = "not golden and not polite and not safety"
 NA_MIN_REASON = 10
 NA_FORBIDDEN = {"logical"}  # every capability needs at least a real unit test
@@ -80,9 +81,11 @@ class Ctx:
     specs: Path
 
 
-def _run(cmd: list[str], cwd: Path, timeout: int = 900) -> tuple[int, str]:
+def _run(
+    cmd: list[str], cwd: Path, timeout: int = 900, env: dict[str, str] | None = None
+) -> tuple[int, str]:
     try:
-        p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+        p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env)
     except FileNotFoundError as exc:
         return 127, str(exc)
     except subprocess.TimeoutExpired:
@@ -134,6 +137,9 @@ def _dotted(expr: ast.expr) -> list[str]:
     return parts[::-1]
 
 
+UNITTEST_SKIPS = {"skip", "skipIf", "skipUnless", "expectedFailure"}
+
+
 def _is_skip_mark(expr: ast.expr, bare_marks: set[str]) -> bool:
     """pytest.mark.skip / skipif / xfail (called or not), mark.skip after `from pytest import
     mark`, or a bare skip/xfail imported from pytest.mark. Arguments are never inspected, so
@@ -145,29 +151,46 @@ def _is_skip_mark(expr: ast.expr, bare_marks: set[str]) -> bool:
         return False
     if len(parts) >= 2 and parts[-2] == "mark" and parts[-1] in SKIP_MARKS:
         return True
+    if len(parts) >= 2 and parts[0] == "unittest" and parts[-1] in UNITTEST_SKIPS:
+        return True
+    if len(parts) >= 2 and parts[-1] == "parametrize" and isinstance(expr, ast.Call):
+        # a parameter carrying marks=pytest.mark.skip never runs that case
+        for node in ast.walk(expr):
+            if (
+                isinstance(node, ast.keyword)
+                and node.arg == "marks"
+                and _is_skip_mark(node.value, bare_marks)
+            ):
+                return True
     return len(parts) == 1 and parts[0] in bare_marks
 
 
-def _pytest_imports(tree: ast.Module) -> tuple[set[str], set[str]]:
-    """Names imported from pytest that skip at runtime, and names imported from pytest.mark."""
+def _pytest_imports(tree: ast.Module) -> tuple[set[str], set[str], set[str]]:
+    """Names imported from pytest that skip at runtime, names imported from pytest.mark, and
+    the names pytest itself is bound to (`import pytest as pt`)."""
     runtime: set[str] = set()
     marks: set[str] = set()
+    aliases: set[str] = {"pytest"}
     for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            aliases |= {a.asname or a.name for a in node.names if a.name == "pytest"}
         if isinstance(node, ast.ImportFrom) and node.module in ("pytest", "_pytest.outcomes"):
             runtime |= {a.asname or a.name for a in node.names if a.name in RUNTIME_SKIPS}
         if isinstance(node, ast.ImportFrom) and node.module == "pytest.mark":
             marks |= {a.asname or a.name for a in node.names if a.name in SKIP_MARKS}
-    return runtime, marks
+    return runtime, marks, aliases
 
 
-def _calls_skip(fn: ast.FunctionDef | ast.AsyncFunctionDef, runtime_names: set[str]) -> bool:
+def _calls_skip(
+    fn: ast.FunctionDef | ast.AsyncFunctionDef, runtime_names: set[str], aliases: set[str]
+) -> bool:
     """A body that calls pytest.skip/xfail/importorskip (or the same names imported from
     pytest) never proves anything. pytest.fail is a legitimate assertion and is allowed."""
     for node in ast.walk(fn):
         if not isinstance(node, ast.Call):
             continue
         parts = _dotted(node.func)
-        if parts[-2:-1] == ["pytest"] and parts[-1] in RUNTIME_SKIPS:
+        if len(parts) == 2 and parts[0] in aliases and parts[-1] in RUNTIME_SKIPS:
             return True
         if len(parts) == 1 and parts[0] in runtime_names:
             return True
@@ -202,8 +225,34 @@ def _test_functions(path: Path) -> dict[str, bool]:
     pytestmark, or the module's pytestmark), or when its body calls a runtime skip.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    runtime_names, bare_marks = _pytest_imports(tree)
+    runtime_names, bare_marks, aliases = _pytest_imports(tree)
     found: dict[str, bool] = {}
+    # `name.__test__ = False` at module level, or `__test__ = False` in a class body
+    disabled = {
+        tg.value.id
+        for n in tree.body
+        if isinstance(n, ast.Assign)
+        for tg in n.targets
+        if isinstance(tg, ast.Attribute)
+        and tg.attr == "__test__"
+        and isinstance(tg.value, ast.Name)
+        and isinstance(n.value, ast.Constant)
+        and not n.value.value
+    }
+
+    def test_off(body: list[ast.stmt]) -> bool:
+        return any(
+            isinstance(n, ast.Assign)
+            and any(isinstance(tg, ast.Name) and tg.id == "__test__" for tg in n.targets)
+            and isinstance(n.value, ast.Constant)
+            and not n.value.value
+            for n in body
+        )
+
+    def is_test_class(node: ast.ClassDef) -> bool:
+        return node.name.startswith("Test") or any(
+            _dotted(b)[-1:] == ["TestCase"] for b in node.bases
+        )
 
     def visit(body: list[ast.stmt], inherited: bool) -> None:
         for node in body:
@@ -211,12 +260,15 @@ def _test_functions(path: Path) -> dict[str, bool]:
                 if node.name.startswith("test"):
                     found[node.name] = (
                         inherited
+                        or node.name in disabled
                         or any(_is_skip_mark(d, bare_marks) for d in node.decorator_list)
-                        or _calls_skip(node, runtime_names)
+                        or _calls_skip(node, runtime_names, aliases)
                     )
-            elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+            elif isinstance(node, ast.ClassDef) and is_test_class(node):
                 skip = (
                     inherited
+                    or node.name in disabled
+                    or test_off(node.body)
                     or any(_is_skip_mark(d, bare_marks) for d in node.decorator_list)
                     or _pytestmark_skips(node.body, bare_marks)
                 )
@@ -325,10 +377,10 @@ def gate_pytest(ctx: Ctx) -> Result:
 MIN_PYTHON = "3.11"  # requires-python floor; float and stdlib behaviour can differ (L-13)
 
 
-def golden_min_python(root: Path) -> Result:
+def golden_min_python(root: Path, which: Callable[[str], str | None] | None = None) -> Result:
     """Run the golden replays again on the minimum supported Python. Never silently skipped:
     no uv, or a failing replay, is a FAIL."""
-    if not shutil.which("uv"):
+    if not (which or shutil.which)("uv"):
         return Result("FAIL", f"uv not found, so golden cannot run on Python {MIN_PYTHON}")
     private = os.environ.get("UV_PROJECT_ENVIRONMENT")
     venv = (
@@ -411,7 +463,17 @@ def _venv_bin(venv: Path, exe: str) -> Path:
     return venv / sub / f"{exe}{suffix}"
 
 
-def gate_build(ctx: Ctx, smoke: list[list[str]] | None = None) -> Result:
+def keyless_env() -> dict[str, str]:
+    """The environment minus every provider credential, so smoke commands prove the no-key
+    paths (EvalKit L-40)."""
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if not (k.endswith("_API_KEY") or k.endswith("_AUTH_TOKEN") or k == "ANTHROPIC_PROFILE")
+    }
+
+
+def gate_build(ctx: Ctx, smoke: list[tuple[list[str], int]] | None = None) -> Result:
     smoke = SMOKE_COMMANDS if smoke is None else smoke
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "dist"
@@ -431,14 +493,16 @@ def gate_build(ctx: Ctx, smoke: list[list[str]] | None = None) -> Result:
         )
         if code != 0:
             return Result("FAIL", "install wheel: " + _tail(log))
-        for cmd in smoke:
+        env = keyless_env()
+        for cmd, expected in smoke:
             exe = _venv_bin(venv, cmd[0])
-            code, log = _run([str(exe), *cmd[1:]], Path(tmp))
-            if code != 0:
-                return Result("FAIL", f"{' '.join(cmd)}: {_tail(log)}")
-        return Result(
-            "PASS", f"{wheels[0].name} installs; smoke: {', '.join(' '.join(c) for c in smoke)}"
-        )
+            code, log = _run([str(exe), *cmd[1:]], Path(tmp), env=env)
+            if code != expected:
+                return Result(
+                    "FAIL", f"{' '.join(cmd)}: exit {code}, expected {expected}: {_tail(log)}"
+                )
+        shown = ", ".join(f"{' '.join(c)} (exit {e})" for c, e in smoke)
+        return Result("PASS", f"{wheels[0].name} installs; smoke with no keys: {shown}")
 
 
 def _git_names(root: Path, args: list[str]) -> tuple[int, list[str], str]:
@@ -659,6 +723,46 @@ def self_test() -> int:
             "@pytest.mark.xfail(run=False)\ndef test_xf():\n    pass\n",
             encoding="utf-8",
         )
+        (tests_dir / "test_w.py").write_text(
+            "import pytest as pt\n\n"
+            "pytestmark = [pt.mark.usefixtures('x'), pt.mark.skip]\n\n"
+            "def test_listmark():\n    pass\n",
+            encoding="utf-8",
+        )
+        (tests_dir / "test_v.py").write_text(
+            "import pytest as pt\nimport unittest\nfrom pytest.mark import skip\n\n"
+            "@skip\ndef test_bare():\n    pass\n\n"
+            "def test_alias():\n    pt.skip('x')\n\n"
+            "def test_imp():\n    pt.importorskip('nope')\n\n"
+            "@unittest.skip('x')\ndef test_ut():\n    pass\n\n"
+            "@pt.mark.parametrize('a', [pt.param(1, marks=pt.mark.skip)])\n"
+            "def test_param(a):\n    pass\n\n"
+            "def test_off():\n    pass\n\ntest_off.__test__ = False\n\n"
+            "class Helper:\n    def test_helper(self):\n        pass\n\n"
+            "class Cases(unittest.TestCase):\n    def test_tc(self):\n        pass\n",
+            encoding="utf-8",
+        )
+        found_v = _test_functions(tests_dir / "test_v.py")
+        skipped_names = ("test_bare", "test_alias", "test_imp", "test_ut", "test_param", "test_off")
+        check(
+            "3 skip detection: bare marks, aliases, importorskip, unittest, params, __test__",
+            all(found_v.get(n) is True for n in skipped_names),
+        )
+        check(
+            "3 methods of non-Test classes are not tests; TestCase subclasses are",
+            "test_helper" not in found_v and found_v.get("test_tc") is False,
+        )
+        check(
+            "3 a skip inside a pytestmark list counts",
+            _test_functions(tests_dir / "test_w.py") == {"test_listmark": True},
+        )
+        (tests_dir / "test_broken.py").write_text("def test_b(:\n", encoding="utf-8")
+        proof = ok.replace("tests/test_x.py", "tests/test_broken.py", 1)
+        r = gate_proofs(ctx(f"H-1\tW0.1\tgreen\t{proof}\t\n"))
+        check(
+            "3 proofs fail on a test file that does not parse",
+            r.status == "FAIL" and "does not parse" in r.detail,
+        )
         for path, name in [
             ("tests/test_y.py", "test_mod"),
             ("tests/test_z.py", "test_cls"),
@@ -677,6 +781,11 @@ def self_test() -> int:
         (lint / "bad.py").write_text("import os\n", encoding="utf-8")
         r = gate_ruff(ctx("H-1\tW0.1\tbuilding\t\t\n", at=lint))
         check("4 ruff fails naming F401", r.status == "FAIL" and "F401" in r.detail)
+        r = _tool_gate(["citewatch-no-such-tool-xyz"], lint, "")
+        check(
+            "4/5 a missing tool is a FAIL, never a pass (L-3)",
+            r.status == "FAIL" and "citewatch-no-such-tool-xyz" in r.detail,
+        )
 
         # 5 pyright
         types = root / "types"
@@ -738,6 +847,14 @@ def self_test() -> int:
         check(
             "7 golden fails when the Python 3.11 replay fails",
             r.status == "FAIL" and "3.11" in r.detail,
+        )
+        r = gate_golden(
+            ctx(building, at=green),
+            min_python=lambda rt: golden_min_python(rt, which=lambda _n: None),
+        )
+        check(
+            "7 golden fails when Python 3.11 cannot be run (no uv)",
+            r.status == "FAIL" and "uv not found" in r.detail,
         )
         r = gate_politeness(ctx("H-1\tW0.1\tbuilding\t\t\n", at=pt))
         check(
@@ -820,10 +937,25 @@ def self_test() -> int:
             '[tool.hatch.build.targets.wheel]\npackages = ["src/fakepkg"]\n',
             encoding="utf-8",
         )
-        r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[["fakecli", "--version"]])
+        r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[(["fakecli", "--version"], 0)])
         check(
-            "10 build fails when a smoke command fails, naming it",
-            r.status == "FAIL" and "fakecli --version" in r.detail,
+            "10 build fails when a smoke command exits wrongly, naming it",
+            r.status == "FAIL" and "fakecli --version: exit 3, expected 0" in r.detail,
+        )
+        r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[(["fakecli"], 3)])
+        check("10 build passes when the smoke exit code is the expected one", r.status == "PASS")
+        pyproject = proj / "pyproject.toml"
+        pyproject.write_text(
+            pyproject.read_text(encoding="utf-8").replace(
+                'version = "0.0.1"\n',
+                'version = "0.0.1"\ndependencies = ["citewatch-no-such-dependency-xyz==9.9.9"]\n',
+            ),
+            encoding="utf-8",
+        )
+        r = gate_build(Ctx("W0.1", proj, graph, [], specs), smoke=[])
+        check(
+            "10 build fails when the wheel cannot install",
+            r.status == "FAIL" and "install wheel" in r.detail,
         )
 
         # 11 changed-tests, through the gate itself
@@ -843,6 +975,17 @@ def self_test() -> int:
             return gate_changed_tests(Ctx("W0.1", repo, graph, [], repo / "specs"))
 
         (repo / "src").mkdir()
+        (repo / "src" / "committed.py").write_text("x = 1\n", encoding="utf-8")
+        _run(["git", "add", "-A"], repo)
+        _run([*git, "commit", "-q", "-m", "source only"], repo)
+        r = changed()
+        check(
+            "11 fails on a committed source-only change",
+            r.status == "FAIL" and "committed.py" in r.detail,
+        )
+        _run(["git", "rm", "-q", "src/committed.py"], repo)
+        _run([*git, "commit", "-q", "-m", "undo"], repo)
+        (repo / "src").mkdir(exist_ok=True)  # git rm removed the emptied folder
         (repo / "src" / "café.py").write_text("x = 1\n", encoding="utf-8")
         r = changed()
         check(

@@ -49,6 +49,12 @@ def candidate_files(root: Path) -> list[Path]:
     return [p for p in root.rglob("*") if p.is_file() and not (skip & set(p.parts))]
 
 
+def _looks_random(token: str) -> bool:
+    """Real OpenAI keys mix upper case and digits; URL slugs like sk-ii-facial-essence don't."""
+    body = token.split("-", 1)[-1]
+    return any(c.isupper() for c in body) and any(c.isdigit() for c in body)
+
+
 def scan(files: list[Path]) -> list[str]:
     hits: list[str] = []
     for f in files:
@@ -66,7 +72,8 @@ def scan(files: list[Path]) -> list[str]:
             if ALLOW in line:
                 continue
             for name, pat in PATTERNS.items():
-                if pat.search(line):
+                m = pat.search(line)
+                if m and (name != "openai key" or _looks_random(m.group(0))):
                     hits.append(f"{f}:{lineno}: possible {name}")
     return hits
 
@@ -96,6 +103,20 @@ def self_test() -> int:
         under = Path(tmp) / "env.py"
         under.write_text(f"X_{fake_oai}\n", encoding="utf-8")
         checks.append(("detects an OpenAI key after an underscore", len(scan([under])) == 1))
+        slug = Path(tmp) / "citations.jsonl"
+        slug.write_text(
+            '{"url": "https://x.org/what-is-sk-ii-facial-treatment-essence-and-how-to-use-it"}\n',
+            encoding="utf-8",
+        )
+        checks.append(("a URL slug starting sk- is not a key", scan([slug]) == []))
+        corrupt = Path(tmp) / "broken.gz"
+        corrupt.write_bytes(b"\x1f\x8b corrupt")
+        checks.append(
+            (
+                "a corrupt archive is reported, not skipped",
+                any("cannot unpack" in h for h in scan([corrupt])),
+            )
+        )
         repo = Path(tmp) / "repo"
         repo.mkdir()
         _sp.run(["git", "init", "-q"], cwd=repo, check=True)

@@ -35,6 +35,26 @@ def test_catalog_holds_every_spec_capability_once():
     assert sorted(cat_caps) == sorted(spec_caps)
 
 
+def test_catalog_text_matches_the_spec_word_for_word():
+    """IDs alone let stale capability text through (W0.1 verifier pass 3)."""
+    spec = SPEC.read_text(encoding="utf-8")
+    section = spec[spec.index("### 12.4 Capability catalog") : spec.index("### 12.5")]
+    want = {
+        m[1]: (m[2], m[3])
+        for m in re.finditer(r"^\| ([A-Z]{3}-\d\d) \| (.+?) \| (.+?) \|$", section, re.M)
+    }
+    nodes = {}
+    for m in re.finditer(
+        r"^\*\*([WNAMSBD]\d\.\d) .*?\*\*$(.*?)(?=^\*\*[WNAMSBD]\d\.\d |\Z)", section, re.M | re.S
+    ):
+        for cap in re.findall(r"^\| ([A-Z]{3}-\d\d) \|", m[2], re.M):
+            nodes[cap] = m[1]
+    for c in load_catalog():
+        text, trace = want[c.cap_id]
+        assert c.note == f"{text} [{trace}]", c.cap_id
+        assert c.node == nodes[c.cap_id], c.cap_id
+
+
 def test_status_prints_graph_and_node(capsys):
     assert status.main([]) == 0
     out = capsys.readouterr().out
