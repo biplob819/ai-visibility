@@ -1,0 +1,31 @@
+{
+  "publisher": "nhs.uk",
+  "share_by_model": {
+    "claude-sonnet-5-5": {
+      "point": 0.42,
+      "lo": 0.33,
+      "hi": 0.51,
+      "n": 100,
+      "k": 42
+    }
+  },
+  "share_by_intent": {
+    "nhs_services": {
+      "point": 0.9,
+      "lo": 0.8,
+      "hi": 0.95,
+      "n": 40,
+      "k": 36
+    }
+  },
+  "citations": 120,
+  "answers_citing": 84,
+  "median_freshness_lag_days": 190.0,
+  "dated_pages": 30,
+  "questions_citing": [
+    "v-017"
+  ],
+  "cited_instead": [
+    "bbc.co.uk"
+  ]
+}

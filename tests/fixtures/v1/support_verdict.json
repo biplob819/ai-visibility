@@ -1,0 +1,7 @@
+{
+  "citation_ref": "1:v-017:claude-sonnet-5-5:1",
+  "judge": "claude-opus-5-5",
+  "verdict": "supported",
+  "quote": "The current prescription charge is set each April.",
+  "hand_label": "supported"
+}

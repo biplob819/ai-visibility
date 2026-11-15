@@ -235,6 +235,7 @@ class PageMeta(BaseModel):
     review_due: date | None
     modified_source: str | None
     published_source: str | None
+    reviewed_source: str | None
     effective_date: date | None      # §6.3
     effective_source: str | None
 
@@ -245,6 +246,71 @@ class Interval(BaseModel):
     hi: float
     n: int                           # count beside every percentage (FR9)
     k: int | None = None             # numerator where the metric is a share
+
+
+Kind = Literal["presence", "weighted", "consulted"]
+
+
+class ShareRow(BaseModel):           # §6.1; intent None = all intents
+    publisher: str
+    model: ModelId
+    intent: Intent | None
+    run: int
+    kind: Kind
+    share: Interval
+
+
+class ConcentrationRow(BaseModel):
+    model: ModelId
+    run: int
+    top10_share: Interval
+    hhi: float
+
+
+class FreshnessRow(BaseModel):       # §6.3
+    publisher: str
+    model: ModelId | None
+    dated_pages: int
+    median_lag_days: float | None
+    iqr_days: tuple[float, float] | None
+    modified_after_answer: int
+
+
+class StaleRow(BaseModel):
+    model: ModelId
+    intent: Intent | None
+    definition: Literal["primary", "secondary"]
+    rate: Interval
+    undated: int
+
+
+class OverlapRow(BaseModel):         # §6.4; model set only for kind "self"
+    intent: Intent | None
+    run: int | None
+    kind: Literal["cross_model", "self", "normalised", "pooled_top20"]
+    model: ModelId | None
+    value: Interval
+
+
+class StabilityRow(BaseModel):       # §6.5
+    model: ModelId
+    publisher: str | None
+    metric: Literal["self_jaccard", "share_change"]
+    value: Interval
+
+
+class AccuracyRow(BaseModel):        # §8.2; source "overall" or a date source
+    source: str
+    within_7_days: Interval
+    exact: Interval
+
+
+class SupportRow(BaseModel):         # §8.1
+    model: ModelId
+    judge: str
+    support_rate: Interval
+    hand_agreement: float | None
+    kappa: Interval | None
 
 
 class StudySummary(BaseModel):

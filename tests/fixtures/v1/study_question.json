@@ -1,0 +1,7 @@
+{
+  "id": "v-017",
+  "text": "How much does an NHS prescription cost in England?",
+  "intent": "nhs_services",
+  "time_sensitive": true,
+  "ts_reason": "prices"
+}

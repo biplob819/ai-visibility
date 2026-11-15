@@ -1,0 +1,20 @@
+{
+  "run": 1,
+  "question_id": "v-017",
+  "model": "claude-sonnet-5-5",
+  "model_snapshot": "claude-sonnet-5-5",
+  "raw_key": "abababababababababababababababababababababababababababababababab",
+  "answer_text": "In England a prescription costs a fixed charge per item; many people are exempt.",
+  "word_count": 14,
+  "over_length": false,
+  "searches": 2,
+  "search_errors": [],
+  "refusal": false,
+  "error": null,
+  "tokens_in": 21000,
+  "tokens_out": 900,
+  "cost_usd": 0.071,
+  "answered_at": "2026-11-15T10:00:00Z",
+  "prompt_hash": "0123456789abcdef",
+  "config_hash": "0123456789abcdef"
+}

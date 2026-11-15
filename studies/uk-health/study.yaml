@@ -1,0 +1,22 @@
+# The flagship study (Tech Spec §7.1). Copy this folder, or run `citewatch init`, to run your own.
+name: uk-health-2026-11
+questions_path: questions.jsonl
+intents: [symptoms, treatment, nhs_services, fitness, nutrition]
+models: [claude-sonnet-5-5, gpt-6.1-sol]
+effort: medium            # OWNER D-8: the same effort on both models
+user_location:
+  type: approximate
+  country: GB
+  city: London
+  region: England
+  timezone: Europe/London
+max_searches: 3
+word_limit: 150
+stale_days: 365
+seeds:
+  order: 20261115
+  support_sample: 51
+  hand_sample: 52
+  bootstrap: 53
+max_cost_usd: 25          # per paid command; OWNER D-19 asks before any run above $25
+user_agent: "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)"

@@ -1,0 +1,53 @@
+{
+  "url": "https://www.nhs.uk/nhs-services/prescriptions/",
+  "fetched_at": "2026-11-15T10:05:00Z",
+  "outcome": "ok",
+  "status": 200,
+  "final_url": null,
+  "candidates": [
+    {
+      "kind": "modified",
+      "value": "2026-03-01",
+      "source": "schema_org",
+      "evidence": "dateModified",
+      "rejected": null
+    },
+    {
+      "kind": "published",
+      "value": "2024-01-10",
+      "source": "schema_org",
+      "evidence": "datePublished",
+      "rejected": null
+    },
+    {
+      "kind": "reviewed",
+      "value": "2026-02-01",
+      "source": "visible_text",
+      "evidence": "Page last reviewed: 1 February 2026",
+      "rejected": null
+    },
+    {
+      "kind": "review_due",
+      "value": "2029-02-01",
+      "source": "visible_text",
+      "evidence": "Next review due: 1 February 2029",
+      "rejected": null
+    },
+    {
+      "kind": "modified",
+      "value": "2026-11-15",
+      "source": "http_header",
+      "evidence": "Last-Modified",
+      "rejected": "within 24 hours of fetch"
+    }
+  ],
+  "date_modified": "2026-03-01",
+  "date_published": "2024-01-10",
+  "date_reviewed": "2026-02-01",
+  "review_due": "2029-02-01",
+  "modified_source": "schema_org",
+  "published_source": "schema_org",
+  "reviewed_source": "visible_text",
+  "effective_date": "2026-02-01",
+  "effective_source": "visible_text"
+}

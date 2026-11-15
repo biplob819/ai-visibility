@@ -1,0 +1,14 @@
+{
+  "run": 1,
+  "question_id": "v-017",
+  "model": "claude-sonnet-5-5",
+  "url_raw": "https://www.nhs.uk/nhs-services/prescriptions/?utm_source=x",
+  "url": "https://www.nhs.uk/nhs-services/prescriptions/",
+  "host": "www.nhs.uk",
+  "publisher": "nhs.uk",
+  "publisher_group": null,
+  "title": "Prescription charges",
+  "quoted_span": "The current prescription charge is",
+  "answer_span": "In England a prescription costs a fixed charge per item",
+  "ordinal": 1
+}

@@ -1,0 +1,31 @@
+{
+  "name": "my-study",
+  "questions_path": "questions.jsonl",
+  "intents": [
+    "symptoms",
+    "nutrition"
+  ],
+  "models": [
+    "claude-sonnet-5-5",
+    "gpt-6.1-sol"
+  ],
+  "effort": "medium",
+  "user_location": {
+    "type": "approximate",
+    "country": "GB",
+    "city": "London",
+    "region": null,
+    "timezone": null
+  },
+  "max_searches": 3,
+  "word_limit": 150,
+  "stale_days": 365,
+  "seeds": {
+    "order": 1,
+    "support_sample": 2,
+    "hand_sample": 3,
+    "bootstrap": 4
+  },
+  "max_cost_usd": 25.0,
+  "user_agent": "citewatch/0.1.0 (+https://example.org)"
+}

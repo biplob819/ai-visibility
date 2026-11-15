@@ -1,0 +1,9 @@
+{
+  "run": 1,
+  "question_id": "v-017",
+  "model": "claude-sonnet-5-5",
+  "url": "https://www.nhs.uk/nhs-services/prescriptions/",
+  "publisher": "nhs.uk",
+  "page_age": "April 30, 2026",
+  "cited": true
+}

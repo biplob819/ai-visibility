@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "runs": [
+    1,
+    2
+  ],
+  "config_hash": "0123456789abcdef",
+  "questions_sha256": "abababababababababababababababababababababababababababababababab",
+  "preregistration_sha256": "abababababababababababababababababababababababababababababababab",
+  "share": [
+    {
+      "publisher": "nhs.uk",
+      "model": "claude-sonnet-5-5",
+      "intent": null,
+      "run": 1,
+      "kind": "presence",
+      "share": {
+        "point": 0.42,
+        "lo": 0.33,
+        "hi": 0.51,
+        "n": 100,
+        "k": 42
+      }
+    }
+  ],
+  "concentration": [
+    {
+      "model": "gpt-6.1-sol",
+      "run": 1,
+      "top10_share": {
+        "point": 0.42,
+        "lo": 0.33,
+        "hi": 0.51,
+        "n": 100,
+        "k": 42
+      },
+      "hhi": 0.08
+    }
+  ],
+  "freshness": [
+    {
+      "publisher": "nhs.uk",
+      "model": null,
+      "dated_pages": 30,
+      "median_lag_days": 190.0,
+      "iqr_days": [
+        60.0,
+        400.0
+      ],
+      "modified_after_answer": 1
+    }
+  ],
+  "stale": [
+    {
+      "model": "claude-sonnet-5-5",
+      "intent": null,
+      "definition": "primary",
+      "rate": {
+        "point": 0.2,
+        "lo": 0.12,
+        "hi": 0.3,
+        "n": 48,
+        "k": 10
+      },
+      "undated": 2
+    }
+  ],
+  "overlap": [
+    {
+      "intent": "fitness",
+      "run": 1,
+      "kind": "self",
+      "model": "claude-sonnet-5-5",
+      "value": {
+        "point": 0.6,
+        "lo": 0.5,
+        "hi": 0.7,
+        "n": 20,
+        "k": null
+      }
+    }
+  ],
+  "stability": [
+    {
+      "model": "gpt-6.1-sol",
+      "publisher": null,
+      "metric": "self_jaccard",
+      "value": {
+        "point": 0.55,
+        "lo": 0.45,
+        "hi": 0.64,
+        "n": 100,
+        "k": null
+      }
+    }
+  ],
+  "coverage": {
+    "point": 0.93,
+    "lo": 0.9,
+    "hi": 0.95,
+    "n": 640,
+    "k": 595
+  },
+  "date_accuracy": [
+    {
+      "source": "overall",
+      "within_7_days": {
+        "point": 0.86,
+        "lo": 0.74,
+        "hi": 0.93,
+        "n": 50,
+        "k": 43
+      },
+      "exact": {
+        "point": 0.7,
+        "lo": 0.56,
+        "hi": 0.81,
+        "n": 50,
+        "k": 35
+      }
+    }
+  ],
+  "support": [
+    {
+      "model": "gpt-6.1-sol",
+      "judge": "claude-opus-5-5",
+      "support_rate": {
+        "point": 0.8,
+        "lo": 0.63,
+        "hi": 0.9,
+        "n": 25,
+        "k": 20
+      },
+      "hand_agreement": 0.88,
+      "kappa": {
+        "point": 0.7,
+        "lo": 0.45,
+        "hi": 0.88,
+        "n": 25,
+        "k": null
+      }
+    }
+  ],
+  "error_counts": {
+    "claude-sonnet-5-5": {
+      "refusal": 0,
+      "transport": 1,
+      "over_length": 3,
+      "zero_citation": 2
+    }
+  },
+  "spend_usd": 39.2,
+  "generated_at": "2026-11-15T18:00:00Z"
+}
