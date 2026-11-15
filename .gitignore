@@ -1,0 +1,22 @@
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.harness/
+.env
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# personal notes, not for the public repo (OWNER D-22)
+Portfolio notes.md
