@@ -1,0 +1,10 @@
+# A2.3 tasks
+
+- [x] 1. Spec and criteria written
+- [x] 2. node_start GO
+- [x] 3. Tests first
+- [x] 4. Build
+- [x] 5. Converge twice
+- [ ] 6. Verifier
+- [ ] 7. Owner labels the 20-page set (DAT-04)
+- [ ] 8. Proofs, green, commit

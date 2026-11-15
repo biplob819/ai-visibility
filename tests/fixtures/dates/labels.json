@@ -1,0 +1,153 @@
+{
+  "note": "Drafted from the trimmed snapshots; the owner confirms each page against the live page (D-6: tuning set). Dates are the page's own; null means the page states none.",
+  "pages": {
+    "my-clevelandclinic-org-health-symptoms-delayed-onset-muscle--3abbb8": {
+      "modified": "2026-02-26",
+      "published": "2025-12-23",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+    },
+    "www-bbc-co-uk-news-health-5bea2c": {
+      "modified": null,
+      "published": null,
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.bbc.co.uk/news/health"
+    },
+    "www-bhf-org-uk-informationsupport-conditions-high-blood-pres-6dc1f3": {
+      "modified": null,
+      "published": null,
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.bhf.org.uk/informationsupport/conditions/high-blood-pressure"
+    },
+    "www-cancerresearchuk-org-about-cancer-bowel-cancer-symptoms-8eee2b": {
+      "modified": null,
+      "published": null,
+      "review_due": "2027-11-06",
+      "reviewed": "2024-11-06",
+      "url": "https://www.cancerresearchuk.org/about-cancer/bowel-cancer/symptoms"
+    },
+    "www-cdc-gov-flu-index-html-bf85cb": {
+      "modified": "2026-09-02",
+      "published": null,
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.cdc.gov/flu/index.html"
+    },
+    "www-diabetes-org-uk-about-diabetes-type-2-diabetes-68f180": {
+      "modified": "2024-10-16",
+      "published": "2022-10-19",
+      "review_due": null,
+      "reviewed": "2024-09-11",
+      "url": "https://www.diabetes.org.uk/about-diabetes/type-2-diabetes"
+    },
+    "www-gov-uk-get-a-ppc-a55f8e": {
+      "modified": "2015-05-21",
+      "published": "2012-11-06",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.gov.uk/get-a-ppc"
+    },
+    "www-gov-uk-government-publications-physical-activity-guideli-cc1ca1": {
+      "modified": "2026-07-09",
+      "published": "2019-09-07",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.gov.uk/government/publications/physical-activity-guidelines-uk-chief-medical-officers-report"
+    },
+    "www-gov-uk-government-publications-the-eatwell-guide-4b7b01": {
+      "modified": "2024-01-02",
+      "published": "2016-03-17",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.gov.uk/government/publications/the-eatwell-guide"
+    },
+    "www-gov-uk-government-publications-vitamin-d-for-vulnerable--a73011": {
+      "modified": "2021-02-24",
+      "published": "2020-12-21",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.gov.uk/government/publications/vitamin-d-for-vulnerable-groups"
+    },
+    "www-healthline-com-health-doms-a3bdb4": {
+      "modified": "2025-05-27",
+      "published": "2019-06-25",
+      "review_due": null,
+      "reviewed": "2025-05-27",
+      "url": "https://www.healthline.com/health/doms"
+    },
+    "www-leicspart-nhs-uk-msk-physiotherapy-resources-getting-sta-8c2dbf": {
+      "modified": "2026-04-25",
+      "published": "2026-02-06",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/"
+    },
+    "www-nhs-uk-conditions-chickenpox-64485a": {
+      "modified": "2026-10-23",
+      "published": "2017-10-19",
+      "review_due": "2028-01-31",
+      "reviewed": "2025-01-31",
+      "url": "https://www.nhs.uk/conditions/chickenpox/"
+    },
+    "www-nhs-uk-conditions-cold-sores-83999e": {
+      "modified": "2026-07-09",
+      "published": "2017-06-15",
+      "review_due": "2027-02-19",
+      "reviewed": "2024-02-19",
+      "url": "https://www.nhs.uk/conditions/cold-sores/"
+    },
+    "www-nhs-uk-conditions-flu-28692c": {
+      "modified": "2026-09-15",
+      "published": "2017-10-23",
+      "review_due": "2029-02-03",
+      "reviewed": "2026-02-03",
+      "url": "https://www.nhs.uk/conditions/flu/"
+    },
+    "www-nhs-uk-conditions-hay-fever-8ab267": {
+      "modified": "2026-07-23",
+      "published": "2017-10-23",
+      "review_due": "2027-03-21",
+      "reviewed": "2024-03-21",
+      "url": "https://www.nhs.uk/conditions/hay-fever/"
+    },
+    "www-nhs-uk-live-well-exercise-b2fce0": {
+      "modified": "2026-11-10",
+      "published": "2022-01-25",
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.nhs.uk/live-well/exercise/"
+    },
+    "www-nhs-uk-medicines-paracetamol-for-adults-316727": {
+      "modified": "2026-08-27",
+      "published": "2026-04-09",
+      "review_due": "2029-03-24",
+      "reviewed": "2026-03-24",
+      "url": "https://www.nhs.uk/medicines/paracetamol-for-adults/"
+    },
+    "www-nhs-uk-nhs-services-prescriptions-nhs-prescription-charg-bdab8b": {
+      "modified": "2024-06-25",
+      "published": "2024-01-22",
+      "review_due": "2026-11-27",
+      "reviewed": "2023-11-23",
+      "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/"
+    },
+    "www-nhs-uk-vaccinations-flu-vaccine-b79b99": {
+      "modified": "2026-10-07",
+      "published": "2024-03-06",
+      "review_due": "2029-09-29",
+      "reviewed": "2026-09-29",
+      "url": "https://www.nhs.uk/vaccinations/flu-vaccine/"
+    },
+    "www-who-int-news-room-fact-sheets-detail-influenza-seasonal-552ec8": {
+      "modified": "2025-02-28",
+      "published": null,
+      "review_due": null,
+      "reviewed": null,
+      "url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)"
+    }
+  },
+  "status": "draft"
+}

@@ -33,6 +33,7 @@ MAX_RETRIES = 2
 MAX_REDIRECTS = 5
 MAX_RETRY_AFTER_S = 60.0
 MAX_PAGE_BYTES = 5 * 1024 * 1024
+SITEMAP_LIMIT = 10 * 1024 * 1024  # DAT-05
 BLOCK_STATUSES = frozenset({401, 403, 451})
 REDIRECTS = frozenset({301, 302, 303, 307, 308})
 TRANSIENT = (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError)
@@ -353,7 +354,7 @@ class PoliteClient:
     # -- a page, with redirects -----------------------------------------------------------
     def get(self, url: str, kind: str = "page") -> FetchResult:
         """Fetch `url` politely; `kind` is "page" (HTML only, 5 MB) or "sitemap"."""
-        limit = self.max_page_bytes
+        limit = SITEMAP_LIMIT if kind == "sitemap" else self.max_page_bytes
         current, hops = url, []
         if not plain_host(url):
             return FetchResult(url, url, "fetch_error", detail="not a plain host name")

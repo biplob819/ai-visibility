@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [A2.3] — date resolver: candidates from the seven §7.3 sources, plausibility rules, precedence, sitemaps from robots.txt, `page_meta.jsonl` from `citewatch fetch`; 21-page real test set with drafted labels awaiting the owner (DAT-04)
 - [GREEN] [A2.2] — verified over nine skeptical passes (L-32, L-33; D-42); robots verdict equals protego's on the path actually sent, wire spacing ≥1 s, no markup stored, audits clean on fuzzed multi-run logs
 - [GREEN] [A2.1] — verified over three skeptical passes (D-43); only current answers extracted, every row field pinned with literal values
 - [FEAT] [A2.1] — citation extraction for both providers from API citation fields only, consulted sources with page_age, `canonical_url` (idempotent, utm and click IDs stripped), `publisher_of` per D-4 offline, `citewatch extract`

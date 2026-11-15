@@ -1,0 +1,129 @@
+{
+  "my-clevelandclinic-org-health-symptoms-delayed-onset-muscle--3abbb8": {
+    "fetched_at": "2026-11-15T20:41:46.228262+00:00",
+    "final_url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness",
+    "last_modified": null,
+    "url": "https://my.clevelandclinic.org/health/symptoms/delayed-onset-muscle-soreness"
+  },
+  "www-bbc-co-uk-news-health-5bea2c": {
+    "fetched_at": "2026-11-15T20:41:46.778468+00:00",
+    "final_url": "https://www.bbc.co.uk/news/health",
+    "last_modified": null,
+    "url": "https://www.bbc.co.uk/news/health"
+  },
+  "www-bhf-org-uk-informationsupport-conditions-high-blood-pres-6dc1f3": {
+    "fetched_at": "2026-11-15T20:41:48.459440+00:00",
+    "final_url": "https://www.bhf.org.uk/informationsupport/conditions",
+    "last_modified": null,
+    "url": "https://www.bhf.org.uk/informationsupport/conditions/high-blood-pressure"
+  },
+  "www-cancerresearchuk-org-about-cancer-bowel-cancer-symptoms-8eee2b": {
+    "fetched_at": "2026-11-15T20:41:48.961327+00:00",
+    "final_url": "https://www.cancerresearchuk.org/about-cancer/bowel-cancer/symptoms",
+    "last_modified": null,
+    "url": "https://www.cancerresearchuk.org/about-cancer/bowel-cancer/symptoms"
+  },
+  "www-cdc-gov-flu-index-html-bf85cb": {
+    "fetched_at": "2026-11-15T20:41:49.862356+00:00",
+    "final_url": "https://www.cdc.gov/flu/index.html",
+    "last_modified": null,
+    "url": "https://www.cdc.gov/flu/index.html"
+  },
+  "www-diabetes-org-uk-about-diabetes-type-2-diabetes-68f180": {
+    "fetched_at": "2026-11-15T20:41:51.557604+00:00",
+    "final_url": "https://www.diabetes.org.uk/about-diabetes/type-2-diabetes",
+    "last_modified": "Sun, 15 Nov 2026 08:58:04 GMT",
+    "url": "https://www.diabetes.org.uk/about-diabetes/type-2-diabetes"
+  },
+  "www-gov-uk-get-a-ppc-a55f8e": {
+    "fetched_at": "2026-11-15T20:41:52.432395+00:00",
+    "final_url": "https://www.gov.uk/get-a-ppc",
+    "last_modified": null,
+    "url": "https://www.gov.uk/get-a-ppc"
+  },
+  "www-gov-uk-government-publications-physical-activity-guideli-cc1ca1": {
+    "fetched_at": "2026-11-15T20:41:53.649604+00:00",
+    "final_url": "https://www.gov.uk/government/publications/physical-activity-guidelines-uk-chief-medical-officers-report",
+    "last_modified": null,
+    "url": "https://www.gov.uk/government/publications/physical-activity-guidelines-uk-chief-medical-officers-report"
+  },
+  "www-gov-uk-government-publications-the-eatwell-guide-4b7b01": {
+    "fetched_at": "2026-11-15T20:41:54.709275+00:00",
+    "final_url": "https://www.gov.uk/government/publications/the-eatwell-guide",
+    "last_modified": null,
+    "url": "https://www.gov.uk/government/publications/the-eatwell-guide"
+  },
+  "www-gov-uk-government-publications-vitamin-d-for-vulnerable--a73011": {
+    "fetched_at": "2026-11-15T20:41:55.764031+00:00",
+    "final_url": "https://www.gov.uk/government/publications/vitamin-d-for-vulnerable-groups",
+    "last_modified": null,
+    "url": "https://www.gov.uk/government/publications/vitamin-d-for-vulnerable-groups"
+  },
+  "www-healthline-com-health-doms-a3bdb4": {
+    "fetched_at": "2026-11-15T20:41:55.821825+00:00",
+    "final_url": "https://www.healthline.com/health/doms",
+    "last_modified": null,
+    "url": "https://www.healthline.com/health/doms"
+  },
+  "www-leicspart-nhs-uk-msk-physiotherapy-resources-getting-sta-8c2dbf": {
+    "fetched_at": "2026-11-15T20:41:57.627611+00:00",
+    "final_url": "https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/",
+    "last_modified": null,
+    "url": "https://www.leicspart.nhs.uk/msk-physiotherapy-resources-getting-started/msk-physiotherapy-resources-faqs/"
+  },
+  "www-nhs-uk-conditions-chickenpox-64485a": {
+    "fetched_at": "2026-11-15T20:41:59.141377+00:00",
+    "final_url": "https://www.nhs.uk/conditions/chickenpox/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/conditions/chickenpox/"
+  },
+  "www-nhs-uk-conditions-cold-sores-83999e": {
+    "fetched_at": "2026-11-15T20:42:01.460249+00:00",
+    "final_url": "https://www.nhs.uk/conditions/cold-sores/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/conditions/cold-sores/"
+  },
+  "www-nhs-uk-conditions-flu-28692c": {
+    "fetched_at": "2026-11-15T20:42:02.820847+00:00",
+    "final_url": "https://www.nhs.uk/conditions/flu/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/conditions/flu/"
+  },
+  "www-nhs-uk-conditions-hay-fever-8ab267": {
+    "fetched_at": "2026-11-15T20:42:04.185969+00:00",
+    "final_url": "https://www.nhs.uk/conditions/hay-fever/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/conditions/hay-fever/"
+  },
+  "www-nhs-uk-live-well-exercise-b2fce0": {
+    "fetched_at": "2026-11-15T20:42:05.561363+00:00",
+    "final_url": "https://www.nhs.uk/live-well/exercise/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/live-well/exercise/"
+  },
+  "www-nhs-uk-medicines-paracetamol-for-adults-316727": {
+    "fetched_at": "2026-11-15T20:42:06.947240+00:00",
+    "final_url": "https://www.nhs.uk/medicines/paracetamol-for-adults/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/medicines/paracetamol-for-adults/"
+  },
+  "www-nhs-uk-nhs-services-prescriptions-nhs-prescription-charg-bdab8b": {
+    "fetched_at": "2026-11-15T20:42:08.382675+00:00",
+    "final_url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/"
+  },
+  "www-nhs-uk-vaccinations-flu-vaccine-b79b99": {
+    "fetched_at": "2026-11-15T20:42:09.767592+00:00",
+    "final_url": "https://www.nhs.uk/vaccinations/flu-vaccine/",
+    "last_modified": null,
+    "url": "https://www.nhs.uk/vaccinations/flu-vaccine/"
+  },
+  "www-who-int-news-room-fact-sheets-detail-influenza-seasonal-552ec8": {
+    "fetched_at": "2026-11-15T20:42:30.769293+00:00",
+    "final_url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)",
+    "last_modified": "Sun, 15 Nov 2026 17:24:22 GMT",
+    "note": "JSON-LD date field transcribed from the first fetch's snapshot (the builder then dropped entities; fixed)",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)"
+  }
+}

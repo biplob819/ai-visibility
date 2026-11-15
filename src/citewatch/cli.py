@@ -428,6 +428,9 @@ def fetch(
     import math as _math
     from collections import Counter
 
+    from citewatch.dates import analyse as date_analyse
+    from citewatch.dates import build_page_meta, host_lastmods, write_page_meta
+    from citewatch.dates.sitemaps import origins_of
     from citewatch.fetch import FetchLog, PageHistory, PoliteClient, fetch_key, fetch_pages
     from citewatch.fetch.keys import host_of
 
@@ -481,7 +484,14 @@ def fetch(
         store=store,
     )
     try:
-        res = fetch_pages(todo, client=client, store=store, keep_text=keep)
+        res = fetch_pages(todo, client=client, store=store, keep_text=keep, analyse=date_analyse)
+        lastmods: dict[str, str] = {}
+        all_urls = list(dict.fromkeys(urls))
+        if not res.interrupted:
+            for origin in origins_of(all_urls):  # sitemaps listed in robots.txt only (DAT-05)
+                lastmods.update(host_lastmods(client, store, origin))
+        metas = build_page_meta(base, all_urls, lastmods)
+        write_page_meta(base, metas)
     finally:
         client.close()
     summary = {
@@ -491,6 +501,7 @@ def fetch(
         "fetched": res.fetched,
         "cached": res.cached,
         "outcomes": dict(res.outcomes),
+        "dated": sum(1 for m in metas if m.effective_date is not None),
         "errors": res.errors,
         "interrupted": res.interrupted,
     }
