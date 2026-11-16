@@ -2,7 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
-- [BUILDING] [M3.1] — §6 metrics with the question-cluster bootstrap, Holm and Wilson; `citewatch score` writes summary.json; DuckDB views
+- [GREEN] [M3.1] — verified over three passes (D-55, D-56); §6 metrics with the question-cluster bootstrap, Holm and Wilson; `citewatch score` writes summary.json; DuckDB views
 - [GREEN] [A2.4] — paid smoke run 0 ($0.79), measured cost model, parity report, golden replay
 - [GREEN] [N1.4] — 100 owner-approved questions frozen with the pre-registration and data card (OWNER D-47, D-51)
 - [GREEN] [A2.3] — verified over five skeptical passes (D-44, D-45); 21-page real test set confirmed by the owner (OWNER D-46)
