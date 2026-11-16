@@ -284,3 +284,45 @@ def test_pooled_top_sets_cut_at_the_kth_share_with_ties():
     assert _top_sets(row, pubs, 20)[0] == set(pubs[:20])
     row[20] = row[19]
     assert _top_sets(row, pubs, 20)[0] == set(pubs[:21])
+
+
+def test_support_and_date_accuracy_join_the_summary_when_present(tiny: Path):
+    data = tiny / "data"
+    ref = "1:t-001:claude-sonnet-5-5:1"
+    (data / "support_verdicts.jsonl").write_text(
+        json.dumps({"citation_ref": ref, "judge": "opus", "verdict": "supported"}) + "\n",
+        encoding="utf-8",
+    )
+    (data / "support_label_key.jsonl").write_text(
+        json.dumps({"id": "s01", "citation_ref": ref}) + "\n", encoding="utf-8"
+    )
+    (data / "support_labels.jsonl").write_text(
+        json.dumps({"id": "s01", "label": "supported"}) + "\n", encoding="utf-8"
+    )
+    (data / "hand_sample.jsonl").write_text(
+        json.dumps({"url": "https://nhs.uk/a", "stratum": "schema_org", "role": "dated"}) + "\n",
+        encoding="utf-8",
+    )
+    (data / "hand_labels.jsonl").write_text(
+        json.dumps(
+            {
+                "url": "https://nhs.uk/a",
+                "true_modified": "2026-01-03",
+                "not_determinable": False,
+                "dates_version": "x",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    s = _score(tiny)
+    assert {(r.judge, r.support_rate.k) for r in s.support} == {("opus", 1), ("hand", 1)}
+    overall = pick(s.date_accuracy, source="overall")
+    assert overall.within_7_days.k == 1 and overall.exact.k == 0
+
+
+def test_finalise_refuses_before_the_labels_are_imported(tiny: Path, capsys):
+    from citewatch.cli import main
+
+    code = main(["score", "--finalise", "--study", str(tiny), "--json"])
+    assert code == 2 and "import the owner's labels" in capsys.readouterr().out

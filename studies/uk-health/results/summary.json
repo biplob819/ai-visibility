@@ -118011,5 +118011,84 @@
    "undated": 0
   }
  ],
- "support": []
+ "support": [
+  {
+   "hand_agreement": null,
+   "judge": "claude-opus-5-5",
+   "kappa": null,
+   "model": "claude-sonnet-5-5",
+   "support_rate": {
+    "hi": 0.8202780967270225,
+    "k": 16,
+    "lo": 0.4670631683813174,
+    "n": 24,
+    "point": 0.6666666666666666
+   }
+  },
+  {
+   "hand_agreement": null,
+   "judge": "gpt-6.1-sol",
+   "kappa": null,
+   "model": "claude-sonnet-5-5",
+   "support_rate": {
+    "hi": 0.8202780967270225,
+    "k": 16,
+    "lo": 0.4670631683813174,
+    "n": 24,
+    "point": 0.6666666666666666
+   }
+  },
+  {
+   "hand_agreement": null,
+   "judge": "hand",
+   "kappa": null,
+   "model": "claude-sonnet-5-5",
+   "support_rate": {
+    "hi": 0.0,
+    "k": 0,
+    "lo": 0.0,
+    "n": 0,
+    "point": 0.0
+   }
+  },
+  {
+   "hand_agreement": null,
+   "judge": "claude-opus-5-5",
+   "kappa": null,
+   "model": "gpt-6.1-sol",
+   "support_rate": {
+    "hi": 0.72108666268789,
+    "k": 13,
+    "lo": 0.3507486535891948,
+    "n": 24,
+    "point": 0.5416666666666666
+   }
+  },
+  {
+   "hand_agreement": null,
+   "judge": "gpt-6.1-sol",
+   "kappa": null,
+   "model": "gpt-6.1-sol",
+   "support_rate": {
+    "hi": 0.6116533413477124,
+    "k": 10,
+    "lo": 0.24467602609811764,
+    "n": 24,
+    "point": 0.4166666666666667
+   }
+  },
+  {
+   "hand_agreement": null,
+   "judge": "hand",
+   "kappa": null,
+   "model": "gpt-6.1-sol",
+   "support_rate": {
+    "hi": 0.0,
+    "k": 0,
+    "lo": 0.0,
+    "n": 0,
+    "point": 0.0
+   }
+  }
+ ]
 }

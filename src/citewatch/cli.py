@@ -31,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"score --labels/--finalise": "M3.2, M3.3", "report": "B4.1"}
+NOT_BUILT = {"score --labels": "M3.2, M3.3", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -572,8 +572,8 @@ def score(
     as_json: JsonOpt = False,
 ) -> None:
     """Compute the metrics and run the support and hand-check samples."""
-    if labels is not None or finalise:
-        _not_built("score --labels/--finalise", as_json)  # M3.2, M3.3
+    if labels is not None:
+        _not_built("score --labels", as_json)  # labels are imported from the review pages
     from citewatch.metrics import COVERAGE_TARGET, build_summary, write_summary
 
     path = _study_file(study)
@@ -584,6 +584,8 @@ def score(
         _fail(as_json, "score", str(exc))
     if sample_support:
         _sample_support(path.parent, cfg, qs, as_json)
+    if finalise:
+        _finalise(path.parent, as_json)
     runs = sorted({r for r in (1, 2) if _has_run(path.parent, r)}) or [0]
     try:
         summary = build_summary(path.parent, cfg, qs, runs)
@@ -640,6 +642,28 @@ def _sample_support(base: Path, cfg: Any, qs: Any, as_json: bool) -> NoReturn:
         f"support sample: {n} citations and {len(rows) - n} reserves -> {out}",
     )
     raise typer.Exit(EXIT_OK)
+
+
+def _finalise(base: Path, as_json: bool) -> None:
+    """SUP-04: once both label sets are in, delete every kept page body and the EvalKit store."""
+    from citewatch.fetch.pages import body_cache_dir
+    from citewatch.handcheck import LABELS_FILE as HAND_LABELS
+    from citewatch.handcheck import publish_problems
+    from citewatch.support.report import LABELS_FILE, finalise
+
+    data = base / "data"
+    missing = [n for n in (LABELS_FILE, HAND_LABELS) if not (data / n).is_file()]
+    if missing:
+        _fail(
+            as_json, "score", f"import the owner's labels before finalising: {', '.join(missing)}"
+        )
+    first = json.loads((data / HAND_LABELS).read_text(encoding="utf-8").splitlines()[0])
+    problems = publish_problems({"version": first.get("dates_version")})
+    if problems:
+        _fail(as_json, "score", "; ".join(problems))
+    left = finalise(body_cache_dir())
+    if left:
+        _fail(as_json, "score", "; ".join(left))
 
 
 def _has_run(base: Path, run: int) -> bool:

@@ -112,10 +112,56 @@ def build_summary(
         comparisons=tuple(compute.comparisons(ctx)),
         nhs_overdue=tuple(compute.overdue(ctx)),
         coverage=wilson(k, n),
+        date_accuracy=tuple(_date_accuracy(base)),
+        support=tuple(_support(base, cfg)),
         error_counts=error_counts(data, excluded),
         spend_usd=data.spend_usd,
         generated_at=data.latest or dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
     )
+
+
+def _support(base: Path, cfg: StudyConfig) -> list:
+    """SupportRows once the judges have run (M3.2); hand labels join when imported."""
+    from citewatch.schemas import SupportVerdict
+    from citewatch.support.report import load_hand_labels, support_rows
+
+    path = base / "data" / "support_verdicts.jsonl"
+    if not path.is_file():
+        return []
+    verdicts = [
+        SupportVerdict.model_validate_json(x)
+        for x in path.read_text(encoding="utf-8").splitlines()
+        if x
+    ]
+    return support_rows(verdicts, load_hand_labels(base), cfg.seeds["support_sample"])
+
+
+def _date_accuracy(base: Path) -> list:
+    """AccuracyRows once the owner's hand date labels are imported (M3.3)."""
+    from citewatch.handcheck import LABELS_FILE, SAMPLE_FILE, accuracy
+    from citewatch.schemas import HandDateLabel
+
+    data = base / "data"
+    if not (data / LABELS_FILE).is_file() or not (data / SAMPLE_FILE).is_file():
+        return []
+    sample = [
+        json.loads(x) for x in (data / SAMPLE_FILE).read_text(encoding="utf-8").splitlines() if x
+    ]
+    labels = {}
+    for x in (data / LABELS_FILE).read_text(encoding="utf-8").splitlines():
+        if x.strip():
+            row = json.loads(x)
+            row.pop("dates_version", None)
+            label = HandDateLabel.model_validate(row)
+            labels[label.url] = label
+    effective = {}
+    for x in (data / "page_meta.jsonl").read_text(encoding="utf-8").splitlines():
+        if x.strip():
+            m = json.loads(x)
+            effective[m["url"]] = (
+                dt.date.fromisoformat(m["effective_date"]) if m.get("effective_date") else None
+            )
+    return accuracy(sample, labels, effective)
 
 
 def write_summary(base: Path, summary: StudySummary) -> Path:

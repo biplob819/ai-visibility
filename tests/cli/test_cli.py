@@ -37,7 +37,6 @@ def test_help_lists_every_command(capsys):
     ("argv", "node"),
     [
         (["score", "--labels", "x.csv"], "M3.2"),
-        (["score", "--finalise"], "M3.3"),
         (["report", "--example"], "B4.1"),
     ],
 )
