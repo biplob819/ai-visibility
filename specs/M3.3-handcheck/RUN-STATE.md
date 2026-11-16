@@ -1,6 +1,6 @@
 # M3.3 run state
 
-**Now:** code built; the draw waits for run 2 fetch.
+**Now:** sample drawn (55: 50 dated across 6 sources + 5 undated); waiting for the owner's blind labels (https://claude.ai/artifact/98WCVLR4agDWTjdhzHioSV).
 
 ## Log
 

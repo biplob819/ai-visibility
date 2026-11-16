@@ -47,6 +47,11 @@ def main() -> int:
     ap.add_argument("study", type=Path)
     ap.add_argument("--max-cost", type=float, required=True)
     ap.add_argument(
+        "--record-unjudged",
+        action="store_true",
+        help="after a retry, record items EvalKit still cannot judge as unjudged (not unsupported)",
+    )
+    ap.add_argument(
         "--legacy-tokens",
         type=int,
         default=None,
@@ -76,7 +81,21 @@ def main() -> int:
     )
     load_dotenv(Path(".env"))
     load_dotenv(base / ".env")
-    verdicts = asyncio.run(_judge_all(items, a.max_cost, a.legacy_tokens))
+    unjudged: list[str] = []
+    try:
+        verdicts = asyncio.run(_judge_all(items, a.max_cost, a.legacy_tokens))
+    except SupportJudgingIncomplete as exc:
+        if not a.record_unjudged:
+            raise
+        # items that fail again after a retry are recorded as unjudged, never as unsupported
+        unjudged = sorted(exc.refs)
+        everything = asyncio.run(judge(items, max_cost_usd=0.05, strict=False))
+        verdicts = [v for v in everything if v.citation_ref not in set(unjudged)]
+    (data / "support_unjudged.jsonl").write_text(
+        "".join(json.dumps({"citation_ref": r}) + "\n" for r in unjudged),
+        encoding="utf-8",
+        newline="\n",
+    )
     (data / "support_verdicts.jsonl").write_text(
         "".join(v.model_dump_json() + "\n" for v in verdicts), encoding="utf-8", newline="\n"
     )
@@ -86,7 +105,7 @@ def main() -> int:
         by[v.judge][0] += v.verdict == "supported"
         by[v.judge][1] += 1
     print(
-        f"judged {len(items)} citations; "
+        f"judged {len(items) - len(unjudged)}/{len(items)} citations ({len(unjudged)} unjudged); "
         + "; ".join(f"{j}: {s}/{n} supported" for j, (s, n) in by.items())
     )
     return 0
