@@ -36,7 +36,8 @@ def test_help_lists_every_command(capsys):
 @pytest.mark.parametrize(
     ("argv", "node"),
     [
-        (["score"], "M3.1"),
+        (["score", "--sample-support"], "M3.2"),
+        (["score", "--finalise"], "M3.3"),
         (["report", "--example"], "B4.1"),
     ],
 )
@@ -169,3 +170,10 @@ def test_missing_key_names_the_variable(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "   ")
     with pytest.raises(MissingKeyError):
         key_for("openai")
+
+
+def test_score_with_no_answers_exits_2(capsys, tmp_path):
+    code, _, _ = run(["init", str(tmp_path / "s")], capsys)
+    assert code == 0
+    code, out, _ = run(["score", "--study", str(tmp_path / "s"), "--json"], capsys)
+    assert code == 2 and json.loads(out)["ok"] is False

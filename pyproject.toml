@@ -9,9 +9,11 @@ authors = [{ name = "Biplob Chakraborty" }]
 requires-python = ">=3.11"
 dependencies = [
     "defusedxml>=0.7",
+    "duckdb>=1.1",
     "extruct>=0.17",
     "httpx>=0.28",
     "idna>=3.7",
+    "numpy>=1.26",
     "protego>=0.4",
     "pydantic>=2.7",
     "python-dateutil>=2.9",

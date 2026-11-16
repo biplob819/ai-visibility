@@ -20,6 +20,25 @@ OUT = ROOT / "tests" / "fixtures" / "golden" / "smoke"
 OUTPUTS = ("answers.jsonl", "citations.jsonl", "consulted.jsonl", "page_meta.jsonl")
 
 
+def _expected_summary() -> None:
+    """The summary the replayed fixture produces (MET-08, §11): built from a copy of the fixture
+    with its expected outputs in place, exactly as the replay test will see it."""
+    import tempfile
+
+    from citewatch.metrics import build_summary, write_summary
+    from citewatch.schemas import load_questions, load_study_config
+
+    with tempfile.TemporaryDirectory(dir=OUT.parent) as tmp:
+        base = Path(tmp) / "smoke"
+        shutil.copytree(OUT, base, ignore=shutil.ignore_patterns("expected", "lastmods.json"))
+        for name in OUTPUTS:
+            shutil.copy(OUT / "expected" / name, base / "data" / name)
+        cfg = load_study_config(base / "study.yaml")
+        qs = load_questions(base / cfg.questions_path, cfg)
+        out = write_summary(base, build_summary(base, cfg, qs, [0]))
+        shutil.copy(out, OUT / "expected" / "summary.json")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("study", type=Path)
@@ -30,6 +49,11 @@ def main() -> int:
         shutil.rmtree(OUT)
     (OUT / "data" / "raw").mkdir(parents=True)
     shutil.copy(a.study / "study.yaml", OUT / "study.yaml")
+    from citewatch.metrics.summary import preregistration_for
+
+    prereg = preregistration_for(a.study)
+    if prereg is not None:  # the fixture carries its own, so its summary is the same anywhere
+        shutil.copy(prereg, OUT / "preregistration.md")
     asked: set[str] = set()
     for f in sorted((data / "raw" / "ask").glob("*/*.json.gz")):
         with gzip.open(f, "rt", encoding="utf-8") as fh:
@@ -61,9 +85,16 @@ def main() -> int:
     (OUT / "lastmods.json").write_text(
         json.dumps(lastmods, indent=1, sort_keys=True) + "\n", encoding="utf-8"
     )
+    ledger = [
+        line
+        for line in (data / "spend-ledger.jsonl").read_text(encoding="utf-8").splitlines()
+        if line and json.loads(line).get("run_id", "").endswith(f"run-{a.run}")
+    ]
+    (OUT / "data" / "spend-ledger.jsonl").write_text("\n".join(ledger) + "\n", encoding="utf-8")
     (OUT / "expected").mkdir()
     for name in OUTPUTS:
         shutil.copy(data / name, OUT / "expected" / name)
+    _expected_summary()
     print(f"golden: {len(asked)} questions, {len(cited)} URLs, {len(lastmods)} lastmods -> {OUT}")
     return 0
 

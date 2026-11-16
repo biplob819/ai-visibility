@@ -10,6 +10,7 @@ import pytest
 
 from citewatch.dates import build_page_meta, write_page_meta
 from citewatch.extract import run_extract
+from citewatch.metrics import build_summary, write_summary
 from citewatch.schemas import load_questions, load_study_config
 
 pytestmark = pytest.mark.golden
@@ -47,3 +48,5 @@ def test_replaying_the_smoke_run_gives_byte_identical_outputs(study: Path):
     write_page_meta(study, build_page_meta(study, list(dict.fromkeys(cited)), lastmods))
     got = (study / "data" / "page_meta.jsonl").read_bytes()
     assert got == (GOLDEN / "expected" / "page_meta.jsonl").read_bytes()
+    out = write_summary(study, build_summary(study, cfg, qs, [0]))
+    assert out.read_bytes() == (GOLDEN / "expected" / "summary.json").read_bytes()

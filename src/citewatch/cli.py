@@ -31,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"score": "M3.1", "report": "B4.1"}
+NOT_BUILT = {"score --sample-support/--labels/--finalise": "M3.2, M3.3", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -524,7 +524,47 @@ def score(
     as_json: JsonOpt = False,
 ) -> None:
     """Compute the metrics and run the support and hand-check samples."""
-    _not_built("score", as_json)
+    if sample_support or labels is not None or finalise:
+        _not_built("score --sample-support/--labels/--finalise", as_json)  # M3.2, M3.3
+    from citewatch.metrics import COVERAGE_TARGET, build_summary, write_summary
+
+    path = _study_file(study)
+    try:
+        cfg = load_study_config(path)
+        qs = load_questions(path.parent / cfg.questions_path, cfg)
+    except ConfigError as exc:
+        _fail(as_json, "score", str(exc))
+    runs = sorted({r for r in (1, 2) if _has_run(path.parent, r)}) or [0]
+    try:
+        summary = build_summary(path.parent, cfg, qs, runs)
+    except ValueError as exc:
+        _fail(as_json, "score", str(exc))
+    out = write_summary(path.parent, summary)
+    cov = summary.coverage
+    payload = {
+        "ok": True,
+        "command": "score",
+        "runs": list(summary.runs),
+        "summary": str(out),
+        "coverage": cov.point,
+        "coverage_target": COVERAGE_TARGET,
+    }
+    text = (
+        f"scored runs {', '.join(map(str, summary.runs))} -> {out}\n"
+        f"coverage {cov.point:.0%} of {cov.n} cited URLs (target {COVERAGE_TARGET:.0%})"
+    )
+    if cov.point < COVERAGE_TARGET:
+        text += "  BELOW TARGET"
+    _emit(as_json, payload, text)
+    raise typer.Exit(EXIT_OK)
+
+
+def _has_run(base: Path, run: int) -> bool:
+    answers = base / "data" / "answers.jsonl"
+    if not answers.is_file():
+        return False
+    with answers.open(encoding="utf-8") as fh:
+        return any(json.loads(line).get("run") == run for line in fh if line.strip())
 
 
 @app.command()

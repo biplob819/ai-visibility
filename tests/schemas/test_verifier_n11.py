@@ -382,6 +382,9 @@ def test_fixture_list_covers_every_top_level_spec_record():
         "StabilityRow",
         "AccuracyRow",
         "SupportRow",
+        "CitationsRow",
+        "OverdueRow",
+        "ComparisonRow",
     }
     from tests.schemas.test_format import spec_schema_names
 

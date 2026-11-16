@@ -117,17 +117,57 @@ class SupportRow(Model):
     kappa: Interval | None = None
 
 
+class CitationsRow(Model):
+    """Citations per valid answer (§6.1): unique canonical URLs, with the raw block count."""
+
+    model: ModelId
+    intent: Slug | None = None
+    run: Run
+    unique_per_answer: Interval
+    raw_per_answer: NonNegFloat
+    zero_citation: NonNegInt
+
+
+class OverdueRow(Model):
+    """NHS overdue (§6.3): cited pages whose `review_due` is before the answer."""
+
+    model: ModelId | None = None
+    share: Interval
+
+
+class ComparisonRow(Model):
+    """A paired model comparison of presence share for one publisher (§6.6)."""
+
+    publisher: NonBlank
+    run: Run
+    model_a: ModelId
+    model_b: ModelId
+    difference: Interval  # share(model_a) − share(model_b) over shared questions
+    p_value: FiniteFloat
+    p_holm: FiniteFloat
+    separated: bool
+
+    @model_validator(mode="after")
+    def _p(self) -> ComparisonRow:
+        if not (0 <= self.p_value <= 1 and self.p_value <= self.p_holm <= 1):
+            raise ValueError("need 0 <= p_value <= p_holm <= 1")
+        return self
+
+
 class StudySummary(Versioned):
     runs: tuple[Run, ...]
     config_hash: HexHash
     questions_sha256: Sha256
     preregistration_sha256: Sha256
     share: tuple[ShareRow, ...] = ()
+    citations: tuple[CitationsRow, ...] = ()
     concentration: tuple[ConcentrationRow, ...] = ()
     freshness: tuple[FreshnessRow, ...] = ()
     stale: tuple[StaleRow, ...] = ()
     overlap: tuple[OverlapRow, ...] = ()
     stability: tuple[StabilityRow, ...] = ()
+    comparisons: tuple[ComparisonRow, ...] = ()
+    nhs_overdue: tuple[OverdueRow, ...] = ()
     coverage: Interval
     date_accuracy: tuple[AccuracyRow, ...] = ()
     support: tuple[SupportRow, ...] = ()

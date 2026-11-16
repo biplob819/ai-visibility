@@ -313,6 +313,31 @@ class SupportRow(BaseModel):         # §8.1
     kappa: Interval | None
 
 
+class CitationsRow(BaseModel):      # citations per answer (§6.1), added by M3.1 (D-55)
+    model: str
+    intent: str | None
+    run: int
+    unique_per_answer: Interval
+    raw_per_answer: float
+    zero_citation: int
+
+
+class OverdueRow(BaseModel):        # NHS overdue (§6.3), added by M3.1 (D-55)
+    model: str | None
+    share: Interval
+
+
+class ComparisonRow(BaseModel):     # paired model comparison (§6.6), added by M3.1 (D-55)
+    publisher: str
+    run: int
+    model_a: str
+    model_b: str
+    difference: Interval
+    p_value: float
+    p_holm: float
+    separated: bool
+
+
 class StudySummary(BaseModel):
     schema_version: str
     runs: tuple[int, ...]
@@ -320,11 +345,14 @@ class StudySummary(BaseModel):
     questions_sha256: str
     preregistration_sha256: str
     share: list[ShareRow]            # publisher × model × intent × run: presence and weighted
+    citations: list[CitationsRow]
     concentration: list[ConcentrationRow]
     freshness: list[FreshnessRow]
     stale: list[StaleRow]
     overlap: list[OverlapRow]
     stability: list[StabilityRow]
+    comparisons: list[ComparisonRow]
+    nhs_overdue: list[OverdueRow]
     coverage: Interval               # URLs with a resolved date or a logged reason
     date_accuracy: list[AccuracyRow] # overall and per source (M3.3)
     support: list[SupportRow]        # per model, per judge, with hand-label agreement (M3.2)

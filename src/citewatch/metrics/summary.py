@@ -1,0 +1,109 @@
+"""`results/summary.json` (MET-08): every §6 metric with its interval, coverage, error counts
+and spend. The same data always gives the same bytes: `generated_at` is the latest timestamp in
+the data, not the clock."""
+
+from __future__ import annotations
+
+import datetime as dt
+import hashlib
+import json
+from pathlib import Path
+
+from citewatch.runners.schedule import config_hash
+from citewatch.schemas import SCHEMA_VERSION, StudyConfig, StudyQuestion, StudySummary
+
+from . import compute
+from .data import StudyData, load
+from .stats import RESAMPLES, resample_matrix, wilson
+
+COVERAGE_TARGET = 0.9  # FR9
+
+
+def _sha(path: Path | None) -> str:
+    return hashlib.sha256(path.read_bytes() if path and path.is_file() else b"").hexdigest()
+
+
+def preregistration_for(study_dir: Path) -> Path | None:
+    """The study's own `preregistration.md`, else the nearest `docs/preregistration.md` above."""
+    own = study_dir / "preregistration.md"
+    if own.is_file():
+        return own
+    for parent in [study_dir, *study_dir.resolve().parents]:
+        p = parent / "docs" / "preregistration.md"
+        if p.is_file():
+            return p
+    return None
+
+
+def coverage(data: StudyData) -> tuple[int, int]:
+    """Cited URLs with a resolved date or a logged reason (an outcome other than `ok`)."""
+    urls = {c.url for a in data.answers for c in a.cites}
+    k = 0
+    for u in urls:
+        page = data.pages.get(u)
+        if page is not None and (page.effective_date is not None or page.outcome != "ok"):
+            k += 1
+    return k, len(urls)
+
+
+def error_counts(data: StudyData, excluded: dict[str, int]) -> dict[str, dict[str, int]]:
+    out: dict[str, dict[str, int]] = {}
+    for m in data.models():
+        xs = [a for a in data.answers if a.model == m]
+        out[m] = {
+            "answers": len(xs),
+            "refusal": sum(a.refusal for a in xs),
+            "transport": sum(a.error for a in xs),
+            "search_error": sum(a.search_errors for a in xs),
+            "over_length": sum(a.over_length for a in xs),
+            "zero_citation": sum(a.valid and not a.cites for a in xs),
+        }
+    if excluded:
+        out["overlap_excluded"] = dict(sorted(excluded.items()))
+    return out
+
+
+def build_summary(
+    base: Path,
+    cfg: StudyConfig,
+    questions: list[StudyQuestion],
+    runs: list[int] | None = None,
+    resamples: int = RESAMPLES,
+) -> StudySummary:
+    data = load(base, cfg, questions, runs)
+    if not data.answers:
+        raise ValueError("no answers to score for the chosen runs")
+    w = resample_matrix(len(data.qids), cfg.seeds["bootstrap"], resamples)
+    ctx = compute.Ctx(data, w, cfg.stale_days)
+    overlap, excluded = compute.overlap(ctx)
+    k, n = coverage(data)
+    return StudySummary(
+        schema_version=SCHEMA_VERSION,
+        runs=tuple(data.runs()),
+        config_hash=config_hash(cfg),
+        questions_sha256=_sha(base / cfg.questions_path),
+        preregistration_sha256=_sha(preregistration_for(base)),
+        share=tuple(compute.shares(ctx)),
+        citations=tuple(compute.citations(ctx)),
+        concentration=tuple(compute.concentration(ctx)),
+        freshness=tuple(compute.freshness(ctx)),
+        stale=tuple(compute.stale(ctx)),
+        overlap=tuple(overlap),
+        stability=tuple(compute.stability(ctx)),
+        comparisons=tuple(compute.comparisons(ctx)),
+        nhs_overdue=tuple(compute.overdue(ctx)),
+        coverage=wilson(k, n),
+        error_counts=error_counts(data, excluded),
+        spend_usd=data.spend_usd,
+        generated_at=data.latest or dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
+    )
+
+
+def write_summary(base: Path, summary: StudySummary) -> Path:
+    path = base / "results" / "summary.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(summary.model_dump(mode="json"), indent=1, sort_keys=True) + "\n"
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(text, encoding="utf-8", newline="\n")
+    tmp.replace(path)
+    return path
