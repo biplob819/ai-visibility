@@ -174,8 +174,12 @@ def test_an_ok_page_without_cached_text_is_replaced(tmp_path):
     rows = sample_rows()
     for r in rows:
         if r["url"] != "https://claude-x.example/howto/1":
-            J.text_path(r["url"], tmp_path).write_text("A sentence with enough words in it.")
-    J.text_path("https://claude-x.example/howto/0", tmp_path).write_text("Just A Title")
+            J.text_path(r["url"], tmp_path).write_text(
+                "A sentence with enough words in it.", encoding="utf-8"
+            )
+    J.text_path("https://claude-x.example/howto/0", tmp_path).write_text(
+        "Just A Title", encoding="utf-8"
+    )
     final, log = J.replacements(rows, {r["url"] for r in rows}, cache_dir=tmp_path)
     assert [(e["replaced"], e["reason"], e["by"]) for e in log] == [
         ("1:v-002:claude-x:1", "no cached text", "1:v-002:claude-x:3"),
@@ -214,7 +218,7 @@ def test_items_use_the_sample_and_promoted_reserves_only(tmp_path, evalkit):
     text = "Heading\nThe tool costs ten dollars a month. It has a free plan for small teams."
     for r in rows:
         if r["url"] != "https://claude-x.example/compare/1":  # no cached text: needs a reserve
-            J.text_path(r["url"], tmp_path).write_text(text)
+            J.text_path(r["url"], tmp_path).write_text(text, encoding="utf-8")
     final, log = J.replacements(rows, {r["url"] for r in rows}, cache_dir=tmp_path)
     assert [e["replaced"] for e in log] == ["1:v-001:claude-x:2"]
 
