@@ -340,6 +340,9 @@ def ask(
     import datetime as _dt
 
     started = _dt.datetime.now(_dt.UTC)
+    from citewatch.runs import git_sha as _git_sha
+
+    run_sha = _git_sha(base) if run >= 1 else None  # a commit made during the run must not count
     try:
         res = ask_run(
             qs,
@@ -372,6 +375,7 @@ def ask(
             finished_at=_dt.datetime.now(_dt.UTC) if done else None,
             answers=res.asked + res.cached,
             errors=res.errors,
+            run_sha=run_sha,
         )
     summary = {
         "ok": not (res.stopped_at_cap or res.interrupted or nothing),

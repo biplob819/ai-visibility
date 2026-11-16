@@ -177,15 +177,17 @@ def write_manifest(
     finished_at: dt.datetime | None,
     answers: int,
     errors: Iterable[Any] = (),
+    run_sha: str | None = None,
 ) -> Path:
     """Write (or update) the run manifest; a resumed run keeps its first start and commit."""
     old = read_manifest(base, run) or {}
+    sha = run_sha or git_sha(base)  # the commit the run started from, read before any call
     stamp = lambda t: t.astimezone(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
     data = {
         "run": run,
         "config_hash": config_hash,
-        "git_sha": old.get("git_sha") or git_sha(base),
-        "git_shas": sorted({*old.get("git_shas", []), git_sha(base) or ""} - {""}),
+        "git_sha": old.get("git_sha") or sha,
+        "git_shas": sorted({*old.get("git_shas", []), sha or ""} - {""}),
         "questions_sha256": questions_sha256,
         "preregistration_sha256": preregistration_sha256,
         "model_snapshots": model_snapshots(base, run),

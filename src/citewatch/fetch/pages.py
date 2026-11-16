@@ -83,13 +83,60 @@ class _Text(HTMLParser):
         self.parts: list[str] = []
         self._skip = 0
 
+    # block elements end a line, so paragraphs and list items never run together
+    # ("healthy dietNot all…", which broke sentence splitting and quote checks; D-61)
+    BLOCK = frozenset(
+        {
+            "p",
+            "div",
+            "br",
+            "li",
+            "ul",
+            "ol",
+            "tr",
+            "td",
+            "th",
+            "dd",
+            "dt",
+            "dl",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "section",
+            "article",
+            "aside",
+            "header",
+            "main",
+            "figure",
+            "figcaption",
+            "blockquote",
+            "table",
+            "hr",
+            "address",
+            "details",
+            "summary",
+            "pre",
+        }
+    )
+
     def handle_starttag(self, tag: str, attrs: Any) -> None:
         if tag in self.SKIP:
             self._skip += 1
+        if tag in self.BLOCK:
+            self.parts.append("\n")
+
+    def handle_startendtag(self, tag: str, attrs: Any) -> None:
+        if tag in self.BLOCK:  # <br/>, <hr/>
+            self.parts.append("\n")
 
     def handle_endtag(self, tag: str) -> None:
         if tag in self.SKIP and self._skip:
             self._skip -= 1
+        if tag in self.BLOCK:
+            self.parts.append("\n")
 
     def handle_data(self, data: str) -> None:
         if not self._skip:

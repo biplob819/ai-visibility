@@ -134,3 +134,13 @@ def test_a_resumed_run_keeps_its_first_start_and_commit(repo):
     assert second is not None
     assert second["started_at"] == first["started_at"] and second["git_sha"] == first["git_sha"]
     assert second["finished_at"] == "2026-11-20T12:00:00Z"
+
+
+def test_the_manifest_keeps_the_commit_the_run_started_from(repo):
+    """A commit made while a run is going must not become the run's recorded commit."""
+    write_manifest(
+        repo, 2, config_hash="c", questions_sha256=None, preregistration_sha256=None,
+        started_at=NOW, finished_at=NOW, answers=1, run_sha="a" * 40,
+    )  # fmt: skip
+    m = read_manifest(repo, 2)
+    assert m is not None and m["git_sha"] == "a" * 40

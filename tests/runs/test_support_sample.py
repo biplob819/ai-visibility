@@ -77,3 +77,20 @@ def test_kept_text_drops_navigation_footers_and_forms():
         "<footer>Page last reviewed</footer><form><button>Search</button></form>"
     )
     assert main_text(html) == "Drink 6 to 8 glasses a day."
+
+
+def test_kept_text_puts_each_block_on_its_own_line():
+    """D-61: glued paragraphs broke sentence splitting and the judges' quote check."""
+    html = (
+        "<p>Eat a healthy diet</p><p>Not all processed food is bad.</p>"
+        "<ul><li>One</li><li>Two</li></ul>a<br>b<br/>c"
+    )
+    assert main_text(html).splitlines() == [
+        "Eat a healthy diet",
+        "Not all processed food is bad.",
+        "One",
+        "Two",
+        "a",
+        "b",
+        "c",
+    ]
