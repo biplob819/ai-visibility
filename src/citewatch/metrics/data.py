@@ -97,9 +97,12 @@ def _date(s: str | None) -> dt.date | None:
     return None if not s else dt.date.fromisoformat(s[:10])
 
 
-def _ledger_run(run_id: str) -> int | None:
-    tail = run_id.rsplit(":run-", 1)
-    return int(tail[1]) if len(tail) == 2 and tail[1].isdigit() else None
+def _ledger_run(run_id: str, study: str) -> int | None:
+    """The run of a ledger line written by this study (`<study>:run-N`), else None (v2 L1)."""
+    import re
+
+    m = re.fullmatch(rf"{re.escape(study)}:run-([0-9]+)", run_id)
+    return int(m.group(1)) if m else None
 
 
 def load(
@@ -157,7 +160,7 @@ def load(
     spend = math.fsum(  # the scored runs' paid calls only (v1 M4): `<study>:run-N`
         float(r.get("spent_usd", 0.0))
         for r in _rows(data / "spend-ledger.jsonl")
-        if _ledger_run(r.get("run_id", "")) in scored
+        if _ledger_run(r.get("run_id", ""), cfg.name) in scored
     )
     ordered = sorted(answers.values(), key=lambda a: (a.run, a.qid, a.model))
     return StudyData(list(questions), ordered, pages, round(spend, 6), latest)

@@ -68,6 +68,17 @@ def error_counts(data: StudyData, excluded: dict[str, int]) -> dict[str, dict[st
             undated[reason] = undated.get(reason, 0) + 1
     if undated:
         out["undated_pages"] = dict(sorted(undated.items()))
+    no_due: dict[str, int] = {}  # cited NHS pages with no review date, by outcome (v2 L2)
+    nhs_urls = {
+        c.url for a in data.answers for c in a.cites if compute.NHS in (c.publisher, c.group)
+    }
+    for u in sorted(nhs_urls):
+        page = data.pages.get(u)
+        if page is None or page.review_due is None:
+            reason = "missing" if page is None else page.outcome
+            no_due[reason] = no_due.get(reason, 0) + 1
+    if no_due:
+        out["nhs_no_review_date"] = dict(sorted(no_due.items()))
     return out
 
 

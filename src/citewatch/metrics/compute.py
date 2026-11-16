@@ -503,7 +503,7 @@ def stability(ctx: Ctx) -> list[StabilityRow]:
         s2 = _presence_by_pub(ctx, r2, m)
         if s1 is None or s2 is None:
             continue
-        top = top_with_ties(s1[0])
+        top = top_with_ties({p: float(k) for p, k in _counts(s1).items()})
         for p in top:
             d_point, d_vals, n = _diff(ctx, s2, s1, p)
             lo, hi = percentiles(d_vals[:, None])
@@ -530,6 +530,12 @@ def _presence_by_pub(
         return None
     point = num.sum(axis=0) / den.sum()
     return {p: float(point[j]) for j, p in enumerate(pubs)}, pubs, num, den
+
+
+def _counts(arrs: PresenceArrays) -> dict[str, int]:
+    """Answers citing each publisher, as exact integers (for ranking without float ties)."""
+    _, pubs, num, _ = arrs
+    return {p: round(float(num[:, j].sum())) for j, p in enumerate(pubs)}
 
 
 def _column(arrs: PresenceArrays, publisher: str) -> Arr:
@@ -568,8 +574,10 @@ def comparisons(ctx: Ctx) -> list[ComparisonRow]:
         b = _presence_by_pub(ctx, run, m2, shared)
         if a is None or b is None:
             continue
-        pooled = Counter(a[0]) + Counter(b[0])
-        top = top_with_ties(dict(pooled))
+        # rank on integer counts: both sides share one denominator (the shared questions), and
+        # float shares split exact ties by an ulp (v2 M1)
+        pooled = Counter(_counts(a)) + Counter(_counts(b))
+        top = top_with_ties({p: float(k) for p, k in pooled.items()})
         found = []
         for p in top:
             point, vals, n = _diff(ctx, a, b, p)

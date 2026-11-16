@@ -71,6 +71,7 @@ def write(base: Path) -> Path:
         )
     )
     cfg["intents"] = ["alpha", "beta"]
+    cfg["name"] = "tiny"
     (base / "study.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     (base / "questions.jsonl").write_text(
         "".join(json.dumps(q) + "\n" for q in QUESTIONS), encoding="utf-8"
@@ -120,8 +121,8 @@ def write(base: Path) -> Path:
             "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
         )
     (data / "spend-ledger.jsonl").write_text(
-        '{"run_id": "s:run-1", "spent_usd": 0.25}\n{"run_id": "s:run-2", "spent_usd": 0.5}\n'
-        '{"run_id": "s:run-0", "spent_usd": 9.0}\n{"run_id": "fixtures", "spent_usd": 3.0}\n',
+        '{"run_id": "tiny:run-1", "spent_usd": 0.25}\n{"run_id": "tiny:run-2", "spent_usd": 0.5}\n'
+        '{"run_id": "tiny:run-0", "spent_usd": 9.0}\n{"run_id": "fixtures", "spent_usd": 3.0}\n',
         encoding="utf-8",
     )
     return base

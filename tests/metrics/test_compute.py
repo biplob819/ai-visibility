@@ -187,6 +187,7 @@ def test_stale_and_overdue_boundaries_are_strict(tiny: Path):
     _edit(tiny, "page_meta.jsonl", pages)
     s = _score(tiny)
     assert pick(s.stale, model=A, intent=None, definition="primary").rate.k == 0
+    assert pick(s.stale, model=A, intent=None, definition="secondary").rate.k == 0
     assert pick(s.nhs_overdue, model=None).share.k == 0
 
 
@@ -220,3 +221,66 @@ def test_top_lists_include_every_publisher_tied_at_the_cut():
 
 def test_undated_pages_are_counted_by_outcome(summary):
     assert summary.error_counts["undated_pages"] == {"ok": 2}
+
+
+# --- verifier pass 2 -----------------------------------------------------------------------------
+
+
+def test_comparison_ties_are_exact_whatever_float_rounding_does(tmp_path: Path):
+    """v2 M1: 1/5 + 2/5 != 3/5 + 0 in floats; both publishers have 3 citing answers."""
+    from citewatch.metrics.compute import Ctx, comparisons
+    from citewatch.metrics.data import Answer, Cite, StudyData
+    from citewatch.metrics.stats import resample_matrix
+
+    at = __import__("datetime").datetime(2026, 11, 20, tzinfo=__import__("datetime").UTC)
+
+    def ans(q, m, pubs):
+        return Answer(1, q, m, "alpha", False, at, True, False, False, False, False,
+                      cites=[Cite(f"https://{p}/{q}", p) for p in pubs])  # fmt: skip
+
+    lead = [f"lead{i}.com" for i in range(9)]
+    answers = []
+    for i in range(5):
+        q = f"q-00{i}"
+        answers.append(
+            ans(q, A, [*lead, *(["split.com"] if i == 0 else []), *(["solo.com"] if i < 3 else [])])
+        )
+        answers.append(ans(q, B, [*lead, *(["split.com"] if i in (1, 2) else [])]))
+    data = StudyData([], answers, {}, 0.0, at)
+    rows = comparisons(Ctx(data, resample_matrix(5, 53, 50), 365))
+    assert {"split.com", "solo.com"} <= {r.publisher for r in rows}
+
+
+def test_an_nhs_page_missing_from_page_meta_counts_as_not_overdue(tiny: Path):
+    _edit(tiny, "page_meta.jsonl", lambda rows: [r for r in rows if r["url"] != "https://nhs.uk/c"])
+    s = _score(tiny)
+    assert pick(s.nhs_overdue, model=None).share.n == 7
+    assert s.error_counts["nhs_no_review_date"] == {"missing": 1}
+
+
+def test_spend_ignores_another_studys_ledger_lines(tiny: Path):
+    p = tiny / "data" / "spend-ledger.jsonl"
+    p.write_text(
+        p.read_text(encoding="utf-8") + '{"run_id": "other:run-1", "spent_usd": 5.0}\n',
+        encoding="utf-8",
+    )
+    assert _score(tiny).spend_usd == 0.75
+
+
+def test_stability_top_list_includes_ties():
+    from citewatch.metrics.compute import top_with_ties
+
+    counts = {f"p{i:02d}": 2.0 for i in range(12)}
+    assert len(top_with_ties(counts, 10)) == 12
+
+
+def test_pooled_top_sets_cut_at_the_kth_share_with_ties():
+    import numpy as np
+
+    from citewatch.metrics.compute import _top_sets
+
+    pubs = [f"p{i:02d}" for i in range(25)]
+    row = np.array([25 - i for i in range(25)], dtype=float)
+    assert _top_sets(row, pubs, 20)[0] == set(pubs[:20])
+    row[20] = row[19]
+    assert _top_sets(row, pubs, 20)[0] == set(pubs[:21])
