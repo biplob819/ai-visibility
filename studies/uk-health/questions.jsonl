@@ -1,6 +1,6 @@
 {"id": "v-001", "text": "When should I worry about a headache that won't go away?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
 {"id": "v-002", "text": "What are the early signs of sepsis in adults?", "intent": "symptoms", "time_sensitive": false}
-{"id": "v-003", "text": "Is chest pain after exercise always a sign of a heart problem?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-003", "text": "Is chest pain after exercise always a sign of a heart problem?", "intent": "symptoms", "time_sensitive": false}
 {"id": "v-004", "text": "How can I tell if my child's high temperature needs a doctor?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
 {"id": "v-005", "text": "What does it mean if I keep feeling dizzy when I stand up?", "intent": "symptoms", "time_sensitive": false}
 {"id": "v-006", "text": "When is a cough serious enough to see a GP?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "waiting"}
@@ -18,9 +18,9 @@
 {"id": "v-018", "text": "Where can I get a free test if I have symptoms of a sexually transmitted infection?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
 {"id": "v-019", "text": "Can I get an urgent same-day appointment for chest infection symptoms?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
 {"id": "v-020", "text": "What symptoms of strep A in children should parents watch for this winter?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
-{"id": "v-021", "text": "Is it safe to take ibuprofen and paracetamol together?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
-{"id": "v-022", "text": "What is the best way to treat a sprained ankle at home?", "intent": "treatment", "time_sensitive": true, "ts_reason": "waiting"}
-{"id": "v-023", "text": "How do I treat a burn from boiling water?", "intent": "treatment", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-021", "text": "Is it safe to take ibuprofen and paracetamol together?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-022", "text": "What is the best way to treat a sprained ankle at home?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-023", "text": "How do I treat a burn from boiling water?", "intent": "treatment", "time_sensitive": false}
 {"id": "v-024", "text": "What helps with hay fever if antihistamines don't work?", "intent": "treatment", "time_sensitive": true, "ts_reason": "eligibility"}
 {"id": "v-025", "text": "How long should I use an ice pack on an injury?", "intent": "treatment", "time_sensitive": false}
 {"id": "v-026", "text": "What is the best treatment for a cold sore?", "intent": "treatment", "time_sensitive": false}
@@ -38,7 +38,7 @@
 {"id": "v-038", "text": "Are there new treatments for migraine available on the NHS?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
 {"id": "v-039", "text": "Can I get the morning after pill free from a pharmacy?", "intent": "treatment", "time_sensitive": true, "ts_reason": "prices"}
 {"id": "v-040", "text": "What is the latest guidance on giving children cough medicine?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
-{"id": "v-041", "text": "How do I register with a GP practice?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-041", "text": "How do I register with a GP practice?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "services"}
 {"id": "v-042", "text": "What is the difference between A&E and an urgent treatment centre?", "intent": "nhs_services", "time_sensitive": false}
 {"id": "v-043", "text": "What does NHS 111 do?", "intent": "nhs_services", "time_sensitive": false}
 {"id": "v-044", "text": "How do I get a copy of my medical records?", "intent": "nhs_services", "time_sensitive": false}
@@ -46,8 +46,8 @@
 {"id": "v-046", "text": "What should I bring to my first GP appointment?", "intent": "nhs_services", "time_sensitive": false}
 {"id": "v-047", "text": "How do I complain about NHS care?", "intent": "nhs_services", "time_sensitive": false}
 {"id": "v-048", "text": "What is a social prescriber?", "intent": "nhs_services", "time_sensitive": false}
-{"id": "v-049", "text": "Can I see a physiotherapist without a GP referral?", "intent": "nhs_services", "time_sensitive": false}
-{"id": "v-050", "text": "What happens at an NHS health check?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-049", "text": "Can I see a physiotherapist without a GP referral?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-050", "text": "What happens at an NHS health check?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}
 {"id": "v-051", "text": "How much does an NHS prescription cost in England?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "prices"}
 {"id": "v-052", "text": "How much does NHS dental treatment cost in each band?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "prices"}
 {"id": "v-053", "text": "Who can get the flu jab for free this winter?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}

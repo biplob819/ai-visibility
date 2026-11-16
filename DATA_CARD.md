@@ -15,7 +15,7 @@ What this study collects, what it discards, and how it treats the sites it reads
 
 ## Politeness
 
-- Only pages a model actually cited are fetched; pages a search only returned are never fetched.
+- Only pages a model actually cited are fetched; pages a search only returned are never fetched. For each cited site, citewatch also reads robots.txt and the sitemaps robots.txt lists (for `lastmod` dates), once per site for the whole study.
 - robots.txt is read once per site for the whole study and obeyed for the `citewatch` user agent with RFC 9309 longest-match rules (protego); a robots.txt answering 401, 403, 5xx or not at all disallows the whole site. Every redirect hop, on any host, is checked again.
 - At most one request per second per site, spaced from the moment each request is actually sent, and at most eight requests in flight. At most three requests per page across the whole study, and none after a 401, 403, 451 or a robots refusal.
 - Every request carries `citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)` and no cookies or credentials. Login walls and paywalls are recorded as `gated`; nothing is worked around.
@@ -23,7 +23,7 @@ What this study collects, what it discards, and how it treats the sites it reads
 
 ## Quoted spans
 
-Claude's `cited_text` (the sentence a citation supports) is stored as the citation's quoted span. Answers are the models' own text. Neither reproduces a page beyond the single sentence the API itself returns.
+Claude's `cited_text` (the passage the API returns as supporting a citation, usually a sentence or a short span) is stored as the citation's quoted span. Answers are the models' own text. The raw store also keeps the APIs' search results as returned, including Claude's `encrypted_content`, which is not readable page text. Nothing else from a page is stored.
 
 ## Limits
 

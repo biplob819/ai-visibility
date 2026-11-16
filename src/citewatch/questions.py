@@ -20,10 +20,12 @@ _DOMAIN = re.compile(
 )
 PUBLISHERS = (
     "bbc", "boots", "bupa", "superdrug", "patient.info", "webmd", "mayo clinic", "healthline",
-    "medical news today", "nice", "gov.uk", "the guardian", "daily mail", "wikipedia",
-    "cancer research", "macmillan", "british heart foundation", "diabetes uk", "mind",
+    "medical news today", "gov.uk", "the guardian", "daily mail", "wikipedia",
+    "cancer research", "macmillan", "british heart foundation", "diabetes uk",
     "versus arthritis", "nhs inform", "nhs choices", "public health england", "ukhsa",
 )  # fmt: skip
+# names that are also everyday words count only as written (v1 L4)
+EXACT = ("NICE", "Mind")
 _SOURCE_ASK = re.compile(
     r"\baccording to (the )?nhs\b|\bwhat (does|do) (the )?nhs (say|says|recommend|advise)\b"
     r"|\bnhs (says|recommends|advises)\b",
@@ -41,6 +43,9 @@ def question_problems(q: StudyQuestion) -> list[str]:
     low = f" {q.text.lower()} "
     for name in PUBLISHERS:
         if re.search(rf"(?<![a-z]){re.escape(name)}(?![a-z])", low):
+            problems.append(f"{q.id}: names a publisher or brand ({name})")
+    for name in EXACT:
+        if re.search(rf"(?<![A-Za-z]){name}(?![A-Za-z-])", q.text):
             problems.append(f"{q.id}: names a publisher or brand ({name})")
     if _SOURCE_ASK.search(q.text):
         problems.append(f'{q.id}: asks for a source ("what the NHS says")')

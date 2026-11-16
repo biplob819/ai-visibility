@@ -12,9 +12,9 @@ from citewatch.schemas import StudyQuestion, load_questions, load_study_config
 
 ROOT = Path(__file__).resolve().parent.parent
 STUDY = ROOT / "studies" / "uk-health"
-# OWNER D-47: frozen 2026-11-16, before run 1. Never edit these to make a test pass.
-QUESTIONS_SHA256 = "db169fec5d7dfb90a5f45a73990016d762b1fef3656900ee44adf3627547824e"
-PREREG_SHA256 = "d8166467572f8e5451d4a00ec4996bfdc8456e1d5669531e7e807802f35733fd"
+# OWNER D-47, re-frozen under D-51 before run 1. Never edit these to make a test pass.
+QUESTIONS_SHA256 = "aaa3a348ab5844e2ad1fac47e0b68a4b53fb08e1354a0f303cc3d60186bba071"
+PREREG_SHA256 = "9e227483cc387386c0a2b7ca36161c24f77cd59eaee2eb173978c4a183f60cbb"
 
 
 def sha(p: Path) -> str:
@@ -93,3 +93,60 @@ def test_the_lint_rejects_duplicates_undeclared_intents_and_short_sets():
     assert any("duplicate id" in p for p in probs)
     assert any("not declared" in p for p in probs)
     assert any("want 20" in p for p in probs) and any("at least 8" in p for p in probs)
+
+
+def test_the_study_settings_and_rubric_match_the_preregistration():
+    """v1 L3: the settings block and rubric hash in the pre-registration match the live files."""
+    pre = (ROOT / "docs" / "preregistration.md").read_text(encoding="utf-8")
+    assert (STUDY / "study.yaml").read_text(encoding="utf-8").strip() in pre
+    assert sha(STUDY / "RUBRIC.md") in pre
+    assert QUESTIONS_SHA256 in pre and "alpha of 0.05" in pre
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Is it nice to swim in winter?",
+        "Is meditation good for the mind?",
+        "Is a mind-body class good?",
+    ],
+)
+def test_everyday_words_are_not_brands(text):
+    """v1 L4: NICE and Mind are matched only as written."""
+    assert question_problems(q(text)) == []
+
+
+@pytest.mark.parametrize(
+    "text", ["What does NICE advise on sleep?", "Does Mind have advice on anxiety?"]
+)
+def test_the_brands_still_count(text):
+    assert question_problems(q(text))
+
+
+def test_the_rubric_states_its_rules_with_examples():
+    """QST-01: the phrasing rules and the time-sensitive rule, each with examples."""
+    r = (STUDY / "RUBRIC.md").read_text(encoding="utf-8").lower()
+    for clause in ("services", "eligibility", "waiting", "prices", "guidance", "30 words"):
+        assert clause in r
+    assert "ibuprofen" in r and "12 months" in r
+
+
+def test_every_ts_reason_is_a_rubric_clause_and_reason_iff_flagged():
+    cfg = load_study_config(STUDY / "study.yaml")
+    for q in load_questions(STUDY / "questions.jsonl", cfg):
+        assert (q.ts_reason is not None) == q.time_sensitive
+        assert q.ts_reason is None or q.ts_reason in (cfg.ts_reasons or ())
+
+
+def test_the_data_card_marks_unbuilt_work_as_planned():
+    """QST-04: present tense only for what is built."""
+    card = (ROOT / "DATA_CARD.md").read_text(encoding="utf-8")
+    for part in (
+        "## What is collected",
+        "## What is discarded",
+        "## Politeness",
+        "## Quoted spans",
+        "## Limits",
+    ):
+        assert part in card
+    assert card.count("Planned") >= 2 and "M3.2" in card and "M3.3" in card

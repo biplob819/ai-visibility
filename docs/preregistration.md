@@ -4,7 +4,7 @@ Frozen on 2026-11-16, before any study run (D-7). Nothing below may change after
 
 ## The question set
 
-- `studies/uk-health/questions.jsonl`: 100 questions, 20 per intent (symptoms, treatment, nhs_services, fitness, nutrition), 58 time-sensitive, approved by the study owner on 2026-11-16. sha256 `db169fec5d7dfb90a5f45a73990016d762b1fef3656900ee44adf3627547824e`.
+- `studies/uk-health/questions.jsonl`: 100 questions, 20 per intent (symptoms, treatment, nhs_services, fitness, nutrition), 57 time-sensitive, approved by the study owner on 2026-11-16 and re-frozen the same day with the time-sensitive flags aligned to the rubric (OWNER D-51). sha256 `aaa3a348ab5844e2ad1fac47e0b68a4b53fb08e1354a0f303cc3d60186bba071`.
 - Written to `studies/uk-health/RUBRIC.md`, committed before any question. sha256 `e96e0741be589782a6c8e3aaf25318d595f54a4cf4f2b4a63f5e3bfaa38e89e9`.
 
 ## Settings (from `studies/uk-health/study.yaml`)
@@ -42,6 +42,12 @@ user_agent: "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)"
 - `hand_sample` 52: the 50-date hand check (M3.3), held out from the date resolver's tuning set (D-6).
 - `bootstrap` 53: the single question-cluster resample matrix used by every interval.
 
+## Thresholds
+
+- Model comparisons: two-sided tests at a family-wise alpha of 0.05, Holm-corrected across the top-10 publishers compared (§6.6).
+- Intervals are 95% (percentile bootstrap; Wilson for the 50-item hand checks).
+- Stale means older than `stale_days` (365) in `study.yaml`; over-length means more than `word_limit` (150) words.
+
 ## Exclusions and counts
 
 - Refusals and transport errors are excluded from share denominators and counted per model.
@@ -51,6 +57,11 @@ user_agent: "citewatch/0.1.0 (+https://github.com/biplob819/ai-visibility)"
 - Undated pages are excluded from lag and stale rates and counted, with the fetch outcome as the reason.
 - Questions where both models cite nothing are excluded from cross-model overlap and counted.
 - Pages robots.txt disallows, blocked (401, 403, 451) or gated are never worked around; they keep only dates that need no fetch (Claude's page age).
+
+## Known limits of the question set
+
+- Recency wording ("current", "latest", "now") appears only in time-sensitive questions, so comparisons of freshness between time-sensitive and other questions mix topic with wording.
+- The questions are about UK care, so 13 name the NHS and 10 mention a GP; this is a natural UK slant, not a request for any source, and is reported as a limit.
 
 ## Metric definitions (Tech Spec §6, verbatim)
 
