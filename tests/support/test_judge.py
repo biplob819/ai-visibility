@@ -241,7 +241,8 @@ def test_items_use_the_sample_and_promoted_reserves_only(tmp_path, evalkit):
 
 # ---- SUP-03: judging through EvalKit with a fake adapter ---------------------------------------
 
-EXTRACT_RE = re.compile(r"Answer \(citations[^:]*: (.*)\nCited sentence numbers: \[(.*)\]")
+# EvalKit's faithfulness extractor prompt (EvalKit D-60): no citation list, claims carry none
+EXTRACT_RE = re.compile(r"\nAnswer: (.*?)\n")
 
 
 def words(s: str) -> list[str]:
@@ -254,9 +255,8 @@ def reply(prompt: str, model: str) -> str:
     if model == "extractor":
         m = EXTRACT_RE.search(prompt)
         assert m is not None
-        cited = [int(x) for x in m.group(2).split(",") if x.strip()]
         claims = [
-            {"text": s.strip() + ".", "cited": cited, "addresses_question": True}
+            {"text": s.strip() + ".", "addresses_question": True}
             for s in m.group(1).split(".")
             if s.strip()
         ]

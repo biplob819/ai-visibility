@@ -273,7 +273,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=1" },
     { name = "defusedxml", specifier = ">=0.7" },
     { name = "duckdb", specifier = ">=1.1" },
-    { name = "evalkit-harness", marker = "extra == 'support'", git = "https://github.com/biplob819/evalkit?rev=43df77edb8efb07d6f168fc0f8b8544ec86e3aca" },
+    { name = "evalkit-harness", marker = "extra == 'support'", git = "https://github.com/biplob819/evalkit?rev=218192132ad601f02976d486d839e712e39bc4e2" },
     { name = "extruct", specifier = ">=0.17" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "idna", specifier = ">=3.7" },
@@ -349,7 +349,7 @@ wheels = [
 [[package]]
 name = "evalkit-harness"
 version = "0.2.0"
-source = { git = "https://github.com/biplob819/evalkit?rev=43df77edb8efb07d6f168fc0f8b8544ec86e3aca#43df77edb8efb07d6f168fc0f8b8544ec86e3aca" }
+source = { git = "https://github.com/biplob819/evalkit?rev=218192132ad601f02976d486d839e712e39bc4e2#218192132ad601f02976d486d839e712e39bc4e2" }
 dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
