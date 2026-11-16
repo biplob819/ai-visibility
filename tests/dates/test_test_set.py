@@ -46,3 +46,8 @@ def test_snapshots_hold_only_date_bearing_parts():
     for f in (SET / "pages").glob("*.html"):
         text = f.read_text(encoding="utf-8")
         assert len(text) < 6000, f.name  # trimmed, never a whole page
+
+
+def test_the_labels_are_owner_confirmed():
+    """DAT-04 needs labels the owner checked against the live pages (OWNER D-46)."""
+    assert LABELS["status"] == "confirmed" and LABELS["confirmed_at"]

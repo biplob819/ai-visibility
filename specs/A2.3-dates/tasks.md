@@ -6,5 +6,5 @@
 - [x] 4. Build
 - [x] 5. Converge twice
 - [ ] 6. Verifier
-- [ ] 7. Owner labels the 20-page set (DAT-04)
+- [x] 7. Owner labels the 20-page set (DAT-04)
 - [ ] 8. Proofs, green, commit

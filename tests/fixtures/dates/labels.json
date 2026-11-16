@@ -1,5 +1,6 @@
 {
-  "note": "Drafted from the trimmed snapshots; the owner confirms each page against the live page (D-6: tuning set). Dates are the page's own; null means the page states none.",
+  "confirmed_at": "2026-11-16T16:33:50Z",
+  "note": "Owner-confirmed on the review page (all 21 confirmed as proposed, none corrected). D-6: tuning set; the held-out hand check is M3.3.",
   "pages": {
     "my-clevelandclinic-org-health-symptoms-delayed-onset-muscle--3abbb8": {
       "modified": "2026-02-26",
@@ -149,5 +150,5 @@
       "url": "https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)"
     }
   },
-  "status": "draft"
+  "status": "confirmed"
 }
