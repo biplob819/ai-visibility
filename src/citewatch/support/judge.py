@@ -299,11 +299,17 @@ def default_store_dir() -> Path:
     return body_cache_dir() / STORE_DIRNAME
 
 
+# Thinking counts against the output limit: EvalKit's 1,024 default cut long-page verdicts and
+# claim lists short, so they failed to parse ("schema"), live run of 2026-11-16 (L-37).
+MAX_OUTPUT_TOKENS = 4096
+
+
 def run_config(
     judges: Sequence[str] = DEFAULT_JUDGES,
     extractor: str = DEFAULT_EXTRACTOR,
     *,
     max_cost_usd: float | None = None,
+    max_output_tokens: int = MAX_OUTPUT_TOKENS,
 ) -> RunConfig:
     from evalkit.schemas import RunConfig
 
@@ -315,6 +321,7 @@ def run_config(
         max_cost_usd=max_cost_usd,
         judge_effort="medium",
         extractor_effort="medium",
+        max_output_tokens=max_output_tokens,
     )
 
 
@@ -328,6 +335,7 @@ async def judge(
     prices: dict[str, Price] | None = None,
     max_cost_usd: float | None = None,
     strict: bool = True,
+    max_output_tokens: int = MAX_OUTPUT_TOKENS,
 ) -> list[SupportVerdict]:
     """Judge every item live with each judge and map the results to `SupportVerdict`s
     (see `verdicts_for` for the rule). EvalKit's store is `store_dir` (default: inside the body
@@ -343,7 +351,9 @@ async def judge(
     root = _repo_root()
     if root is not None and store.is_relative_to(root.resolve()):
         raise ValueError(f"the EvalKit store {store} must be outside the repository (NFR6)")
-    config = run_config(judges, extractor, max_cost_usd=max_cost_usd)
+    config = run_config(
+        judges, extractor, max_cost_usd=max_cost_usd, max_output_tokens=max_output_tokens
+    )
     prices = prices if prices is not None else load_prices()
     if adapters is None:
         keys = {adapter_key(provider_for(m), m) for m in (extractor, *judges)}

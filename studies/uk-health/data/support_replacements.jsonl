@@ -1,0 +1,13 @@
+{"by": "1:v-077:claude-sonnet-5-5:3", "intent": "fitness", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-070:claude-sonnet-5-5:6", "skipped": []}
+{"by": "1:v-065:claude-sonnet-5-5:4", "intent": "fitness", "model": "claude-sonnet-5-5", "reason": "no cached text", "replaced": "1:v-064:claude-sonnet-5-5:1", "skipped": []}
+{"by": "1:v-051:claude-sonnet-5-5:3", "intent": "nhs_services", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-056:claude-sonnet-5-5:1", "skipped": ["1:v-055:claude-sonnet-5-5:6"]}
+{"by": "1:v-082:claude-sonnet-5-5:4", "intent": "nutrition", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-096:claude-sonnet-5-5:1", "skipped": []}
+{"by": "1:v-099:claude-sonnet-5-5:3", "intent": "nutrition", "model": "claude-sonnet-5-5", "reason": "no cached text", "replaced": "1:v-081:claude-sonnet-5-5:2", "skipped": []}
+{"by": null, "intent": "nutrition", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-085:claude-sonnet-5-5:3", "skipped": []}
+{"by": "1:v-002:claude-sonnet-5-5:3", "intent": "symptoms", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-007:claude-sonnet-5-5:11", "skipped": ["1:v-007:claude-sonnet-5-5:4"]}
+{"by": null, "intent": "symptoms", "model": "claude-sonnet-5-5", "reason": "no cached text", "replaced": "1:v-013:claude-sonnet-5-5:2", "skipped": []}
+{"by": "1:v-021:claude-sonnet-5-5:2", "intent": "treatment", "model": "claude-sonnet-5-5", "reason": "fetch not ok", "replaced": "1:v-040:claude-sonnet-5-5:3", "skipped": []}
+{"by": "1:v-039:claude-sonnet-5-5:1", "intent": "treatment", "model": "claude-sonnet-5-5", "reason": "no cached text", "replaced": "1:v-037:claude-sonnet-5-5:2", "skipped": []}
+{"by": "1:v-065:gpt-6.1-sol:5", "intent": "fitness", "model": "gpt-6.1-sol", "reason": "fetch not ok", "replaced": "1:v-064:gpt-6.1-sol:1", "skipped": []}
+{"by": "1:v-015:gpt-6.1-sol:2", "intent": "symptoms", "model": "gpt-6.1-sol", "reason": "no cached text", "replaced": "1:v-012:gpt-6.1-sol:6", "skipped": ["1:v-012:gpt-6.1-sol:5"]}
+{"by": null, "intent": "treatment", "model": "gpt-6.1-sol", "reason": "fetch not ok", "replaced": "1:v-034:gpt-6.1-sol:3", "skipped": ["1:v-023:gpt-6.1-sol:2", "1:v-036:gpt-6.1-sol:1"]}
