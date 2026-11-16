@@ -137,7 +137,12 @@ _PAGE_TYPES = frozenset({"BlogPosting", "Report", "HealthTopicContent", "SocialM
 
 def _is_page(obj: Mapping[str, Any]) -> bool:
     types = obj.get("@type", obj.get("type"))
-    names = [types] if isinstance(types, str) else [x for x in types or [] if isinstance(x, str)]
+    if isinstance(types, str):
+        names = [types]
+    elif isinstance(types, list):
+        names = [x for x in types if isinstance(x, str)]
+    else:
+        names = []  # a number or boolean @type is no page type (v4 M2)
     names = [n.rsplit("/", 1)[-1] for n in names]
     return any(n.endswith(_PAGE_SUFFIXES) or n in _PAGE_TYPES for n in names)
 
@@ -246,6 +251,49 @@ def json_ld(blocks: list[str]) -> list[DateCandidate]:
     return out
 
 
+# block elements, and the inline ones a page sets a date line in (a byline span, a <time>)
+LINE_TAGS = frozenset(
+    [
+        "p",
+        "div",
+        "br",
+        "li",
+        "ul",
+        "ol",
+        "tr",
+        "td",
+        "th",
+        "dd",
+        "dt",
+        "dl",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "section",
+        "article",
+        "aside",
+        "header",
+        "footer",
+        "main",
+        "nav",
+        "figure",
+        "figcaption",
+        "blockquote",
+        "table",
+        "hr",
+        "small",
+        "span",
+        "time",
+        "address",
+        "details",
+        "summary",
+    ]
+)
+
+
 class _Page(HTMLParser):
     SKIP = frozenset({"script", "style", "noscript", "template"})
 
@@ -267,12 +315,12 @@ class _Page(HTMLParser):
             self._ld = []
         elif tag in self.SKIP:
             self._skip += 1
-        if tag in ("p", "div", "br", "li", "tr", "dd", "dt", "h1", "h2", "h3", "h4", "h5", "h6"):
-            self.text.append("\n")  # block boundaries are line breaks
-        elif tag in ("span", "time", "td", "th"):
-            self.text.append(" ")
+        if tag in LINE_TAGS:
+            self.text.append("\n")  # an element of its own starts a line (A2.3 v4 M1)
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in LINE_TAGS:
+            self.text.append("\n")  # and ends one
         if tag == "script" and self._ld is not None:
             self.ld.append("".join(self._ld))
             self._ld = None
@@ -286,15 +334,22 @@ class _Page(HTMLParser):
             self.text.append(data)
 
 
+def _safely(fn: Any, *args: Any) -> list[DateCandidate]:
+    try:
+        return list(fn(*args))
+    except Exception:  # one failing source never drops the others (v4 M2)
+        return []
+
+
 def from_html(html: str, url: str) -> list[DateCandidate]:
-    out = structured(html, url)
+    out = _safely(structured, html, url)
     p = _Page()
     try:
         p.feed(html)
         p.close()
     except Exception:
         pass
-    out += json_ld(p.ld)
+    out += _safely(json_ld, p.ld)
     for name, content in p.metas:
         d = parse_date(content)
         if d is not None:

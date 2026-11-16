@@ -639,3 +639,46 @@ def test_odd_page_ages_and_deep_values_never_stop_a_page(tmp_path):
         '<meta property="article:published_time" content="2020-01-01">'
     )
     assert ("published", "2020-01-01", "meta_tag") in kinds(html)
+
+
+# --- pass 4 ------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "html",
+    [
+        "<h1>Title</h1><span>Last reviewed: 06 Nov 2024</span>",
+        "<article><p>Body.</p></article><footer>Last reviewed: 06 Nov 2024</footer>",
+        "<p>Body.</p><section>Last reviewed: 06 Nov 2024</section>",
+        "<p>Body.</p>Last reviewed: 06 Nov 2024",
+        "<ul><li>x</li></ul><small>Last reviewed: 06 Nov 2024</small>",
+        "<table><tr><td>x</td></tr></table><aside>Reviewed on: 06 Nov 2024</aside>",
+        "<p>Body.</p><hr>Last reviewed: 06 Nov 2024",
+        "<div>Body</div><div>Last reviewed: 06 Nov 2024</div>",
+        "<p>Body<br>Last reviewed: 06 Nov 2024</p>",
+        "<ul><li>Body</li><li>Last reviewed: 06 Nov 2024</li></ul>",
+        "<span>By Jo</span> <span>Last reviewed:</span> <time>06 Nov 2024</time>",
+    ],
+)
+def test_a_review_line_in_its_own_element_counts(html):
+    """v4 M1: real layouts put the review line in its own element."""
+    assert ("reviewed", "2024-11-06", "visible_text") in kinds(html)
+
+
+def test_a_non_string_type_never_loses_the_other_sources():
+    """v4 M2."""
+    html = (
+        '<script type="application/ld+json">{"@type":5,"dateModified":"2024-01-01"}</script>'
+        "<p>Last updated 3 March 2024</p>"
+    )
+    assert ("modified", "2024-03-03", "visible_text") in kinds(html)
+    assert ("modified", "2024-03-03", "visible_text") in kinds(
+        '<script type="application/ld+json">{"type":true}</script><p>Last updated 3 March 2024</p>'
+    )
+
+
+def test_every_date_in_a_list_value_is_read():
+    """v4 L1."""
+    ld = {"@type": "Article", "datePublished": ["2019-01-01", "2018-06-06", "2020-02-02"]}
+    got = kinds(f'<script type="application/ld+json">{json.dumps(ld)}</script>')
+    assert {v for k, v, _ in got if k == "published"} == {"2019-01-01", "2018-06-06", "2020-02-02"}
