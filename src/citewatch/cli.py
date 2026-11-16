@@ -252,6 +252,24 @@ def ask(
             f"warning: prices were checked {age} days ago; estimates and the cap may be low",
             err=True,
         )
+    gate: list[str] = []
+    if run >= 1:  # Tech Spec §13: gate G1 before every study run, G2 before run 2
+        import datetime as dt
+
+        from citewatch.metrics.summary import preregistration_for
+        from citewatch.runs import gate_g1, gate_g2
+
+        gate = gate_g1(
+            path.parent,
+            cfg,
+            estimate_usd=est["total_usd"],
+            measured=bool(measured),
+            cap_usd=cap,
+            prices_age_days=age,
+            preregistration=preregistration_for(path.parent),
+        )
+        if run == 2:
+            gate += [g for g in gate_g2(path.parent, cfg, dt.datetime.now(dt.UTC)) if g not in gate]
     plan = {
         "run": run,
         "questions": len(qs),
@@ -259,6 +277,7 @@ def ask(
         "estimate": est,
         "cap_usd": cap,
         "prices_age_days": price_age_days(prices),
+        "gate": gate,
     }
     if dry_run:
         lines = [f"run {run}: {len(qs)} questions x {len(cfg.models)} models, no calls made"]
@@ -269,8 +288,13 @@ def ask(
             f"  total about ${est['total_usd']:.2f}"
             + (f" (cap ${cap:.2f})" if cap is not None else " (no cap)")
         )
+        if run >= 1:
+            lines.append("gate: " + ("passes" if not gate else "WOULD REFUSE"))
+            lines += [f"  - {g}" for g in gate]
         _emit(as_json, {"ok": True, "command": "ask", "dry_run": True, **plan}, "\n".join(lines))
         raise typer.Exit(EXIT_OK)
+    if gate:
+        _fail(as_json, "ask", f"gate G{run} refuses run {run}: " + "; ".join(gate))
     if cap is not None and est["total_usd"] > cap:
         _fail(
             as_json,
@@ -313,6 +337,9 @@ def ask(
         old_term = signal.signal(signal.SIGTERM, _term)
     except (ValueError, OSError):  # not the main thread
         old_term = None
+    import datetime as _dt
+
+    started = _dt.datetime.now(_dt.UTC)
     try:
         res = ask_run(
             qs,
@@ -329,6 +356,23 @@ def ask(
         if old_term is not None:
             signal.signal(signal.SIGTERM, old_term)
     nothing = res.asked == 0 and bool(res.errors)  # every attempted call failed (D-41, v4 L5)
+    if run >= 1:  # RUN-04: the manifest records the commit, config and model snapshots
+        from citewatch.metrics.summary import preregistration_for
+        from citewatch.runners.schedule import config_hash
+        from citewatch.runs import sha256, write_manifest
+
+        done = not (res.stopped_at_cap or res.interrupted)
+        write_manifest(
+            base,
+            run,
+            config_hash=config_hash(cfg),
+            questions_sha256=sha256(base / cfg.questions_path),
+            preregistration_sha256=sha256(preregistration_for(base)),
+            started_at=started,
+            finished_at=_dt.datetime.now(_dt.UTC) if done else None,
+            answers=res.asked + res.cached,
+            errors=res.errors,
+        )
     summary = {
         "ok": not (res.stopped_at_cap or res.interrupted or nothing),
         "command": "ask",
