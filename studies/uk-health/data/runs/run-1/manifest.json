@@ -1,0 +1,22 @@
+{
+  "answers": 200,
+  "config_hash": "b1ef32199d482e7d",
+  "errors": 0,
+  "finished_at": "2026-11-16T18:16:11Z",
+  "git_sha": "45abb41fcaf5bed2f1d3c7ac57dfca360035a15c",
+  "git_shas": [
+    "45abb41fcaf5bed2f1d3c7ac57dfca360035a15c"
+  ],
+  "model_snapshots": {
+    "claude-sonnet-5-5": [
+      "claude-sonnet-5-5"
+    ],
+    "gpt-6.1-sol": [
+      "gpt-6.1-sol"
+    ]
+  },
+  "preregistration_sha256": "9e227483cc387386c0a2b7ca36161c24f77cd59eaee2eb173978c4a183f60cbb",
+  "questions_sha256": "aaa3a348ab5844e2ad1fac47e0b68a4b53fb08e1354a0f303cc3d60186bba071",
+  "run": 1,
+  "started_at": "2026-11-16T18:10:16Z"
+}
