@@ -27,7 +27,12 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     "openai key": re.compile(
         r"(?<![A-Za-z0-9])sk-(?!ant-)(?:proj-|svcacct-|admin-)?[A-Za-z0-9_\-]{32,}"
     ),
-    "aws access key": re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
+    # Owner-approved exception (OWNER D-57): a key id directly after `X-Amz-Credential=` is part of
+    # a third party's presigned S3 link that a search API returned and the study stores verbatim;
+    # presigned links expose the id by design and expire. Every other occurrence is still flagged.
+    "aws access key": re.compile(
+        r"(?<!X-Amz-Credential=)(?<!X-Amz-Credential%3D)\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"
+    ),
     "aws secret key": re.compile(
         r"(?i)aws_?secret_?(?:access_?)?key\W{0,4}[=:]\W{0,4}[A-Za-z0-9/+]{40}(?![A-Za-z0-9/+])"
     ),

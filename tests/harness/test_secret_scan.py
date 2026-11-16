@@ -62,3 +62,23 @@ def test_env_var_reference_is_clean(tmp_path):
 @pytest.mark.safety
 def test_live_repo_has_no_secrets():
     assert secret_scan.scan(secret_scan.candidate_files(secret_scan.ROOT)) == []
+
+
+def test_a_presigned_url_key_id_is_not_flagged_but_any_other_is(tmp_path):
+    """OWNER D-57: only the key id right after X-Amz-Credential= in a URL is exempt."""
+    key = "AKIA" + "ABCDEFGHIJKLMNOP"
+    signed = tmp_path / "consulted.jsonl"
+    signed.write_text(
+        f'{{"url": "https://b.s3.amazonaws.com/x.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential={key}%2F20251110"}}\n',
+        encoding="utf-8",
+    )
+    assert secret_scan.scan([signed]) == []
+    for leak in (
+        f"aws_access_key_id = {key}",
+        f"Credential={key}",
+        f"X-Amz-Credential= {key}",
+        f"see {key} here",
+    ):
+        f = tmp_path / "leak.txt"
+        f.write_text(leak + "\n", encoding="utf-8")
+        assert secret_scan.scan([f]), leak
