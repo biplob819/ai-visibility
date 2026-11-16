@@ -1,0 +1,10 @@
+{"id": "v-002", "text": "What are the early signs of sepsis in adults?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-012", "text": "Which symptoms mean I should call 999 rather than NHS 111?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-023", "text": "How do I treat a burn from boiling water?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-037", "text": "Is talking therapy for anxiety available without a GP referral?", "intent": "treatment", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-043", "text": "What does NHS 111 do?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-053", "text": "Who can get the flu jab for free this winter?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-064", "text": "Why do my legs ache the day after a long run?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-078", "text": "What is the latest advice on exercise after having Covid?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-081", "text": "How much water should adults drink a day?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-092", "text": "What is the current advice on how much sugar children should have?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}

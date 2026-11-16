@@ -1,0 +1,16 @@
+# Measured per-answer usage from the smoke run; `citewatch ask` estimates from it.
+headroom: 1.25
+models:
+  claude-sonnet-5-5:
+    answers: 10
+    mean_cost_usd: 0.040421
+    searches: 2
+    tokens_in: 16038
+    tokens_out: 596
+  gpt-6.1-sol:
+    answers: 10
+    mean_cost_usd: 0.038803
+    searches: 2
+    tokens_in: 18692
+    tokens_out: 462
+source: 'run 0: 20 stored answers'

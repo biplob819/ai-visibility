@@ -151,21 +151,75 @@ def estimate_run(
     models: Iterable[str],
     prices: Mapping[str, Price],
     assumptions: Mapping[str, int] = ASSUMPTIONS,
+    measured: Mapping[str, Mapping[str, int]] | None = None,
 ) -> dict[str, Any]:
     """Calls and estimated USD per model and in total, before any call is made. `n_questions`
-    may be a count per model (a resumed run counts only the calls not yet stored)."""
+    may be a count per model (a resumed run counts only the calls not yet stored). `measured`
+    holds a study's per-model averages from its smoke run (SMK-02) and wins over the defaults."""
     per_model = {}
+    used: dict[str, dict[str, int]] = {}
     for m in models:
         n = n_questions.get(m, 0) if isinstance(n_questions, Mapping) else n_questions
+        a = dict(measured[m]) if measured and m in measured else dict(assumptions)
+        used[m] = a
         one = answer_cost(
             price_for(m, prices),
-            tokens_in=assumptions["tokens_in"],
-            tokens_out=assumptions["tokens_out"],
-            searches=assumptions["searches"],
+            tokens_in=a["tokens_in"],
+            tokens_out=a["tokens_out"],
+            searches=a["searches"],
         )
         per_model[m] = {"calls": n, "usd": check_money(round(one * n, 6))}
     total = check_money(math.fsum(v["usd"] for v in per_model.values()))
-    return {"per_model": per_model, "total_usd": round(total, 6), "assumptions": dict(assumptions)}
+    return {
+        "per_model": per_model,
+        "total_usd": round(total, 6),
+        "assumptions": used,
+        "measured": bool(measured),
+    }
+
+
+MEASURED_KEYS = ("tokens_in", "tokens_out", "searches")
+
+
+def load_measured(path: Path) -> dict[str, dict[str, int]] | None:
+    """A study's `cost_model.yaml` (written from its smoke run), or None if it has none."""
+    if not path.is_file():
+        return None
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    models = raw.get("models") if isinstance(raw, dict) else None
+    if not isinstance(models, dict):
+        raise PriceError(f"{path}: needs a `models:` mapping")
+    out: dict[str, dict[str, int]] = {}
+    for m, v in models.items():
+        if not isinstance(v, dict):
+            raise PriceError(f"{path}: {m} must be a mapping")
+        row = {}
+        for k in MEASURED_KEYS:
+            x = v.get(k)
+            if isinstance(x, bool) or not isinstance(x, int) or x < 0:
+                raise PriceError(f"{path}: {m}.{k} must be a non-negative integer, got {x!r}")
+            row[k] = x
+        out[str(m)] = row
+    return out
+
+
+def measure(records: Iterable[Mapping[str, Any]], *, headroom: float = 1.25) -> dict[str, Any]:
+    """Per-model averages from stored answers, with headroom so estimates stay on the safe side:
+    the mean of each usage figure times `headroom`, rounded up."""
+    by: dict[str, list[Mapping[str, Any]]] = {}
+    for r in records:
+        if r.get("error") is None and r.get("usage"):
+            by.setdefault(str(r["model"]), []).append(r)
+    models: dict[str, dict[str, Any]] = {}
+    for m, xs in sorted(by.items()):
+        row: dict[str, Any] = {}
+        for k in MEASURED_KEYS:
+            mean = math.fsum(int(x["usage"][k]) for x in xs) / len(xs)
+            row[k] = max(1, math.ceil(mean * headroom))
+        row["answers"] = len(xs)
+        row["mean_cost_usd"] = round(math.fsum(float(x["cost_usd"]) for x in xs) / len(xs), 6)
+        models[m] = row
+    return {"headroom": headroom, "models": models}
 
 
 def price_age_days(prices: Mapping[str, Price], today: dt.date | None = None) -> int:

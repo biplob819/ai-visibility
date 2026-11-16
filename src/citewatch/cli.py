@@ -16,7 +16,7 @@ from typing import Annotated, Any, NoReturn
 import typer
 
 from citewatch import __version__
-from citewatch.cost import PriceError, estimate_run, load_prices, price_age_days
+from citewatch.cost import PriceError, estimate_run, load_measured, load_prices, price_age_days
 from citewatch.env import MissingKeyError, key_status, load_dotenv
 from citewatch.ledger import Ledger
 from citewatch.schemas import (
@@ -241,7 +241,8 @@ def ask(
         m: sum(not stored.has("ask", ask_key(cfg, run, q, m)) for q in qs) for m in cfg.models
     }
     try:
-        est = estimate_run(missing, cfg.models, prices)  # a resume counts only what is missing
+        measured = load_measured(path.parent / "cost_model.yaml")  # SMK-02
+        est = estimate_run(missing, cfg.models, prices, measured=measured)  # only what is missing
     except PriceError as exc:
         _fail(as_json, "ask", str(exc))
     cap = max_cost if max_cost is not None else cfg.max_cost_usd
