@@ -1,0 +1,100 @@
+{"id": "v-001", "text": "When should I worry about a headache that won't go away?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-002", "text": "What are the early signs of sepsis in adults?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-003", "text": "Is chest pain after exercise always a sign of a heart problem?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-004", "text": "How can I tell if my child's high temperature needs a doctor?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-005", "text": "What does it mean if I keep feeling dizzy when I stand up?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-006", "text": "When is a cough serious enough to see a GP?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-007", "text": "What are the symptoms of a stroke I should look out for?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-008", "text": "Is blood in my urine always serious?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-009", "text": "What are the warning signs of type 2 diabetes?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-010", "text": "How long does a sore throat usually last before I should get it checked?", "intent": "symptoms", "time_sensitive": false}
+{"id": "v-011", "text": "What are the current symptoms of Covid I should test for?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-012", "text": "Which symptoms mean I should call 999 rather than NHS 111?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-013", "text": "What symptoms of measles should parents look for during the current outbreaks?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-014", "text": "When should I use a pharmacy instead of a GP for a urine infection?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-015", "text": "What symptoms of bowel cancer mean I should ask my GP for a home test kit?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-016", "text": "When do shingles symptoms mean I can get antiviral treatment from a pharmacy?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-017", "text": "What are the signs of whooping cough in babies during the current rise in cases?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-018", "text": "Where can I get a free test if I have symptoms of a sexually transmitted infection?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-019", "text": "Can I get an urgent same-day appointment for chest infection symptoms?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-020", "text": "What symptoms of strep A in children should parents watch for this winter?", "intent": "symptoms", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-021", "text": "Is it safe to take ibuprofen and paracetamol together?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-022", "text": "What is the best way to treat a sprained ankle at home?", "intent": "treatment", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-023", "text": "How do I treat a burn from boiling water?", "intent": "treatment", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-024", "text": "What helps with hay fever if antihistamines don't work?", "intent": "treatment", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-025", "text": "How long should I use an ice pack on an injury?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-026", "text": "What is the best treatment for a cold sore?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-027", "text": "How can I treat constipation without medicine?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-028", "text": "Do antibiotics help with a sinus infection?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-029", "text": "What can I do at home to ease lower back pain?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-030", "text": "How do I treat head lice in children?", "intent": "treatment", "time_sensitive": false}
+{"id": "v-031", "text": "Can a pharmacist now give me antibiotics for sinusitis without seeing a GP?", "intent": "treatment", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-032", "text": "Which weight loss injections are available on the NHS and who can get them?", "intent": "treatment", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-033", "text": "Is there a shortage of ADHD medication at the moment?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-034", "text": "What is the current advice on taking vitamin D to treat low levels?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-035", "text": "Can I get HRT for menopause from a pharmacy without a prescription?", "intent": "treatment", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-036", "text": "Which hay fever treatments can I buy without a prescription in the UK now?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-037", "text": "Is talking therapy for anxiety available without a GP referral?", "intent": "treatment", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-038", "text": "Are there new treatments for migraine available on the NHS?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-039", "text": "Can I get the morning after pill free from a pharmacy?", "intent": "treatment", "time_sensitive": true, "ts_reason": "prices"}
+{"id": "v-040", "text": "What is the latest guidance on giving children cough medicine?", "intent": "treatment", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-041", "text": "How do I register with a GP practice?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-042", "text": "What is the difference between A&E and an urgent treatment centre?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-043", "text": "What does NHS 111 do?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-044", "text": "How do I get a copy of my medical records?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-045", "text": "Can I choose which hospital I'm referred to?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-046", "text": "What should I bring to my first GP appointment?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-047", "text": "How do I complain about NHS care?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-048", "text": "What is a social prescriber?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-049", "text": "Can I see a physiotherapist without a GP referral?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-050", "text": "What happens at an NHS health check?", "intent": "nhs_services", "time_sensitive": false}
+{"id": "v-051", "text": "How much does an NHS prescription cost in England?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "prices"}
+{"id": "v-052", "text": "How much does NHS dental treatment cost in each band?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "prices"}
+{"id": "v-053", "text": "Who can get the flu jab for free this winter?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-054", "text": "How long is the wait for hospital treatment after a GP referral?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-055", "text": "Who is eligible for the RSV vaccine?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-056", "text": "How do I find an NHS dentist taking new patients?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-057", "text": "What can I do in the NHS App now?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-058", "text": "Who qualifies for free eye tests on the NHS?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-059", "text": "How long should I expect to wait in A&E?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "waiting"}
+{"id": "v-060", "text": "How much does a prescription prepayment certificate cost?", "intent": "nhs_services", "time_sensitive": true, "ts_reason": "prices"}
+{"id": "v-061", "text": "How much exercise should adults do each week?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-062", "text": "Is it better to stretch before or after running?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-063", "text": "How can I start running if I've never exercised?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-064", "text": "Why do my legs ache the day after a long run?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-065", "text": "How many steps a day should I aim for?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-066", "text": "What is the best way to build muscle after 50?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-067", "text": "How do I avoid shin splints when I start running?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-068", "text": "Is walking as good as running for fitness?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-069", "text": "How often should I rest between strength training sessions?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-070", "text": "What exercises help with lower back pain?", "intent": "fitness", "time_sensitive": false}
+{"id": "v-071", "text": "What are the latest UK physical activity guidelines for adults?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-072", "text": "What are the current UK physical activity guidelines for children?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-073", "text": "Can my GP refer me to a free exercise programme?", "intent": "fitness", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-074", "text": "What exercise is safe during pregnancy under current advice?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-075", "text": "Is there free NHS support to help me get more active?", "intent": "fitness", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-076", "text": "What are the current recommendations on strength training for older adults?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-077", "text": "Are free community running programmes still available for beginners?", "intent": "fitness", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-078", "text": "What is the latest advice on exercise after having Covid?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-079", "text": "Can I get free physiotherapy for a sports injury on the NHS?", "intent": "fitness", "time_sensitive": true, "ts_reason": "services"}
+{"id": "v-080", "text": "What does current guidance say about sitting too much at work?", "intent": "fitness", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-081", "text": "How much water should adults drink a day?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-082", "text": "Is it safe to eat eggs every day?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-083", "text": "What foods are high in iron?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-084", "text": "How much protein do I need to build muscle?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-085", "text": "Are frozen vegetables as healthy as fresh?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-086", "text": "How long can cooked rice be kept in the fridge?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-087", "text": "What counts as one of my five a day?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-088", "text": "Is intermittent fasting safe?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-089", "text": "What are the best sources of omega-3 for vegetarians?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-090", "text": "How much fibre should I eat each day?", "intent": "nutrition", "time_sensitive": false}
+{"id": "v-091", "text": "Should everyone in the UK take a vitamin D supplement in winter?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-092", "text": "What is the current advice on how much sugar children should have?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-093", "text": "How much alcohol is it safe to drink each week under current guidelines?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-094", "text": "Can I get free vitamins for my baby?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-095", "text": "What is the latest advice on eating ultra-processed food?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-096", "text": "Is folic acid now added to flour in the UK?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-097", "text": "Who can get free healthy food vouchers during pregnancy?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "eligibility"}
+{"id": "v-098", "text": "What are the current salt intake recommendations for adults?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-099", "text": "Is it safe to eat runny eggs during pregnancy under current advice?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
+{"id": "v-100", "text": "What is the current guidance on caffeine during pregnancy?", "intent": "nutrition", "time_sensitive": true, "ts_reason": "guidance"}
