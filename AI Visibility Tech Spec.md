@@ -572,7 +572,7 @@ Appendix C lists the provider facts to confirm against live docs at N1.2 before 
 - **Lookup (US7).** `lookup(domain)` normalises the input (strips scheme, `www.`, path, port) and maps it through the same `publisher_of` the extractor uses (a contract test asserts they are one function). It reads `domain_cards.json` only; it never calls a model. Target under 1 second.
 - **Not in the data.** A publisher that was never cited returns "not cited in any of the N answers in this study", plus the most-cited publishers for the intent the reviewer picks.
 - **`cited_instead`.** For a cited publisher: on the questions where it was cited by one model or run but not another, the publishers cited in the answers that left it out, ranked by count.
-- **Live mode (US8).** Behind the passcode, through the `portfolio-demos` spend guard EvalKit built in D3.1 (persistent daily counter, per-session limit, per-request cap). One question, both models, the §7.1 settings. The screen shows each model's citations (URL, publisher, quoted span) and never the answer prose (D-17). Daily cap $3; at about $0.20 per live question, about 15 questions a day.
+- **Live mode (US8).** Behind passkey sign-in (WebAuthn; OWNER D-58 replaces the passcode), through the `portfolio-demos` spend guard EvalKit built in D3.1 (persistent daily counter, per-session limit, per-request cap). One question, both models, the §7.1 settings. The screen shows each model's citations (URL, publisher, quoted span) and never the answer prose (D-17). Daily cap $3; at about $0.20 per live question, about 15 questions a day. **Bring your own keys (OWNER D-58):** a signed-in visitor may paste their own Anthropic and OpenAI keys instead of using the owner's; a passkey is still required, the keys live only in that session's memory (never logged, stored or sent anywhere but the provider), and the per-request cap still applies, while the owner's daily cap counts only calls made on the owner's keys.
 - **Privacy.** Logs hold timestamp, mode, latency and cost only. No question text, no IP address.
 
 ---
@@ -950,6 +950,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | OSS-06 | CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates | D-23 |
 | OSS-07 | Semver policy; public API (`citewatch.schemas`, `canonical_url`, `publisher_of`, `lookup`) and an import contract test against the built wheel | D-23 |
 | OSS-08 | Tag v0.1.0 with the flagship UK study's results and changelog | D-23 |
+| OSS-09 | Release README: screenshots of the dashboard, demo and CLI; a step-by-step guide; every important link in one place, each checked to resolve | OWNER D-58 |
 
 **D5.1 Domain cards and lookup**
 
@@ -964,9 +965,10 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | Cap | Capability | Trace |
 | --- | --- | --- |
 | DEM-01 | Streamlit page in `portfolio-demos`: lookup by default, top-ten picker | US7 |
-| DEM-02 | Live mode behind the passcode through the shared spend guard; citations only (D-17) | US8, B5, B6 |
+| DEM-02 | Live mode behind passkey sign-in (WebAuthn) through the shared spend guard; citations only (D-17) | US8, B5, B6, OWNER D-58 |
 | DEM-03 | Aggregate-only logging; secrets in the host's secret store | §9 |
 | DEM-04 | Deployed | FR11 |
+| DEM-05 | Bring your own API keys: a passkey is still required; keys held only in session memory, never logged or stored; per-request cap applies | OWNER D-58 |
 
 **D5.3 Project page, video, supporting notes**
 
