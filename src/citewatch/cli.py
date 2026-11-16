@@ -31,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"score --sample-support/--labels/--finalise": "M3.2, M3.3", "report": "B4.1"}
+NOT_BUILT = {"score --labels/--finalise": "M3.2, M3.3", "report": "B4.1"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -568,8 +568,8 @@ def score(
     as_json: JsonOpt = False,
 ) -> None:
     """Compute the metrics and run the support and hand-check samples."""
-    if sample_support or labels is not None or finalise:
-        _not_built("score --sample-support/--labels/--finalise", as_json)  # M3.2, M3.3
+    if labels is not None or finalise:
+        _not_built("score --labels/--finalise", as_json)  # M3.2, M3.3
     from citewatch.metrics import COVERAGE_TARGET, build_summary, write_summary
 
     path = _study_file(study)
@@ -578,6 +578,8 @@ def score(
         qs = load_questions(path.parent / cfg.questions_path, cfg)
     except ConfigError as exc:
         _fail(as_json, "score", str(exc))
+    if sample_support:
+        _sample_support(path.parent, cfg, qs, as_json)
     runs = sorted({r for r in (1, 2) if _has_run(path.parent, r)}) or [0]
     try:
         summary = build_summary(path.parent, cfg, qs, runs)
@@ -600,6 +602,39 @@ def score(
     if cov.point < COVERAGE_TARGET:
         text += "  BELOW TARGET"
     _emit(as_json, payload, text)
+    raise typer.Exit(EXIT_OK)
+
+
+def _sample_support(base: Path, cfg: Any, qs: Any, as_json: bool) -> NoReturn:
+    """SUP-01: draw the support sample from run 1's citations, once, before run 1's fetch."""
+    from citewatch.support import draw_sample, read_sample, write_sample
+
+    if read_sample(base):
+        _fail(as_json, "score", "the support sample was already drawn; it is never redrawn")
+    cites_path = base / "data" / "citations.jsonl"
+    cites = (
+        [json.loads(x) for x in cites_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if cites_path.is_file()
+        else []
+    )
+    rows = draw_sample(cites, cfg, qs)
+    if not rows:
+        _fail(
+            as_json, "score", "no run 1 citations to sample: run `ask --run 1` and `extract` first"
+        )
+    out = write_sample(base, rows)
+    n = sum(r["role"] == "sample" for r in rows)
+    _emit(
+        as_json,
+        {
+            "ok": True,
+            "command": "score",
+            "sample": str(out),
+            "sampled": n,
+            "reserves": len(rows) - n,
+        },
+        f"support sample: {n} citations and {len(rows) - n} reserves -> {out}",
+    )
     raise typer.Exit(EXIT_OK)
 
 

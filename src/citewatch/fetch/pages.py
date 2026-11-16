@@ -62,7 +62,21 @@ def body_cache_dir() -> Path:
 
 
 class _Text(HTMLParser):
-    SKIP = frozenset({"script", "style", "noscript", "template", "svg", "head"})
+    # markup and page furniture: navigation, footers and forms are never evidence (SUP-02)
+    SKIP = frozenset(
+        {
+            "script",
+            "style",
+            "noscript",
+            "template",
+            "svg",
+            "head",
+            "nav",
+            "footer",
+            "form",
+            "button",
+        }
+    )
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)

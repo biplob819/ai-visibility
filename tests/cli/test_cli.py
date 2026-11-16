@@ -36,7 +36,7 @@ def test_help_lists_every_command(capsys):
 @pytest.mark.parametrize(
     ("argv", "node"),
     [
-        (["score", "--sample-support"], "M3.2"),
+        (["score", "--labels", "x.csv"], "M3.2"),
         (["score", "--finalise"], "M3.3"),
         (["report", "--example"], "B4.1"),
     ],
