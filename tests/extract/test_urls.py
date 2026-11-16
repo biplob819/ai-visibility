@@ -118,3 +118,20 @@ def test_publisher_needs_no_network(monkeypatch):
 
     urls._extractor.cache_clear()
     assert publisher_of("https://www.bbc.co.uk/") == ("bbc.co.uk", None)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://apply-for-a-blue-badge.service.gov.uk/start",
+        "https://assets.publishing.service.gov.uk/media/x.pdf",
+        "https://service.gov.uk/",
+    ],
+)
+def test_gov_uk_services_count_as_gov_uk(url):
+    """OWNER D-49."""
+    assert publisher_of(url) == ("gov.uk", None)
+
+
+def test_other_gov_uk_hosts_keep_their_own_publisher():
+    assert publisher_of("https://www.ons.gov.uk/x") == ("ons.gov.uk", "gov.uk")

@@ -92,6 +92,8 @@ def publisher_of(url_or_domain: str) -> tuple[str, str | None]:
     host = _host(url_or_domain)
     if not host:
         raise UrlError(f"{url_or_domain!r} has no host")
+    if host == "service.gov.uk" or host.endswith(".service.gov.uk"):
+        return "gov.uk", None  # GOV.UK services and assets count as GOV.UK (OWNER D-49)
     for inst in INSTITUTIONAL:
         if host == inst or host == "www." + inst:
             return inst, None
