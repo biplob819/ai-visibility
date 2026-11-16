@@ -682,3 +682,20 @@ def test_every_date_in_a_list_value_is_read():
     ld = {"@type": "Article", "datePublished": ["2019-01-01", "2018-06-06", "2020-02-02"]}
     got = kinds(f'<script type="application/ld+json">{json.dumps(ld)}</script>')
     assert {v for k, v, _ in got if k == "published"} == {"2019-01-01", "2018-06-06", "2020-02-02"}
+
+
+def test_an_aside_inside_a_paragraph_is_its_own_line_and_a_failing_source_drops_nothing(
+    monkeypatch,
+):
+    """v5 lows: the aside break and the per-source guard."""
+    assert ("reviewed", "2024-11-06", "visible_text") in kinds(
+        "<p>text <aside>Last reviewed: 06 Nov 2024</aside></p>"
+    )
+    import citewatch.dates.candidates as cand
+
+    def boom(*a, **k):
+        raise RuntimeError("extruct broke")
+
+    monkeypatch.setattr(cand, "structured", boom)
+    monkeypatch.setattr(cand, "json_ld", boom)
+    assert ("modified", "2024-03-03", "visible_text") in kinds("<p>Last updated 3 March 2024</p>")

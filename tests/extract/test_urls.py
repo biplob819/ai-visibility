@@ -67,7 +67,10 @@ def test_canonical_url_is_idempotent(scheme, host, port, path, query, frag):
     url += frag
     once = canonical_url(url)
     assert canonical_url(once) == once and canonical_problems(once) == []
-    assert "utm_" not in once and "gclid" not in once and "#" not in once
+    from urllib.parse import parse_qsl, urlsplit
+
+    keys = [k.lower() for k, _ in parse_qsl(urlsplit(once).query, keep_blank_values=True)]
+    assert not any(k.startswith("utm_") or k == "gclid" for k in keys) and "#" not in once
 
 
 @pytest.mark.parametrize(
