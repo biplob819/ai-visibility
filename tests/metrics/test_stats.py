@@ -43,7 +43,8 @@ def test_one_seeded_resample_matrix():
 
 
 def test_two_sided_bootstrap_p_value():
-    assert p_two_sided(np.array([1.0] * 99 + [-1.0])) == pytest.approx(0.02)
+    assert p_two_sided(np.array([1.0] * 99 + [-1.0])) == pytest.approx(2 * 2 / 101)
+    assert p_two_sided(np.array([1.0] * 100)) == pytest.approx(2 / 101)  # never exactly 0
     assert p_two_sided(np.array([0.0, 0.0])) == 1.0
     assert p_two_sided(np.array([np.nan])) == 1.0
 

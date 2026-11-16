@@ -180,8 +180,8 @@
    },
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
-   "p_holm": 0.0,
-   "p_value": 0.0,
+   "p_holm": 0.007999200079992,
+   "p_value": 0.00019998000199980003,
    "publisher": "nhs.uk",
    "run": 0,
    "separated": true
@@ -197,7 +197,7 @@
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
    "p_holm": 1.0,
-   "p_value": 0.7136,
+   "p_value": 0.7137286271372862,
    "publisher": "londonambulance.nhs.uk",
    "run": 0,
    "separated": false
@@ -229,7 +229,7 @@
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
    "p_holm": 1.0,
-   "p_value": 0.211,
+   "p_value": 0.2111788821117888,
    "publisher": "gov.uk",
    "run": 0,
    "separated": false
@@ -277,7 +277,7 @@
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
    "p_holm": 1.0,
-   "p_value": 0.2228,
+   "p_value": 0.22297770222977703,
    "publisher": "swast.nhs.uk",
    "run": 0,
    "separated": false
@@ -309,7 +309,7 @@
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
    "p_holm": 1.0,
-   "p_value": 0.6952,
+   "p_value": 0.6953304669533047,
    "publisher": "acsm.org",
    "run": 0,
    "separated": false
@@ -325,8 +325,488 @@
    "model_a": "claude-sonnet-5-5",
    "model_b": "gpt-6.1-sol",
    "p_holm": 1.0,
-   "p_value": 0.706,
+   "p_value": 0.7061293870612939,
    "publisher": "actiononsugar.org",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.0,
+    "k": null,
+    "lo": -0.3,
+    "n": 10,
+    "point": -0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7137286271372862,
+   "publisher": "assets.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6995300469953005,
+   "publisher": "asthmaandlung.org.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7005299470052995,
+   "publisher": "boots.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7047295270472953,
+   "publisher": "britbrief.co.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6899310068993101,
+   "publisher": "cnn.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7005299470052995,
+   "publisher": "curatehealth.co.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6995300469953005,
+   "publisher": "eastamb.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7045295470452955,
+   "publisher": "ekhuft.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7137286271372862,
+   "publisher": "england.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7045295470452955,
+   "publisher": "esht.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.682931706829317,
+   "publisher": "google.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7061293870612939,
+   "publisher": "gov.scot",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7137286271372862,
+   "publisher": "healthwatch.co.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.682931706829317,
+   "publisher": "icb.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.0,
+    "k": null,
+    "lo": -0.3,
+    "n": 10,
+    "point": -0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7005299470052995,
+   "publisher": "ics.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.0,
+    "k": null,
+    "lo": -0.3,
+    "n": 10,
+    "point": -0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7005299470052995,
+   "publisher": "kch.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7005299470052995,
+   "publisher": "lilachbullock.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6953304669533047,
+   "publisher": "marathonhandbook.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6899310068993101,
+   "publisher": "medicinesresources.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.700929907009299,
+   "publisher": "nbt.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7061293870612939,
+   "publisher": "nth.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6995300469953005,
+   "publisher": "nwas.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.682931706829317,
+   "publisher": "patient.info",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7047295270472953,
+   "publisher": "reminderit.com",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.6995300469953005,
+   "publisher": "scas.nhs.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.0,
+    "k": null,
+    "lo": -0.3,
+    "n": 10,
+    "point": -0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7045295470452955,
+   "publisher": "sepsistrust.org",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7137286271372862,
+   "publisher": "signhealth.org.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7047295270472953,
+   "publisher": "southdownspharmacygroup.co.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7061293870612939,
+   "publisher": "srnutrition.co.uk",
+   "run": 0,
+   "separated": false
+  },
+  {
+   "difference": {
+    "hi": 0.3,
+    "k": null,
+    "lo": 0.0,
+    "n": 10,
+    "point": 0.1
+   },
+   "model_a": "claude-sonnet-5-5",
+   "model_b": "gpt-6.1-sol",
+   "p_holm": 1.0,
+   "p_value": 0.7045295470452955,
+   "publisher": "uhsussex.nhs.uk",
    "run": 0,
    "separated": false
   }
@@ -390,6 +870,11 @@
    "cross_model:nutrition:run0": 0,
    "cross_model:symptoms:run0": 0,
    "cross_model:treatment:run0": 0
+  },
+  "undated_pages": {
+   "not_html": 4,
+   "ok": 5,
+   "robots_disallowed": 2
   }
  },
  "freshness": [
@@ -1288,11 +1773,11 @@
   {
    "model": null,
    "share": {
-    "hi": 0.7692307692307693,
+    "hi": 0.3454720279720277,
     "k": 10,
-    "lo": 0.24970238095238123,
-    "n": 19,
-    "point": 0.5263157894736842
+    "lo": 0.1111111111111111,
+    "n": 41,
+    "point": 0.24390243902439024
    }
   },
   {
@@ -1301,18 +1786,18 @@
     "hi": 0.0,
     "k": 0,
     "lo": 0.0,
-    "n": 2,
+    "n": 18,
     "point": 0.0
    }
   },
   {
    "model": "gpt-6.1-sol",
    "share": {
-    "hi": 0.8,
+    "hi": 0.6071428571428571,
     "k": 10,
-    "lo": 0.2857142857142857,
-    "n": 17,
-    "point": 0.5882352941176471
+    "lo": 0.2,
+    "n": 23,
+    "point": 0.43478260869565216
    }
   }
  ],
@@ -1338,9 +1823,9 @@
    "value": {
     "hi": 0.22727272727272727,
     "k": null,
-    "lo": 0.038461538461538464,
-    "n": 20,
-    "point": 0.06666666666666667
+    "lo": 0.06451612903225806,
+    "n": 40,
+    "point": 0.15
    }
   },
   {
@@ -1365,7 +1850,7 @@
     "hi": 0.3333333333333333,
     "k": null,
     "lo": 0.2,
-    "n": 20,
+    "n": 8,
     "point": 0.25
    }
   },
@@ -1391,7 +1876,7 @@
     "hi": 0.0,
     "k": null,
     "lo": 0.0,
-    "n": 20,
+    "n": 11,
     "point": 0.0
    }
   },
@@ -1417,7 +1902,7 @@
     "hi": 0.2,
     "k": null,
     "lo": 0.0,
-    "n": 20,
+    "n": 10,
     "point": 0.1
    }
   },
@@ -1443,7 +1928,7 @@
     "hi": 0.14285714285714285,
     "k": null,
     "lo": 0.0,
-    "n": 20,
+    "n": 11,
     "point": 0.09090909090909091
    }
   },
@@ -1469,7 +1954,7 @@
     "hi": 0.5,
     "k": null,
     "lo": 0.0,
-    "n": 20,
+    "n": 7,
     "point": 0.2857142857142857
    }
   }

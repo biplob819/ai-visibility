@@ -21,6 +21,7 @@ from citewatch.schemas import StudyConfig, StudyQuestion
 class Cite:
     url: str
     publisher: str
+    group: str | None = None
 
 
 @dataclass
@@ -96,6 +97,11 @@ def _date(s: str | None) -> dt.date | None:
     return None if not s else dt.date.fromisoformat(s[:10])
 
 
+def _ledger_run(run_id: str) -> int | None:
+    tail = run_id.rsplit(":run-", 1)
+    return int(tail[1]) if len(tail) == 2 and tail[1].isdigit() else None
+
+
 def load(
     base: Path, cfg: StudyConfig, questions: list[StudyQuestion], runs: list[int] | None = None
 ) -> StudyData:
@@ -131,7 +137,7 @@ def load(
             continue
         a.raw_citations += 1
         if all(c.url != r["url"] for c in a.cites):
-            a.cites.append(Cite(r["url"], r["publisher"]))
+            a.cites.append(Cite(r["url"], r["publisher"], r.get("publisher_group")))
     for r in _rows(data / "consulted.jsonl"):
         a = answers.get((r["run"], r["question_id"], r["model"]))
         if a is not None and all(c.url != r["url"] for c in a.consulted):
@@ -147,6 +153,11 @@ def load(
         if r.get("fetched_at"):
             at = _ts(r["fetched_at"])
             latest = at if latest is None or at > latest else latest
-    spend = math.fsum(float(r.get("spent_usd", 0.0)) for r in _rows(data / "spend-ledger.jsonl"))
+    scored = {a.run for a in answers.values()}
+    spend = math.fsum(  # the scored runs' paid calls only (v1 M4): `<study>:run-N`
+        float(r.get("spent_usd", 0.0))
+        for r in _rows(data / "spend-ledger.jsonl")
+        if _ledger_run(r.get("run_id", "")) in scored
+    )
     ordered = sorted(answers.values(), key=lambda a: (a.run, a.qid, a.model))
     return StudyData(list(questions), ordered, pages, round(spend, 6), latest)

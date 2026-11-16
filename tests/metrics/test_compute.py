@@ -78,13 +78,14 @@ def test_freshness_excludes_and_counts_pages_modified_after_the_answer(summary):
 def test_stale_rates_and_undated_answers(summary):
     a = pick(summary.stale, model=A, intent=None, definition="primary")
     assert a.rate.point == 0.5 and a.rate.n == 4 and a.rate.k == 2 and a.undated == 0
+    # a page dated after the answer is dated and newest: excluded from lag only (v1 M1)
     b = pick(summary.stale, model=B, intent=None, definition="primary")
-    assert b.rate.point == 0.0 and b.rate.n == 2 and b.undated == 2
+    assert b.rate.point == 0.0 and b.rate.n == 4 and b.undated == 0
 
 
 def test_nhs_overdue(summary):
-    row = pick(summary.nhs_overdue, model=None)
-    assert row.share.point == pytest.approx(4 / 6) and row.share.k == 4
+    row = pick(summary.nhs_overdue, model=None)  # NHS pairs only; no review date = not overdue
+    assert row.share.point == pytest.approx(4 / 7) and row.share.k == 4 and row.share.n == 7
 
 
 def test_overlap_self_overlap_and_normalised(summary):
@@ -141,3 +142,81 @@ def test_duckdb_views_reproduce_presence_share(tiny: Path, summary):
     for run, model, pub, k, n, share in con.execute("SELECT * FROM presence").fetchall():
         row = pick(summary.share, publisher=pub, model=model, intent=None, run=run, kind="presence")
         assert (row.share.k, row.share.n) == (k, n) and row.share.point == pytest.approx(share)
+
+
+# --- verifier pass 1 -----------------------------------------------------------------------------
+
+
+def _edit(tiny: Path, name: str, fn) -> None:
+    p = tiny / "data" / name
+    rows = [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x]
+    p.write_text("".join(json.dumps(r) + "\n" for r in fn(rows)), encoding="utf-8")
+
+
+def _score(tiny: Path) -> StudySummary:
+    cfg = load_study_config(tiny / "study.yaml")
+    return build_summary(tiny, cfg, load_questions(tiny / "questions.jsonl", cfg), resamples=200)
+
+
+def test_a_newer_page_dated_after_the_answer_keeps_an_answer_fresh(tiny: Path):
+    """v1 M1: t-001 on Claude cites a 1,054-day page and a page modified after the answer."""
+
+    def swap(rows):
+        for r in rows:
+            if (r["run"], r["question_id"], r["model"]) == (1, "t-001", A) and r["url"].endswith(
+                "nhs.uk/a"
+            ):
+                r["url"] = "https://nhs.uk/b"
+        return rows
+
+    _edit(tiny, "citations.jsonl", swap)
+    assert pick(_score(tiny).stale, model=A, intent=None, definition="primary").rate.point == 0.5
+
+
+def test_stale_and_overdue_boundaries_are_strict(tiny: Path):
+    """v1 L8: exactly 365 days is not stale; a review due on the answer day is not overdue."""
+
+    def pages(rows):
+        for r in rows:
+            if r["url"] == "https://nhs.uk/b":
+                r["effective_date"] = "2025-11-20"  # 365 days before 2026-11-20
+            if r["url"] == "https://nhs.uk/a":
+                r["review_due"] = "2026-11-20"
+        return rows
+
+    _edit(tiny, "page_meta.jsonl", pages)
+    s = _score(tiny)
+    assert pick(s.stale, model=A, intent=None, definition="primary").rate.k == 0
+    assert pick(s.nhs_overdue, model=None).share.k == 0
+
+
+def test_a_transport_error_leaves_the_denominator(tiny: Path):
+    def err(rows):
+        for r in rows:
+            if (r["run"], r["question_id"], r["model"]) == (1, "t-002", B):
+                r["error"] = "transport"
+        return rows
+
+    _edit(tiny, "answers.jsonl", err)
+    s = _score(tiny)
+    assert (
+        pick(s.share, publisher="nhs.uk", model=B, intent=None, run=1, kind="presence").share.n == 3
+    )
+    assert s.error_counts[B]["transport"] == 1
+
+
+def test_spend_counts_only_the_scored_runs(tiny: Path, summary):
+    assert summary.spend_usd == 0.75  # runs 1 and 2; run 0 and fixture spend are not counted
+
+
+def test_top_lists_include_every_publisher_tied_at_the_cut():
+    from citewatch.metrics.compute import top_with_ties
+
+    shares = {f"p{i:02d}": 0.1 for i in range(15)} | {"big": 0.9}
+    assert len(top_with_ties(shares, 10)) == 16
+    assert top_with_ties({"a": 0.5, "b": 0.4, "c": 0.4}, 2) == ["a", "b", "c"]
+    assert top_with_ties({"a": 0.5}, 10) == ["a"]
+
+
+def test_undated_pages_are_counted_by_outcome(summary):
+    assert summary.error_counts["undated_pages"] == {"ok": 2}

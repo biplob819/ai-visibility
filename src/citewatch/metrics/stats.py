@@ -81,8 +81,9 @@ def p_two_sided(diffs: Arr) -> float:
     d = diffs[np.isfinite(diffs)]
     if d.size == 0:
         return 1.0
-    below = float(np.mean(d <= 0))
-    above = float(np.mean(d >= 0))
+    # (count + 1) / (B + 1): a bootstrap p-value is never exactly 0 (v1 L3)
+    below = (float(np.sum(d <= 0)) + 1) / (d.size + 1)
+    above = (float(np.sum(d >= 0)) + 1) / (d.size + 1)
     return min(1.0, 2 * min(below, above))
 
 

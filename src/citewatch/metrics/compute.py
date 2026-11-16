@@ -30,6 +30,7 @@ from .stats import ALPHA, Arr, boot_ratio, holm, jaccard, make_interval, p_two_s
 
 TOP = 10
 POOLED_TOP = 20
+NHS = "nhs.uk"
 
 
 @dataclass
@@ -199,6 +200,13 @@ def _lag(ctx: Ctx, a: Answer, url: str) -> int | str | None:
     return "after" if days < 0 else days
 
 
+def _signed_lag(ctx: Ctx, a: Answer, url: str) -> int | None:
+    page = ctx.data.pages.get(url)
+    if page is None or page.effective_date is None:
+        return None
+    return (a.answered_at.date() - page.effective_date).days
+
+
 def freshness(ctx: Ctx) -> list[FreshnessRow]:
     rows = []
     for model in [None, *ctx.data.models()]:
@@ -252,7 +260,9 @@ def stale(ctx: Ctx) -> list[StaleRow]:
                 for a in ctx.slice(run, model, intent):
                     if not a.time_sensitive:
                         continue
-                    lags = [x for c in a.cites if isinstance(x := _lag(ctx, a, c.url), int)]
+                    # every dated citation counts, including pages dated after the answer: they
+                    # are excluded from lag only (pre-registration, v1 M1); their lag is negative
+                    lags = [x for c in a.cites if (x := _signed_lag(ctx, a, c.url)) is not None]
                     if not lags:
                         undated += 1
                         continue
@@ -282,7 +292,8 @@ def stale(ctx: Ctx) -> list[StaleRow]:
 
 
 def overdue(ctx: Ctx) -> list[OverdueRow]:
-    """Share of cited (page, answer) pairs whose `review_due` is before the answer (§6.3)."""
+    """Share of cited NHS (page, answer) pairs whose `review_due` is before the answer (§6.3,
+    D-56); an NHS page with no review date counts as not overdue."""
     rows = []
     for model in [None, *ctx.data.models()]:
         num, den = ctx.vec(), ctx.vec()
@@ -290,12 +301,13 @@ def overdue(ctx: Ctx) -> list[OverdueRow]:
             if not a.valid or (model is not None and a.model != model):
                 continue
             for c in a.cites:
+                if NHS not in (c.publisher, c.group):
+                    continue  # NHS overdue is over cited NHS pages (D-56)
                 page = ctx.data.pages.get(c.url)
-                if page is None or page.review_due is None:
-                    continue
                 i = ctx.index[a.qid]
                 den[i] += 1
-                num[i] += page.review_due < a.answered_at.date()
+                due = None if page is None else page.review_due
+                num[i] += due is not None and due < a.answered_at.date()
         n = int(den.sum())
         if n == 0:
             continue
@@ -416,9 +428,26 @@ def overlap(ctx: Ctx) -> tuple[list[OverlapRow], dict[str, int]]:
 
 
 def _top_sets(point_or_vals: Arr, pubs: list[str], k: int) -> list[set[str]]:
-    arr = np.atleast_2d(point_or_vals)
-    order = np.argsort(-np.nan_to_num(arr), axis=1, kind="stable")[:, :k]
-    return [{pubs[j] for j in row if arr[r, j] > 0} for r, row in enumerate(order)]
+    """Each row's top-k publishers by share, with every publisher tied at the cut included,
+    so the set never depends on name order (D-56)."""
+    arr = np.nan_to_num(np.atleast_2d(point_or_vals))
+    out = []
+    for row in arr:
+        if not len(row):
+            out.append(set())
+            continue
+        cut = np.sort(row)[::-1][min(k, len(row)) - 1]
+        out.append({pubs[j] for j in np.nonzero((row >= cut) & (row > 0))[0]})
+    return out
+
+
+def top_with_ties(shares: dict[str, float], k: int = TOP) -> list[str]:
+    """The top-k publishers by share plus any tied with the k-th (D-56), in rank then name order."""
+    ranked = sorted(shares.items(), key=lambda kv: (-kv[1], kv[0]))
+    if len(ranked) <= k:
+        return [p for p, _ in ranked]
+    cut = ranked[k - 1][1]
+    return [p for p, s in ranked if s >= cut]
 
 
 def _pooled(ctx: Ctx, run: int, m1: str, m2: str, intent: str | None) -> list[OverlapRow]:
@@ -446,7 +475,7 @@ def _pooled(ctx: Ctx, run: int, m1: str, m2: str, intent: str | None) -> list[Ov
             intent=intent,
             run=run,
             kind="pooled_top20",
-            value=make_interval(float(point), float(lo[0]), float(hi[0]), n=POOLED_TOP),
+            value=make_interval(float(point), float(lo[0]), float(hi[0]), n=len(a | b)),
         )
     ]
 
@@ -474,7 +503,7 @@ def stability(ctx: Ctx) -> list[StabilityRow]:
         s2 = _presence_by_pub(ctx, r2, m)
         if s1 is None or s2 is None:
             continue
-        top = [p for p, _ in sorted(s1[0].items(), key=lambda kv: (-kv[1], kv[0]))[:TOP]]
+        top = top_with_ties(s1[0])
         for p in top:
             d_point, d_vals, n = _diff(ctx, s2, s1, p)
             lo, hi = percentiles(d_vals[:, None])
@@ -540,7 +569,7 @@ def comparisons(ctx: Ctx) -> list[ComparisonRow]:
         if a is None or b is None:
             continue
         pooled = Counter(a[0]) + Counter(b[0])
-        top = [p for p, _ in sorted(pooled.items(), key=lambda kv: (-kv[1], kv[0]))[:TOP]]
+        top = top_with_ties(dict(pooled))
         found = []
         for p in top:
             point, vals, n = _diff(ctx, a, b, p)

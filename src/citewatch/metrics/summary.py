@@ -60,6 +60,14 @@ def error_counts(data: StudyData, excluded: dict[str, int]) -> dict[str, dict[st
         }
     if excluded:
         out["overlap_excluded"] = dict(sorted(excluded.items()))
+    undated: dict[str, int] = {}  # undated cited pages, by fetch outcome (pre-registration)
+    for u in sorted({c.url for a in data.answers for c in a.cites}):
+        page = data.pages.get(u)
+        if page is None or page.effective_date is None:
+            reason = "missing" if page is None else page.outcome
+            undated[reason] = undated.get(reason, 0) + 1
+    if undated:
+        out["undated_pages"] = dict(sorted(undated.items()))
     return out
 
 

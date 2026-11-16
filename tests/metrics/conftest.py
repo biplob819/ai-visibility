@@ -120,7 +120,9 @@ def write(base: Path) -> Path:
             "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
         )
     (data / "spend-ledger.jsonl").write_text(
-        '{"spent_usd": 0.25}\n{"spent_usd": 0.5}\n', encoding="utf-8"
+        '{"run_id": "s:run-1", "spent_usd": 0.25}\n{"run_id": "s:run-2", "spent_usd": 0.5}\n'
+        '{"run_id": "s:run-0", "spent_usd": 9.0}\n{"run_id": "fixtures", "spent_usd": 3.0}\n',
+        encoding="utf-8",
     )
     return base
 
