@@ -185,7 +185,14 @@ def load_measured(path: Path) -> dict[str, dict[str, int]] | None:
     """A study's `cost_model.yaml` (written from its smoke run), or None if it has none."""
     if not path.is_file():
         return None
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    from citewatch.schemas.config import ConfigError, _UniqueKeyLoader
+
+    try:
+        raw = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader) or {}
+    except ConfigError as exc:  # a duplicated model must not keep only its last entry
+        raise PriceError(f"{path}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise PriceError(f"{path} is not valid YAML ({exc})") from exc
     models = raw.get("models") if isinstance(raw, dict) else None
     if not isinstance(models, dict):
         raise PriceError(f"{path}: needs a `models:` mapping")
@@ -196,8 +203,8 @@ def load_measured(path: Path) -> dict[str, dict[str, int]] | None:
         row = {}
         for k in MEASURED_KEYS:
             x = v.get(k)
-            if isinstance(x, bool) or not isinstance(x, int) or x < 0:
-                raise PriceError(f"{path}: {m}.{k} must be a non-negative integer, got {x!r}")
+            if isinstance(x, bool) or not isinstance(x, int) or x < 1:  # zero would estimate $0
+                raise PriceError(f"{path}: {m}.{k} must be a positive integer, got {x!r}")
             row[k] = x
         out[str(m)] = row
     return out

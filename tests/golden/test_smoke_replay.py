@@ -12,6 +12,8 @@ from citewatch.dates import build_page_meta, write_page_meta
 from citewatch.extract import run_extract
 from citewatch.schemas import load_questions, load_study_config
 
+pytestmark = pytest.mark.golden
+
 GOLDEN = Path(__file__).resolve().parent.parent / "fixtures" / "golden" / "smoke"
 
 

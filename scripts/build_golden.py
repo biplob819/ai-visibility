@@ -51,11 +51,13 @@ def main() -> int:
         for x in (data / "citations.jsonl").read_text("utf-8").splitlines()
         if x
     }
+    # the sitemap dates the pages used, read back from their candidates (the cache is local, D-53)
     lastmods: dict[str, str] = {}
-    for f in sorted((data / "raw" / "sitemap").glob("*/*.json.gz")):
-        with gzip.open(f, "rt", encoding="utf-8") as fh:
-            lm = json.load(fh).get("lastmod") or {}
-        lastmods.update({u: v for u, v in lm.items() if u in cited})
+    for line in (data / "page_meta.jsonl").read_text(encoding="utf-8").splitlines():
+        meta = json.loads(line)
+        for c in meta.get("candidates") or []:
+            if c["source"] == "sitemap" and meta["url"] in cited:
+                lastmods[meta["url"]] = c["evidence"].removeprefix("lastmod: ").strip()
     (OUT / "lastmods.json").write_text(
         json.dumps(lastmods, indent=1, sort_keys=True) + "\n", encoding="utf-8"
     )

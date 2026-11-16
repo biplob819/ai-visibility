@@ -457,14 +457,17 @@ def golden_min_python(
         if private
         else str(root / f".venv-py{MIN_PYTHON.replace('.', '')}")
     )
-    env = {**os.environ, "UV_PROJECT_ENVIRONMENT": venv}
+    # an active VIRTUAL_ENV makes uv print a warning on stderr that hid pytest's summary line
+    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+    env["UV_PROJECT_ENVIRONMENT"] = venv
     cmd = ["uv", "run", "--python", MIN_PYTHON, "python", "-m", "pytest", "-q", "-m", "golden"]
     try:
         proc = (runner or _default_runner)(cmd, root, env)
     except subprocess.TimeoutExpired:
         return Result("FAIL", f"golden on Python {MIN_PYTHON} timed out")
     out = (proc.stdout + proc.stderr).strip()
-    last = out.splitlines()[-1] if out else ""
+    lines = proc.stdout.strip().splitlines()
+    last = lines[-1] if lines else ""  # pytest's summary is the last line it writes to stdout
     if proc.returncode != 0 or not re.search(r"\b\d+ passed\b", last):
         return Result("FAIL", f"golden on Python {MIN_PYTHON}: " + _tail(out))
     return Result("PASS", f"Python {MIN_PYTHON}: {last}")

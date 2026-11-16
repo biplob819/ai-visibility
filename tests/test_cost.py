@@ -43,7 +43,11 @@ def test_load_measured_rejects_bad_values(tmp_path):
     assert load_measured(p) == {"m": {"tokens_in": 10, "tokens_out": 5, "searches": 1}}
     for bad in ("models: 3\n", "models:\n  m: {tokens_in: -1, tokens_out: 5, searches: 1}\n",
                 "models:\n  m: {tokens_in: 1.5, tokens_out: 5, searches: 1}\n",
-                "models:\n  m: {tokens_in: true, tokens_out: 5, searches: 1}\n"):  # fmt: skip
+                "models:\n  m: {tokens_in: true, tokens_out: 5, searches: 1}\n",
+                "models:\n  m: {tokens_in: 0, tokens_out: 5, searches: 1}\n",
+                "models:\n  m: {tokens_in: 1, tokens_out: 5, searches: 1}\n"
+                "  m: {tokens_in: 2, tokens_out: 5, searches: 1}\n",
+                "models: [unclosed\n"):  # fmt: skip
         p.write_text(bad, encoding="utf-8")
         with pytest.raises(PriceError):
             load_measured(p)

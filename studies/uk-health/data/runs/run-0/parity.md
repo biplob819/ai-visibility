@@ -1,6 +1,6 @@
 # Parity report: uk-health, run 0
 
-One instruction for both models: True.
+One instruction, both models: True.
 
 | | claude-sonnet-5-5 | gpt-6.1-sol |
 | --- | --- | --- |
