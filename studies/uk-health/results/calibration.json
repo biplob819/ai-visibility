@@ -1,0 +1,49 @@
+{
+ "judges": [
+  {
+   "agreement": 0.6041666666666666,
+   "answers": 44,
+   "confusion": {
+    "fn": 19,
+    "fp": 0,
+    "tn": 0,
+    "tp": 29
+   },
+   "judge": "claude-opus-5-5",
+   "kappa": 0.0,
+   "kappa_interval": [
+    0.0,
+    0.0
+   ],
+   "leniency": null,
+   "n": 48,
+   "owner_cant_tell": 0,
+   "owner_constant": true,
+   "owner_unlabelled": 0,
+   "strictness": 0.3958333333333333
+  },
+  {
+   "agreement": 0.5416666666666666,
+   "answers": 44,
+   "confusion": {
+    "fn": 22,
+    "fp": 0,
+    "tn": 0,
+    "tp": 26
+   },
+   "judge": "gpt-6.1-sol",
+   "kappa": 0.0,
+   "kappa_interval": [
+    0.0,
+    0.0
+   ],
+   "leniency": null,
+   "n": 48,
+   "owner_cant_tell": 0,
+   "owner_constant": true,
+   "owner_unlabelled": 0,
+   "strictness": 0.4583333333333333
+  }
+ ],
+ "method": "EvalKit cluster_kappa over citations, clustered by answer (OWNER D-65)"
+}

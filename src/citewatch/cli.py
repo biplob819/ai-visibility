@@ -592,6 +592,7 @@ def score(
     except ValueError as exc:
         _fail(as_json, "score", str(exc))
     out = write_summary(path.parent, summary)
+    _write_calibration(path.parent, cfg)
     cov = summary.coverage
     payload = {
         "ok": True,
@@ -609,6 +610,27 @@ def score(
         text += "  BELOW TARGET"
     _emit(as_json, payload, text)
     raise typer.Exit(EXIT_OK)
+
+
+def _write_calibration(base: Path, cfg: Any) -> None:
+    """OWNER D-65: judge-vs-owner calibration with EvalKit's statistics, once both exist."""
+    from citewatch.schemas import SupportVerdict
+    from citewatch.support.report import load_hand_labels
+
+    path = base / "data" / "support_verdicts.jsonl"
+    hand = load_hand_labels(base)
+    if not path.is_file() or not hand:
+        return
+    try:
+        from citewatch.support.calibrate import calibrate, write_calibration
+    except ImportError:  # the `support` extra (EvalKit) is not installed
+        return
+    verdicts = [
+        SupportVerdict.model_validate_json(x)
+        for x in path.read_text(encoding="utf-8").splitlines()
+        if x.strip()
+    ]
+    write_calibration(base, calibrate(verdicts, hand, cfg.seeds["support_sample"]))
 
 
 def _sample_support(base: Path, cfg: Any, qs: Any, as_json: bool) -> NoReturn:
