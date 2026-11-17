@@ -1,10 +1,10 @@
 {
  "judges": [
   {
-   "agreement": 0.6041666666666666,
-   "answers": 44,
+   "agreement": 0.6170212765957447,
+   "answers": 43,
    "confusion": {
-    "fn": 19,
+    "fn": 18,
     "fp": 0,
     "tn": 0,
     "tp": 29
@@ -16,17 +16,17 @@
     0.0
    ],
    "leniency": null,
-   "n": 48,
+   "n": 47,
    "owner_cant_tell": 0,
    "owner_constant": true,
    "owner_unlabelled": 0,
-   "strictness": 0.3958333333333333
+   "strictness": 0.3829787234042553
   },
   {
-   "agreement": 0.5416666666666666,
-   "answers": 44,
+   "agreement": 0.5531914893617021,
+   "answers": 43,
    "confusion": {
-    "fn": 22,
+    "fn": 21,
     "fp": 0,
     "tn": 0,
     "tp": 26
@@ -38,11 +38,11 @@
     0.0
    ],
    "leniency": null,
-   "n": 48,
+   "n": 47,
    "owner_cant_tell": 0,
    "owner_constant": true,
    "owner_unlabelled": 0,
-   "strictness": 0.4583333333333333
+   "strictness": 0.44680851063829785
   }
  ],
  "method": "EvalKit cluster_kappa over citations, clustered by answer (OWNER D-65)"

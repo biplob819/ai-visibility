@@ -90,6 +90,9 @@ def support_rows(
             both = [r for r in refs if hand.get(r) in ("supported", "unsupported")]
             a = [by[(judge, r)] for r in both]
             b = [hand[r] == "supported" for r in both]
+            # kappa is not informative when the owner's labels are all one value (it is 0 by
+            # construction); it is left out here and flagged in calibration.json (pass 1, L4)
+            informative = len(set(b)) > 1
             rows.append(
                 SupportRow(
                     model=model,
@@ -98,7 +101,7 @@ def support_rows(
                     hand_agreement=(sum(x == y for x, y in zip(a, b, strict=True)) / len(a))
                     if a
                     else None,
-                    kappa=kappa_interval(a, b, seed) if a else None,
+                    kappa=kappa_interval(a, b, seed) if a and informative else None,
                 )
             )
     return rows
@@ -113,6 +116,29 @@ def load_hand_labels(base: Path) -> dict[str, str]:
         if ref and r.get("label") in ("supported", "unsupported", "cant_tell"):
             out[ref] = r["label"]
     return out
+
+
+GAPS_FILE = "support_gaps.json"
+
+
+def write_gaps(base: Path) -> Path:
+    """SUP-06: every labelled citation's gap, and the ones with no text fetch to measure from."""
+    rows = gaps(base)
+    have = {r["citation_ref"] for r in rows}
+    missing = sorted(
+        r["citation_ref"] for r in _rows(base / "data" / KEY_FILE) if r["citation_ref"] not in have
+    )
+    days = sorted(r["gap_days"] for r in rows)
+    payload = {
+        "gaps": rows,
+        "no_text_fetch": missing,
+        "median_days": days[len(days) // 2] if days else None,
+        "max_days": days[-1] if days else None,
+    }
+    path = base / "results" / GAPS_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return path
 
 
 def gaps(base: Path) -> list[dict[str, Any]]:
@@ -151,7 +177,13 @@ def gaps(base: Path) -> list[dict[str, Any]]:
 
 
 def finalise(cache_dir: Path) -> list[str]:
-    """Delete the body cache (page text and the EvalKit store inside it); return problems."""
+    """Delete the body cache (page text and the EvalKit store inside it); return problems.
+    Refuses anything that does not look like a citewatch body cache (pass 1, L5)."""
+    looks_right = cache_dir.name == "bodies" or (cache_dir / ".citewatch-body-cache").exists()
+    if cache_dir.exists() and (
+        not looks_right or cache_dir == Path.home() or cache_dir.parent == cache_dir
+    ):
+        return [f"{cache_dir} does not look like a citewatch body cache; not deleting it"]
     if cache_dir.exists():
         shutil.rmtree(cache_dir)
     return [f"{cache_dir} still exists after finalise"] if cache_dir.exists() else []

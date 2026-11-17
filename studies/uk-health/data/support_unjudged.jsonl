@@ -1,1 +1,2 @@
-{"citation_ref": "1:v-004:gpt-6.1-sol:1"}
+{"citation_ref": "1:v-004:gpt-6.1-sol:1", "reason": "EvalKit could not judge after a retry"}
+{"citation_ref": "1:v-062:gpt-6.1-sol:4", "reason": "D-61 refetch failed; the kept text predates the main_text fix (D-67)"}

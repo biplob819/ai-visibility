@@ -1,4 +1,8 @@
 {
+ "check_methods": {
+  "date_accuracy": "agent-checked, owner-approved (OWNER D-63)",
+  "support_hand": "owner-labelled (OWNER D-62)"
+ },
  "citations": [
   {
    "intent": null,
@@ -887,6 +891,11 @@
    "search_error": 0,
    "transport": 0,
    "zero_citation": 0
+  },
+  "hand_dates": {
+   "labels": 55,
+   "stale_labels": 0,
+   "unjudgeable": 23
   },
   "nhs_no_review_date": {
    "blocked": 4,
@@ -118152,13 +118161,7 @@
   {
    "hand_agreement": 0.6666666666666666,
    "judge": "claude-opus-5-5",
-   "kappa": {
-    "hi": 0.0,
-    "k": null,
-    "lo": 0.0,
-    "n": 24,
-    "point": 0.0
-   },
+   "kappa": null,
    "model": "claude-sonnet-5-5",
    "support_rate": {
     "hi": 0.8202780967270225,
@@ -118171,13 +118174,7 @@
   {
    "hand_agreement": 0.6666666666666666,
    "judge": "gpt-6.1-sol",
-   "kappa": {
-    "hi": 0.0,
-    "k": null,
-    "lo": 0.0,
-    "n": 24,
-    "point": 0.0
-   },
+   "kappa": null,
    "model": "claude-sonnet-5-5",
    "support_rate": {
     "hi": 0.8202780967270225,
@@ -118201,41 +118198,29 @@
    }
   },
   {
-   "hand_agreement": 0.5416666666666666,
+   "hand_agreement": 0.5652173913043478,
    "judge": "claude-opus-5-5",
-   "kappa": {
-    "hi": 0.0,
-    "k": null,
-    "lo": 0.0,
-    "n": 24,
-    "point": 0.0
-   },
+   "kappa": null,
    "model": "gpt-6.1-sol",
    "support_rate": {
-    "hi": 0.72108666268789,
+    "hi": 0.743653646743258,
     "k": 13,
-    "lo": 0.3507486535891948,
-    "n": 24,
-    "point": 0.5416666666666666
+    "lo": 0.3681137508501646,
+    "n": 23,
+    "point": 0.5652173913043478
    }
   },
   {
-   "hand_agreement": 0.4166666666666667,
+   "hand_agreement": 0.43478260869565216,
    "judge": "gpt-6.1-sol",
-   "kappa": {
-    "hi": 0.0,
-    "k": null,
-    "lo": 0.0,
-    "n": 24,
-    "point": 0.0
-   },
+   "kappa": null,
    "model": "gpt-6.1-sol",
    "support_rate": {
-    "hi": 0.6116533413477124,
+    "hi": 0.6318862491498354,
     "k": 10,
-    "lo": 0.24467602609811764,
-    "n": 24,
-    "point": 0.4166666666666667
+    "lo": 0.25634635325674215,
+    "n": 23,
+    "point": 0.43478260869565216
    }
   },
   {

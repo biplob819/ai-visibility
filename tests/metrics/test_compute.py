@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from citewatch.handcheck import dates_fingerprint
 from citewatch.metrics import build_summary, write_summary
 from citewatch.metrics.views import connect
 from citewatch.schemas import StudySummary, load_questions, load_study_config
@@ -309,7 +310,7 @@ def test_support_and_date_accuracy_join_the_summary_when_present(tiny: Path):
                 "url": "https://nhs.uk/a",
                 "true_modified": "2026-01-03",
                 "not_determinable": False,
-                "dates_version": "x",
+                "dates_version": dates_fingerprint(),
             }
         )
         + "\n",
@@ -319,6 +320,54 @@ def test_support_and_date_accuracy_join_the_summary_when_present(tiny: Path):
     assert {(r.judge, r.support_rate.k) for r in s.support} == {("opus", 1), ("hand", 1)}
     overall = pick(s.date_accuracy, source="overall")
     assert overall.within_7_days.k == 1 and overall.exact.k == 0
+    assert s.check_methods["date_accuracy"].startswith("agent-checked, owner-approved")
+    assert s.check_methods["support_hand"].startswith("owner-labelled")
+    assert s.error_counts["hand_dates"] == {"labels": 1, "stale_labels": 0, "unjudgeable": 0}
+
+
+def _hand_labels(data: Path, versions: list[str]) -> None:
+    rows = [
+        {"url": f"https://nhs.uk/p{i}", "stratum": "schema_org", "role": "dated"}
+        for i in range(len(versions))
+    ]
+    (data / "hand_sample.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
+    labels = [
+        {
+            "url": r["url"],
+            "true_modified": "2026-01-03",
+            "not_determinable": False,
+            "dates_version": v,
+        }
+        for r, v in zip(rows, versions, strict=True)
+    ]
+    (data / "hand_labels.jsonl").write_text("".join(json.dumps(r) + "\n" for r in labels), "utf-8")
+
+
+def test_stale_date_labels_block_the_accuracy_rows_even_with_a_fresh_first_row(tiny: Path):
+    """D-6: one fresh row placed first must not let 54 stale rows through (M3.3 pass 1, H1/H2)."""
+    _hand_labels(tiny / "data", [dates_fingerprint()] + ["old"] * 54)
+    s = _score(tiny)
+    assert s.date_accuracy == ()
+    assert s.error_counts["hand_dates"]["blocked"] == 1
+    assert s.error_counts["hand_dates"]["stale_labels"] == 54
+    assert "date_accuracy" not in s.check_methods
+
+
+def test_twenty_five_fresh_labels_publish_and_only_they_are_scored(tiny: Path):
+    _hand_labels(tiny / "data", ["old"] * 30 + [dates_fingerprint()] * 25)
+    s = _score(tiny)
+    assert s.error_counts["hand_dates"] == {"labels": 55, "stale_labels": 30, "unjudgeable": 0}
+    assert sum(r.within_7_days.n for r in s.date_accuracy if r.source != "overall") <= 25
+
+
+def test_finalise_refuses_stale_date_labels_whatever_the_row_order(tiny: Path, capsys):
+    from citewatch.cli import main
+
+    data = tiny / "data"
+    (data / "support_labels.jsonl").write_text("", encoding="utf-8")
+    _hand_labels(data, [dates_fingerprint()] + ["old"] * 54)
+    code = main(["score", "--finalise", "--study", str(tiny), "--json"])
+    assert code == 2 and "date resolver changed" in capsys.readouterr().out
 
 
 def test_finalise_refuses_before_the_labels_are_imported(tiny: Path, capsys):

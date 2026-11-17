@@ -8,6 +8,7 @@ import datetime as dt
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 from citewatch.runners.schedule import config_hash
 from citewatch.schemas import SCHEMA_VERSION, StudyConfig, StudyQuestion, StudySummary
@@ -96,6 +97,16 @@ def build_summary(
     ctx = compute.Ctx(data, w, cfg.stale_days)
     overlap, excluded = compute.overlap(ctx)
     k, n = coverage(data)
+    accuracy_rows, hand_counts = _date_accuracy(base)
+    errors = error_counts(data, excluded)
+    if hand_counts:
+        errors["hand_dates"] = hand_counts
+    support = _support(base, cfg)
+    methods = {}
+    if accuracy_rows:
+        methods["date_accuracy"] = DATE_CHECK_METHOD
+    if any(r.judge == "hand" for r in support):
+        methods["support_hand"] = SUPPORT_HAND_METHOD
     return StudySummary(
         schema_version=SCHEMA_VERSION,
         runs=tuple(data.runs()),
@@ -112,9 +123,10 @@ def build_summary(
         comparisons=tuple(compute.comparisons(ctx)),
         nhs_overdue=tuple(compute.overdue(ctx)),
         coverage=wilson(k, n),
-        date_accuracy=tuple(_date_accuracy(base)),
-        support=tuple(_support(base, cfg)),
-        error_counts=error_counts(data, excluded),
+        date_accuracy=tuple(accuracy_rows),
+        support=tuple(support),
+        check_methods=methods,
+        error_counts=errors,
         spend_usd=data.spend_usd,
         generated_at=data.latest or dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
     )
@@ -136,25 +148,49 @@ def _support(base: Path, cfg: StudyConfig) -> list:
     return support_rows(verdicts, load_hand_labels(base), cfg.seeds["support_sample"])
 
 
-def _date_accuracy(base: Path) -> list:
-    """AccuracyRows once the owner's hand date labels are imported (M3.3)."""
-    from citewatch.handcheck import LABELS_FILE, SAMPLE_FILE, accuracy
+DATE_CHECK_METHOD = "agent-checked, owner-approved (OWNER D-63)"
+SUPPORT_HAND_METHOD = "owner-labelled (OWNER D-62)"
+
+
+def _hand_rows(base: Path) -> list[dict[str, Any]]:
+    from citewatch.handcheck import LABELS_FILE
+
+    path = base / "data" / LABELS_FILE
+    if not path.is_file():
+        return []
+    return [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
+
+
+def _date_accuracy(base: Path) -> tuple[list, dict[str, int]]:
+    """AccuracyRows and counts for the held-out date check (M3.3). Rows made against an older
+    resolver are never scored; with too few current rows nothing is published (D-6)."""
+    from citewatch.handcheck import (
+        SAMPLE_FILE,
+        accuracy,
+        current_labels,
+        labels_meta,
+        publish_problems,
+    )
     from citewatch.schemas import HandDateLabel
 
     data = base / "data"
-    if not (data / LABELS_FILE).is_file() or not (data / SAMPLE_FILE).is_file():
-        return []
+    rows = _hand_rows(base)
+    if not rows or not (data / SAMPLE_FILE).is_file():
+        return [], {}
+    current = current_labels(rows)
+    counts = {"labels": len(rows), "stale_labels": len(rows) - len(current)}
+    if publish_problems(labels_meta(rows)):
+        counts["blocked"] = 1
+        return [], counts
     sample = [
         json.loads(x) for x in (data / SAMPLE_FILE).read_text(encoding="utf-8").splitlines() if x
     ]
     labels = {}
-    for x in (data / LABELS_FILE).read_text(encoding="utf-8").splitlines():
-        if x.strip():
-            row = json.loads(x)
-            for meta in ("dates_version", "id", "checked_by", "approved_by"):  # provenance
-                row.pop(meta, None)
-            label = HandDateLabel.model_validate(row)
-            labels[label.url] = label
+    for row in current:
+        label = HandDateLabel.model_validate(
+            {k: v for k, v in row.items() if k in HandDateLabel.model_fields}
+        )
+        labels[label.url] = label
     effective = {}
     for x in (data / "page_meta.jsonl").read_text(encoding="utf-8").splitlines():
         if x.strip():
@@ -162,7 +198,11 @@ def _date_accuracy(base: Path) -> list:
             effective[m["url"]] = (
                 dt.date.fromisoformat(m["effective_date"]) if m.get("effective_date") else None
             )
-    return accuracy(sample, labels, effective)
+    dated = [s for s in sample if s["role"] == "dated" and s["url"] in labels]
+    counts["unjudgeable"] = sum(  # dated by the parser, no date found by the checker
+        labels[s["url"]].not_determinable for s in dated
+    )
+    return accuracy(sample, labels, effective), counts
 
 
 def write_summary(base: Path, summary: StudySummary) -> Path:

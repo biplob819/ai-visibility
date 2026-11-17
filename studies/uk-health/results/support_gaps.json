@@ -1,0 +1,201 @@
+{
+ "gaps": [
+  {
+   "citation_ref": "1:v-011:claude-sonnet-5-5:4",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-022:gpt-6.1-sol:1",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-018:claude-sonnet-5-5:1",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-036:gpt-6.1-sol:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-023:gpt-6.1-sol:2",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-096:gpt-6.1-sol:1",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-064:claude-sonnet-5-5:1",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-029:claude-sonnet-5-5:1",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-090:claude-sonnet-5-5:6",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-001:gpt-6.1-sol:2",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-085:gpt-6.1-sol:1",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-089:gpt-6.1-sol:4",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-004:gpt-6.1-sol:1",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-051:claude-sonnet-5-5:3",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-054:claude-sonnet-5-5:4",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-054:gpt-6.1-sol:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-099:claude-sonnet-5-5:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-077:claude-sonnet-5-5:5",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-039:gpt-6.1-sol:2",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-082:claude-sonnet-5-5:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-037:claude-sonnet-5-5:2",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-065:gpt-6.1-sol:5",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-014:gpt-6.1-sol:4",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-021:claude-sonnet-5-5:2",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-055:gpt-6.1-sol:2",
+   "gap_days": 0.115
+  },
+  {
+   "citation_ref": "1:v-002:claude-sonnet-5-5:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-079:gpt-6.1-sol:3",
+   "gap_days": 0.115
+  },
+  {
+   "citation_ref": "1:v-050:claude-sonnet-5-5:5",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-046:gpt-6.1-sol:4",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-058:claude-sonnet-5-5:6",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-093:gpt-6.1-sol:3",
+   "gap_days": 0.115
+  },
+  {
+   "citation_ref": "1:v-095:gpt-6.1-sol:1",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-012:gpt-6.1-sol:6",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-065:claude-sonnet-5-5:6",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-075:gpt-6.1-sol:5",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-024:claude-sonnet-5-5:1",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-081:claude-sonnet-5-5:2",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-018:gpt-6.1-sol:2",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-082:claude-sonnet-5-5:4",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-053:claude-sonnet-5-5:6",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-077:claude-sonnet-5-5:3",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-080:gpt-6.1-sol:5",
+   "gap_days": 0.114
+  },
+  {
+   "citation_ref": "1:v-029:claude-sonnet-5-5:5",
+   "gap_days": 0.111
+  },
+  {
+   "citation_ref": "1:v-041:gpt-6.1-sol:3",
+   "gap_days": 0.115
+  },
+  {
+   "citation_ref": "1:v-054:gpt-6.1-sol:1",
+   "gap_days": 0.113
+  },
+  {
+   "citation_ref": "1:v-035:gpt-6.1-sol:3",
+   "gap_days": 0.112
+  },
+  {
+   "citation_ref": "1:v-071:claude-sonnet-5-5:4",
+   "gap_days": 0.115
+  },
+  {
+   "citation_ref": "1:v-014:claude-sonnet-5-5:3",
+   "gap_days": 0.111
+  }
+ ],
+ "max_days": 0.115,
+ "median_days": 0.113,
+ "no_text_fetch": [
+  "1:v-062:gpt-6.1-sol:4"
+ ]
+}

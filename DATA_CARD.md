@@ -11,7 +11,7 @@ What this study collects, what it discards, and how it treats the sites it reads
 ## What is discarded
 
 - **Page bodies.** A fetched page is held in memory only while its dates are read, then dropped. No page body or markup is stored; a storage audit (gate 9) fails the build if any is.
-- **Planned (M3.2):** for the 50-citation support sample only, the page's main text will be kept in a local cache outside the repository for the support check and hand labelling, and deleted when scoring is finalised.
+- **Support sample (M3.2):** for the 49-citation support sample only, the page's main text was kept in a local cache outside the repository for the support check, and deleted when scoring was finalised (`citewatch score --finalise`, 17 November 2026). Only verdicts and one-sentence quotes remain.
 
 ## Politeness
 
@@ -30,4 +30,5 @@ Claude's `cited_text` (the passage the API returns as supporting a citation, usu
 - Two models, one location (London), one instruction and 100 questions: findings describe this setup, not AI search in general.
 - Dates come only from what pages state; a page with no usable date is reported as undated, never guessed. Ambiguous numeric dates (05/10/2024) are dropped.
 - Sites that disallow citewatch (seen so far: NICE, NHS inform, Mayo Clinic) or block it can be dated only from Claude's page age.
-- **Planned:** the support check (M3.2) and the 50-date hand check (M3.3) will measure how often a cited page supports its claim and how accurate the dates are; until then neither rate is known.
+- **Support check (M3.2):** 49 sampled citations, judged by two AI judges from different families (claude-opus-5-5, gpt-6.1-sol, via EvalKit) and labelled by the owner (OWNER D-62). The owner labelled all 49 supported; the judges called 38–45% of them unsupported, so judge–owner kappa is not informative. One citation is unjudged after a failed refetch (D-67) and one after EvalKit could not judge it.
+- **Date check (M3.3):** 55 held-out pages, agent-checked, owner-approved, not hand-checked (OWNER D-63, D-64). The parser's date was within 7 days on 18 of 27 judgeable dated pages (67%, Wilson 48–81%); 23 dated pages show a reader no date and are counted, not scored. Every judged date was either exact or more than 7 days off.

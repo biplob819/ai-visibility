@@ -69,6 +69,12 @@ def main() -> int:
         if x
     ]
     ok = {p["url"] for p in pages if p["outcome"] == "ok"}
+    # OWNER D-61 / D-67: a page whose support refetch failed keeps pre-fix text, so it is not ok
+    refetch = data / "support_text_fetches.jsonl"
+    if refetch.is_file():
+        for x in refetch.read_text(encoding="utf-8").splitlines():
+            if x.strip() and json.loads(x)["outcome"] != "ok":
+                ok.discard(json.loads(x)["url"])
     final, log = replacements(read_sample(base), ok, cache_dir=body_cache_dir())
     cites = [
         json.loads(x)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from ._base import (
     FiniteFloat,
@@ -171,6 +171,7 @@ class StudySummary(Versioned):
     coverage: Interval
     date_accuracy: tuple[AccuracyRow, ...] = ()
     support: tuple[SupportRow, ...] = ()
+    check_methods: FrozenMap[NonBlank] = Field(default_factory=dict)  # how each human check ran
     error_counts: FrozenMap[FrozenMap[NonNegInt]]
     spend_usd: NonNegFloat
     generated_at: Timestamp

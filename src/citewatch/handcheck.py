@@ -2,16 +2,18 @@
 
 50 dated cited pages, stratified by the chosen `effective_source` in proportion to its
 frequency (at least 5 for each source with 5 or more pages), plus 5 undated pages, drawn with
-the study's `hand_sample` seed. The owner records each page's true dates without seeing the
-parser's. Pages in the resolver's tuning set (`tests/fixtures/dates`) are never drawn: the check
-must be held out (D-6).
+the study's `hand_sample` seed from the pages cited in the study runs (`study_pages`). A checker
+records each page's true dates without seeing the parser's: for the flagship study an agent that
+never sees the parser's output, approved by the owner (OWNER D-63). Pages in the resolver's
+tuning set (`tests/fixtures/dates`) are never drawn: the check must be held out (D-6).
 
-Correct: the parser's effective date is within 7 days of the hand date (the hand-modified date,
-else the hand-published date); exact matches are reported too. An undated page is correct when
-the owner also finds no date.
+Correct: the parser's effective date is within 7 days of the hand date (the checked modified
+date, else the checked published date); exact matches are reported too. An undated page is
+correct when the checker also finds no date.
 
-Held-out rule (D-6, C5): the labels record the date code's fingerprint. If the resolver changes
-after labelling, publishing is blocked until 25 pages are labelled afresh against the new code.
+Held-out rule (D-6, C5): every label row records the date code's fingerprint. If the resolver
+changes after labelling, publishing (finalise and the summary's accuracy rows) is blocked until
+25 pages are labelled afresh against the new code; only those fresh labels are then scored.
 """
 
 from __future__ import annotations
@@ -69,6 +71,20 @@ def _allocate(counts: Mapping[str, int], total: int) -> dict[str, int]:
         alloc[s] += take
         spare -= take
     return alloc
+
+
+def study_pages(base: Path, runs: Iterable[int] = (1, 2)) -> list[dict[str, Any]]:
+    """`page_meta` rows for pages cited in the study runs (smoke-run pages are left out)."""
+    data = base / "data"
+    keep = set(runs)
+    cited = set()
+    for x in (data / "citations.jsonl").read_text(encoding="utf-8").splitlines():
+        if x.strip():
+            c = json.loads(x)
+            if c["run"] in keep:
+                cited.add(c["url"])
+    rows = (data / "page_meta.jsonl").read_text(encoding="utf-8").splitlines()
+    return [p for p in (json.loads(x) for x in rows if x.strip()) if p["url"] in cited]
 
 
 def draw_hand_sample(
@@ -161,6 +177,23 @@ def accuracy(
         for s in order
         if n[s]
     ]
+
+
+def labels_meta(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+    """The fingerprint state of a label set: one `version` if every row shares it (else None),
+    and how many rows were labelled under each version."""
+    counts = Counter(str(r.get("dates_version")) for r in rows)
+    return {
+        "version": next(iter(counts)) if len(counts) == 1 else None,
+        "labelled_by_version": dict(counts),
+    }
+
+
+def current_labels(rows: Sequence[Mapping[str, Any]], current: str | None = None) -> list:
+    """The rows that count: all of them when none is stale, else only those made against the
+    current resolver (publish_problems says whether there are enough)."""
+    current = current or dates_fingerprint()
+    return [r for r in rows if r.get("dates_version") == current]
 
 
 def publish_problems(labels_meta: Mapping[str, Any], current: str | None = None) -> list[str]:

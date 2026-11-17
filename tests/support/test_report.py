@@ -15,6 +15,7 @@ from citewatch.support.report import (
     kappa_interval,
     load_hand_labels,
     support_rows,
+    write_gaps,
 )
 
 C, G = "claude-sonnet-5-5", "gpt-6.1-sol"
@@ -101,9 +102,47 @@ def test_the_gap_runs_from_answer_to_text_fetch(tmp_path: Path):
     assert gaps(tmp_path) == [{"citation_ref": "1:v-001:m:1", "gap_days": 0.5}]
 
 
+def test_every_labelled_citation_gets_a_gap_or_is_listed_as_missing(tmp_path: Path):
+    """SUP-06 (M3.2 pass 1): gaps are written out, and an item with no text fetch is named."""
+    test_the_gap_runs_from_answer_to_text_fetch(tmp_path)
+    data = tmp_path / "data"
+    with (data / "support_label_key.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"id": "s02", "citation_ref": "1:v-002:m:1"}) + "\n")
+    out = json.loads(write_gaps(tmp_path).read_text(encoding="utf-8"))
+    assert out["gaps"] == [{"citation_ref": "1:v-001:m:1", "gap_days": 0.5}]
+    assert out["no_text_fetch"] == ["1:v-002:m:1"]
+    assert out["median_days"] == out["max_days"] == 0.5
+
+
 def test_finalise_deletes_the_cache_and_the_store(tmp_path: Path):
     cache = tmp_path / "bodies"
     (cache / "evalkit-store" / "ab").mkdir(parents=True)
     (cache / "page.txt").write_text("text", encoding="utf-8")
     assert finalise(cache) == [] and not cache.exists()
     assert finalise(cache) == []
+
+
+def test_finalise_refuses_a_path_that_is_not_a_body_cache(tmp_path: Path):
+    """Pass 1 L5: a mis-set CITEWATCH_BODY_CACHE must not rmtree an arbitrary folder."""
+    other = tmp_path / "projects"
+    (other / "keep").mkdir(parents=True)
+    problems = finalise(other)
+    assert problems and "does not look like a citewatch body cache" in problems[0]
+    assert (other / "keep").is_dir()
+    marked = tmp_path / "custom-cache"
+    marked.mkdir()
+    (marked / ".citewatch-body-cache").write_text("", encoding="utf-8")
+    assert finalise(marked) == [] and not marked.exists()
+
+
+def test_kappa_is_left_out_when_the_owner_labels_are_all_one_value():
+    """Pass 1 L4: a constant hand label makes kappa 0 by construction, not a finding."""
+    refs = [f"1:v-{i:03d}:claude-sonnet-5-5:1" for i in range(4)]
+    verdicts = [
+        SupportVerdict(citation_ref=r, judge="j", verdict="supported" if i < 2 else "unsupported")
+        for i, r in enumerate(refs)
+    ]
+    (row,) = [
+        r for r in support_rows(verdicts, dict.fromkeys(refs, "supported"), 1) if r.judge == "j"
+    ]
+    assert row.kappa is None and row.hand_agreement == 0.5

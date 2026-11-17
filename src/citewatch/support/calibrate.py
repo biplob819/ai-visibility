@@ -21,6 +21,12 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from evalkit.pipeline.calibrate import (  # pinned 2181921; `_Pair` until EvalKit 0.3 (D-66)
+    _Pair,
+    cluster_kappa,
+    kappa_from,
+)
+
 from citewatch.schemas import SupportVerdict
 
 CALIBRATION_FILE = "calibration.json"
@@ -33,8 +39,6 @@ def _answer(citation_ref: str) -> str:
 def calibrate(
     verdicts: Sequence[SupportVerdict], hand: Mapping[str, str], seed: int
 ) -> list[dict[str, Any]]:
-    from evalkit.pipeline.calibrate import _Pair, cluster_kappa, kappa_from  # pinned 2181921
-
     rows = []
     for judge in sorted({v.judge for v in verdicts}):
         mine = {v.citation_ref: v.verdict == "supported" for v in verdicts if v.judge == judge}

@@ -149,4 +149,6 @@ def test_the_data_card_marks_unbuilt_work_as_planned():
         "## Limits",
     ):
         assert part in card
-    assert card.count("Planned") >= 2 and "M3.2" in card and "M3.3" in card
+    # M3.2 and M3.3 are built: described as done, with how each check was made (D-67)
+    assert "**Support check (M3.2):**" in card and "**Date check (M3.3):**" in card
+    assert "agent-checked, owner-approved" in card

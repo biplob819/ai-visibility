@@ -144,6 +144,9 @@
       }
     }
   ],
+  "check_methods": {
+    "date_accuracy": "agent-checked, owner-approved"
+  },
   "error_counts": {
     "claude-sonnet-5-5": {
       "refusal": 0,

@@ -46,8 +46,6 @@
 {"citation_ref":"1:v-024:claude-sonnet-5-5:1","judge":"gpt-6.1-sol","verdict":"unsupported","quote":null,"hand_label":null}
 {"citation_ref":"1:v-029:claude-sonnet-5-5:5","judge":"claude-opus-5-5","verdict":"supported","quote":"Self-help measures are the initial treatment for most back pain.","hand_label":null}
 {"citation_ref":"1:v-029:claude-sonnet-5-5:5","judge":"gpt-6.1-sol","verdict":"supported","quote":"Self-help measures are the initial treatment for most back pain.","hand_label":null}
-{"citation_ref":"1:v-062:gpt-6.1-sol:4","judge":"claude-opus-5-5","verdict":"unsupported","quote":null,"hand_label":null}
-{"citation_ref":"1:v-062:gpt-6.1-sol:4","judge":"gpt-6.1-sol","verdict":"unsupported","quote":null,"hand_label":null}
 {"citation_ref":"1:v-065:gpt-6.1-sol:5","judge":"claude-opus-5-5","verdict":"supported","quote":"Alongside general physical activity we all must maintain our strength and balance.","hand_label":null}
 {"citation_ref":"1:v-065:gpt-6.1-sol:5","judge":"gpt-6.1-sol","verdict":"supported","quote":"Alongside general physical activity we all must maintain our strength and balance.","hand_label":null}
 {"citation_ref":"1:v-080:gpt-6.1-sol:5","judge":"claude-opus-5-5","verdict":"unsupported","quote":null,"hand_label":null}

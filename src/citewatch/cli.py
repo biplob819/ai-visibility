@@ -593,6 +593,7 @@ def score(
         _fail(as_json, "score", str(exc))
     out = write_summary(path.parent, summary)
     _write_calibration(path.parent, cfg)
+    _write_gaps(path.parent)
     cov = summary.coverage
     payload = {
         "ok": True,
@@ -633,6 +634,13 @@ def _write_calibration(base: Path, cfg: Any) -> None:
     write_calibration(base, calibrate(verdicts, hand, cfg.seeds["support_sample"]))
 
 
+def _write_gaps(base: Path) -> None:
+    from citewatch.support.report import KEY_FILE, write_gaps
+
+    if (base / "data" / KEY_FILE).is_file():
+        write_gaps(base)
+
+
 def _sample_support(base: Path, cfg: Any, qs: Any, as_json: bool) -> NoReturn:
     """SUP-01: draw the support sample from run 1's citations, once, before run 1's fetch."""
     from citewatch.support import draw_sample, read_sample, write_sample
@@ -670,7 +678,7 @@ def _finalise(base: Path, as_json: bool) -> None:
     """SUP-04: once both label sets are in, delete every kept page body and the EvalKit store."""
     from citewatch.fetch.pages import body_cache_dir
     from citewatch.handcheck import LABELS_FILE as HAND_LABELS
-    from citewatch.handcheck import publish_problems
+    from citewatch.handcheck import labels_meta, publish_problems
     from citewatch.support.report import LABELS_FILE, finalise
 
     data = base / "data"
@@ -679,8 +687,12 @@ def _finalise(base: Path, as_json: bool) -> None:
         _fail(
             as_json, "score", f"import the owner's labels before finalising: {', '.join(missing)}"
         )
-    first = json.loads((data / HAND_LABELS).read_text(encoding="utf-8").splitlines()[0])
-    problems = publish_problems({"version": first.get("dates_version")})
+    rows = [
+        json.loads(x)
+        for x in (data / HAND_LABELS).read_text(encoding="utf-8").splitlines()
+        if x.strip()
+    ]
+    problems = publish_problems(labels_meta(rows))
     if problems:
         _fail(as_json, "score", "; ".join(problems))
     left = finalise(body_cache_dir())

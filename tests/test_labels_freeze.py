@@ -71,3 +71,16 @@ def test_the_held_out_rule_holds_for_the_current_resolver():
     versions = {r["dates_version"] for r in _rows("hand_labels.jsonl")}
     assert versions == {dates_fingerprint()}
     assert publish_problems({"version": versions.pop()}) == []
+
+
+def test_the_committed_hand_sample_redraws_from_committed_data():
+    """HND-01 (M3.3 pass 1): the documented rule, seed and inputs give the committed sample."""
+    from citewatch.handcheck import draw_hand_sample, study_pages, tuning_urls
+    from citewatch.schemas import load_study_config
+
+    base = DATA.parent
+    tuning = tuning_urls(ROOT / "tests" / "fixtures" / "dates")
+    seed = load_study_config(base / "study.yaml").seeds["hand_sample"]
+    rows = draw_hand_sample(study_pages(base), seed, exclude=tuning)
+    assert rows == _rows("hand_sample.jsonl")
+    assert len(tuning) >= 20 and not tuning & {r["url"] for r in rows}

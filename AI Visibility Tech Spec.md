@@ -356,6 +356,7 @@ class StudySummary(BaseModel):
     coverage: Interval               # URLs with a resolved date or a logged reason
     date_accuracy: list[AccuracyRow] # overall and per source (M3.3)
     support: list[SupportRow]        # per model, per judge, with hand-label agreement (M3.2)
+    check_methods: dict[str, str]    # how each human-in-the-loop check was made (D-67)
     error_counts: dict[str, dict[str, int]]   # model -> {refusal, transport, over_length, zero_citation}
     spend_usd: float
     generated_at: datetime
@@ -951,6 +952,8 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | OSS-07 | Semver policy; public API (`citewatch.schemas`, `canonical_url`, `publisher_of`, `lookup`) and an import contract test against the built wheel | D-23 |
 | OSS-08 | Tag v0.1.0 with the flagship UK study's results and changelog | D-23 |
 | OSS-09 | Release README: screenshots of the dashboard, demo and CLI; a step-by-step guide; every important link in one place, each checked to resolve | OWNER D-58 |
+| THR-01 | Thresholds in `study.yaml` (metric, scope, operator, bound; checked against the interval or the point, as declared); `citewatch score` exits 1 and names each failed rule; no rules means exit 0 | OWNER D-65 |
+| THR-02 | Example GitHub Actions workflow that runs `citewatch score` on committed data and fails the job on a threshold; docs page on thresholds | OWNER D-65 |
 
 **D5.1 Domain cards and lookup**
 
@@ -959,6 +962,8 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | CRD-01 | `domain_cards.json` from `summary.json` | FR11 |
 | CRD-02 | `lookup()` with input normalisation through `publisher_of`; not-cited message; under 1 second | US7, NFR5 |
 | CRD-03 | `cited_instead` per §9 | US7 |
+| IMP-01 | Per-publisher improvement report in each domain card: why it is or isn't cited (share and rank by intent, freshness and stale rate, missing or unreadable dates by source, robots blocks and fetch errors, judge-unsupported citations) | OWNER D-65 |
+| IMP-02 | Each reason maps to a concrete fix with the evidence count behind it; never a medical-accuracy claim; every number traced to `summary.json`, `page_meta.jsonl` or `fetch_log.jsonl` | OWNER D-65, NFR4 |
 
 **D5.2 Demo page and live mode**
 
