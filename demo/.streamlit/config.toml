@@ -1,0 +1,5 @@
+# Streamlit reads this file from the entrypoint's folder (demo/), locally and on Community Cloud.
+# An uncaught error shows a generic message: no exception type, message or traceback in the
+# browser (they still go to the server log, which the app keeps free of secrets).
+[client]
+showErrorDetails = "none"

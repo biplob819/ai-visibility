@@ -21,12 +21,12 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from html import escape
 from typing import Any
 
 from citewatch.cost import Price, answer_cost, price_for
 from citewatch.demo.guard import GuardRefused, SpendGuard
 from citewatch.demo.logs import log_request
+from citewatch.demo.markup import link, text
 from citewatch.extract.extractors import canonical_or_none, extract_claude, extract_openai
 from citewatch.extract.urls import publisher_of
 from citewatch.runners import Runner
@@ -114,7 +114,8 @@ def citations_from(model: str, responses: Sequence[Mapping[str, Any]]) -> tuple[
         url = canonical_or_none(c.url_raw)
         if url is None:
             continue
-        quote = (c.quoted_span or "").strip()[:MAX_QUOTE_CHARS] or None
+        # one line: a line break in a quote must never reach the page's markdown
+        quote = " ".join((c.quoted_span or "").split())[:MAX_QUOTE_CHARS] or None
         if (url, quote) in seen:
             continue
         seen.add((url, quote))
@@ -242,33 +243,30 @@ def run_live(
 
 
 def live_html(result: LiveResult) -> str:
-    """Each model's citations as escaped HTML: URL, publisher and quoted span. There is no
-    place for answer prose: `ModelCitations` does not carry it."""
+    """Each model's citations as one line of HTML, every value inert for HTML and markdown
+    (`citewatch.demo.markup`): URL, publisher and quoted span. There is no place for answer
+    prose: `ModelCitations` does not carry it."""
     if result.refused:
-        return f"<div class='cw-live'><p class='cw-err'>{escape(result.refused)}</p></div>"
+        return f"<div class='cw-live'><p class='cw-err'>{text(result.refused)}</p></div>"
     h = ["<div class='cw-live'>"]
     for mc in result.models:
         n = len(mc.citations)
-        h.append(f"<div class='cw-model'><h4>{escape(mc.model)}</h4>")
+        h.append(f"<div class='cw-model'><h4>{text(mc.model)}</h4>")
         h.append(
             f"<p class='cw-meta'>{n} citation{'s' if n != 1 else ''} · ${mc.cost_usd:.4f} · "
             f"{mc.latency_ms / 1000:.1f}s</p>"
         )
         if mc.note:
-            h.append(f"<p class='cw-note'>{escape(mc.note)}</p>")
+            h.append(f"<p class='cw-note'>{text(mc.note)}</p>")
         if mc.citations:
             h.append("<ol class='cw-cites'>")
             for c in mc.citations:
                 quote = (
-                    f"<blockquote>{escape(c.quoted_span)}</blockquote>"
+                    f"<blockquote>{text(c.quoted_span)}</blockquote>"
                     if c.quoted_span
-                    else f"<p class='cw-note'>{escape(NO_QUOTE)}</p>"
+                    else f"<p class='cw-note'>{text(NO_QUOTE)}</p>"
                 )
-                h.append(
-                    f"<li><b>{escape(c.publisher)}</b> · "
-                    f"<a href='{escape(c.url)}' rel='noopener nofollow' target='_blank'>"
-                    f"{escape(c.url)}</a>{quote}</li>"
-                )
+                h.append(f"<li><b>{text(c.publisher)}</b> · {link(c.url)}{quote}</li>")
             h.append("</ol>")
         h.append("</div>")
     h.append(f"<p class='cw-meta'>Total cost ${result.cost_usd:.4f}.</p></div>")

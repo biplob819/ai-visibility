@@ -13,12 +13,16 @@ All the logic lives in `src/citewatch/demo/`. `demo/app.py` only lays out the pa
 | Control | Where | Rule |
 | --- | --- | --- |
 | Passkey sign-in (WebAuthn) | `citewatch.demo.passkeys`, `citewatch.demo.component` | Live mode needs a registered passkey. Sign-in is by passkey alone (OWNER D-58, D-59) |
-| Registration code | `RegistrationGate` | Registering a passkey needs the owner's numeric code. The code is checked against a salted PBKDF2 hash with a constant-time compare. Attempts are limited to 3 per session and 10 across all visitors per hour, and the limit is counted before the compare |
+| Registration code | `RegistrationGate` | Registering a passkey needs the owner's numeric code of 12 to 32 digits. The code is checked against a salted PBKDF2 hash of at least 600,000 rounds (a weaker stored hash is refused) with a constant-time compare. Attempts are limited to 3 per session and 10 across all visitors in any hour: each attempt counts against the current and the previous clock hour together, so no burst can straddle the hour. The limit is counted before the compare, so refused attempts count too |
 | Per-request cap | `SpendGuard.check_cap` | $0.50 per question, whoever's keys are used |
 | Rate limit | `SpendGuard` | 5 live questions per passkey per hour |
 | Owner's daily cap | `SpendGuard.reserve` / `settle` | $3 a day. Only calls on the owner's keys count. The cap is held atomically in the KV, so concurrent requests cannot pass it together |
-| Bring your own keys | `ProviderKeys`, `make_runners` | A signed-in visitor can paste their own Anthropic and OpenAI keys. The keys stay in that session's memory. They are never logged, stored or shown, and provider error messages are never echoed |
-| Logs | `citewatch.demo.logs` | One line per request with four fields only: `at`, `mode`, `latency_ms`, `cost_usd`. No question, domain, IP address, passkey id or key |
+| Bring your own keys | `ProviderKeys`, `make_runners` | A signed-in visitor can paste their own Anthropic and OpenAI keys. The keys stay in that session's memory. They are never logged, stored or shown, and provider error messages are never echoed. A visitor who gives only one key gets that model only; the other shows `No openai key given.` (or `anthropic`) and the owner's key is never used in its place |
+| Logs | `citewatch.demo.logs` | One line per request with four fields only: `at`, `mode`, `latency_ms`, `cost_usd`. No question, domain, IP address, passkey id or key. A lookup is logged once per distinct query and topic in a session, not on every rerun |
+| Single-use ceremonies | `Pending`, `Passkeys` | Each sign-in or registration challenge can be finished once, pass or fail, so a captured response cannot be replayed, even from an authenticator whose signature counter stays at 0 |
+| Exact origin | `exact_origin` | `CITEWATCH_DEMO_ORIGIN` must be exactly `https://<host>[:port]` at or under the RP ID; plain `http` is allowed only for `localhost` |
+| No tracebacks | `demo/.streamlit/config.toml`, `CredentialStore` | `client.showErrorDetails = "none"`. A store failure during sign-in or registration shows a short message, never the store's error |
+| Inert text | `citewatch.demo.markup` | Quotes, URLs, publisher names and card text are put on one line with markdown syntax written as character references, so a cited page cannot add images or links to the page |
 
 Passkeys use discoverable credentials with user verification required. The store keeps the credential id, public key, signature counter and the date the passkey was added. It keeps no name, e-mail or IP address.
 
@@ -29,7 +33,7 @@ Streamlit has no WebAuthn support, so the page uses a small inline component bui
 ## Deploy to Streamlit Community Cloud
 
 1. **Create the KV.** Make a free Redis database at [Upstash](https://upstash.com) (pick a region near the app's host, in the US). From its **REST API** section, copy the `UPSTASH_REDIS_REST_URL` (`https://...upstash.io`) and the `UPSTASH_REDIS_REST_TOKEN`. Use the read-write token, not the read-only one.
-2. **Make the registration code hash.** Pick a code of 8 to 32 digits that only you know (12 or more is better). Run this in a checkout:
+2. **Make the registration code hash.** Pick a code of 12 to 32 digits that only you know. Run this in a checkout:
 
    ```
    uv run python -m citewatch.demo.make_code_hash
@@ -76,7 +80,9 @@ Streamlit has no WebAuthn support, so the page uses a small inline component bui
 
 Live mode stays off until every required secret is set. Lookup mode always works. No secret is ever shown on the page or written to the log.
 
-To rotate the code, run `make_code_hash` again and replace the two lines. Existing passkeys keep working. To remove every passkey, delete the `citewatch:demo:passkeys` hash in Upstash.
+To rotate the code, run `make_code_hash` again and replace the two lines. Existing passkeys keep working. A hash made before the 12-digit and 600,000-round floors no longer passes; make a new one. To remove every passkey, delete the `citewatch:demo:passkeys` hash in Upstash.
+
+**If registration is locked out** ("Too many registration attempts"), for example because someone has been guessing, it unlocks by itself once a whole clock hour passes with no attempts. To unlock it now, open the Upstash **Data Browser** and delete the keys matching `citewatch:demo:regcode:all:*` (the global counters, one per hour: `citewatch:demo:regcode:all:<hour>`, where `<hour>` is the Unix time divided by 3600). Per-session counters are `citewatch:demo:regcode:s:*`; a fresh browser session starts with its own, so they rarely need deleting. If the lockout keeps coming back, someone is still guessing: rotate the code.
 
 ## Run locally
 
