@@ -28,7 +28,7 @@ EXAMPLES = 3
 # date sources a reader never sees on the page: the search tool's page age, sitemaps, headers
 HIDDEN_SOURCES = frozenset({"sitemap", "http_header", "page_age"})
 TOP_FOR_INTENT = 5
-DOCS = ("is a document", "are documents")
+DOCS = ("is a document rather than a web page", "are documents rather than web pages")
 TS_PAGES = "dated pages that loaded and were cited on time-sensitive questions"
 # a missing intent is reported only for publishers cited broadly enough for the gap to mean
 # something: on this many distinct questions, across at least two intents (D-69)
@@ -219,9 +219,11 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             Improvement(
                 code="hidden_date",
                 finding=f"{_of(len(hidden), len(dated_ok), 'dated pages that loaded')} dated "
-                "only by a sitemap, an HTTP header or the search tool's page age; none shows a "
-                "date on the page.",
-                fix="Show the last-updated date on the page itself, and in schema.org markup.",
+                "only by a sitemap, an HTTP header or the search tool's page age; citewatch found "
+                "no date on the page itself.",
+                fix="Show the last-updated date on the page and mark it up (schema.org "
+                "dateModified or a <time> element), so automated readers find the date a "
+                "person sees.",
                 count=len(hidden),
                 of=len(dated_ok),
                 sources=("page_meta.jsonl",),
@@ -273,22 +275,41 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             )
         )
     if unreadable:
-        kinds = sorted({_robots_failure(st.robots[robots_host(u)]) for u in unreadable})
-        bot = any(k.startswith("refused") for k in kinds)
+        statuses = {u: st.robots[robots_host(u)] for u in unreadable}
+        kinds = sorted({_robots_failure(v) for v in statuses.values()})
+        elsewhere = sorted(
+            {robots_host(u) for u in unreadable if robots_host(u) != urlsplit(u).hostname}
+        )
+        where = (
+            f" (the failure was at {', '.join(elsewhere)}, where the pages redirect)"
+            if elsewhere
+            else ""
+        )
+        fixes = []
+        if any(v in (401, 403, 429) for v in statuses.values()):
+            fixes.append(
+                "Bot protection that refuses robots.txt also hides the site's rules from "
+                "well-behaved readers; serving robots.txt to them keeps its rules visible."
+            )
+        if any(v is None or v >= 500 for v in statuses.values()):
+            fixes.append(
+                "An unavailable robots.txt leaves well-behaved readers treating the site as off "
+                "limits (RFC 9309); keeping it available keeps the site's rules visible."
+            )
+        if any(v is not None and 300 <= v < 400 for v in statuses.values()):
+            fixes.append(
+                "citewatch follows a robots.txt redirect only to another /robots.txt; serving "
+                "robots.txt at its own address lets strict readers see the rules."
+            )
+        if not fixes:
+            fixes.append("Serving robots.txt with HTTP 200 keeps the site's rules visible.")
         rows.append(
             Improvement(
                 code="robots_unreadable",
                 finding=f"{_of(len(unreadable), len(urls), 'cited pages')} on a host whose "
-                f"robots.txt {' or '.join(kinds)}, so citewatch, which reads only what robots.txt "
-                f"allows, did not read {'it' if len(unreadable) == 1 else 'them'}.",
-                fix=(
-                    "Bot protection that refuses robots.txt also hides the site's rules from "
-                    "well-behaved readers; serving robots.txt to them keeps its rules visible."
-                    if bot
-                    else "A robots.txt that is unavailable or redirected elsewhere leaves "
-                    "well-behaved readers treating the site as off limits; serving it at "
-                    "/robots.txt keeps the site's rules visible."
-                ),
+                f"robots.txt {' or '.join(kinds)}{where}, so citewatch, which reads only what "
+                f"robots.txt allows, did not read {'it' if len(unreadable) == 1 else 'them'}.",
+                fix=" ".join(fixes),
                 count=len(unreadable),
                 of=len(urls),
                 sources=("page_meta.jsonl", "fetch_log.jsonl"),
@@ -316,8 +337,8 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             Improvement(
                 code="not_html",
                 finding=f"{_of(len(files), len(urls), 'cited links', DOCS)} "
-                "rather than web pages (for example PDFs); citewatch reads dates from web pages "
-                "only.",
+                f"({'for example a PDF' if len(files) == 1 else 'for example PDFs'}); citewatch "
+                "reads dates from web pages only.",
                 fix="Publish key guidance as an HTML page with a visible date, and link the "
                 "document from it.",
                 count=len(files),

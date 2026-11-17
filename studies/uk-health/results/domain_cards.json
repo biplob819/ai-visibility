@@ -572,8 +572,8 @@
      "https://www.england.nhs.uk/2026/04/millions-of-older-people-to-get-vaccine-against-serious-lung-infection/",
      "https://www.england.nhs.uk/2026/04/nhs-detects-tens-of-thousands-of-bowel-cancers-thanks-to-screening-programme/"
     ],
-    "finding": "17 of 17 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "17 of 17 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 17,
     "sources": [
      "page_meta.jsonl"
@@ -1009,8 +1009,8 @@
     "examples": [
      "https://www.bhf.org.uk/informationsupport/support/healthy-living/healthy-eating/salt"
     ],
-    "finding": "1 of 19 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 19 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 19,
     "sources": [
      "page_meta.jsonl"
@@ -1349,8 +1349,8 @@
      "https://www.nhsbsa.nhs.uk/help-nhs-prescription-costs/nhs-hormone-replacement-therapy-prescription-prepayment-certificate-hrt-ppc",
      "https://www.nhsbsa.nhs.uk/help-nhs-prescription-costs/nhs-prescription-prepayment-certificate-ppc"
     ],
-    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -1531,8 +1531,8 @@
      "https://notts.icb.nhs.uk/self-referral-services/",
      "https://notts.icb.nhs.uk/your-health/vaccinations/flu/"
     ],
-    "finding": "3 of 7 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 7 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 7,
     "sources": [
      "page_meta.jsonl"
@@ -1563,7 +1563,7 @@
      "https://www.frimley.icb.nhs.uk/policies-and-documents/medicines-optimisation/prescribing-guidelines-1/ear-nose-and-throat/1352-treating-your-hayfever-a-patient-information-leaflet/file"
     ],
     "finding": "3 of 13 cited pages are on a host whose robots.txt did not respond or redirected away from /robots.txt (HTTP 301) or refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible. An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible. citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 13,
     "sources": [
      "page_meta.jsonl",
@@ -1752,7 +1752,7 @@
     "examples": [
      "https://www.wmic.wales.nhs.uk/wp-content/uploads/2026/07/FINAL-PIL-Head-Lice-v2-July-26-Eng.pdf"
     ],
-    "finding": "1 of 9 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 9 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 9,
     "sources": [
@@ -1895,8 +1895,8 @@
     "examples": [
      "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167315/"
     ],
-    "finding": "1 of 2 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 2 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 2,
     "sources": [
      "page_meta.jsonl"
@@ -2097,8 +2097,8 @@
      "https://www.healthystart.nhs.uk/how-to-apply/",
      "https://www.healthystart.nhs.uk/scheme-rules/"
     ],
-    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -2365,8 +2365,8 @@
     "examples": [
      "https://mydiabetesmyway.scot.nhs.uk/resources/internal/what-can-i-do-to-lose-weight/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -2392,7 +2392,7 @@
     "examples": [
      "https://www.publications.scot.nhs.uk/files/dc20090302overthecounter.pdf"
     ],
-    "finding": "1 of 6 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 6 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 6,
     "sources": [
@@ -2888,8 +2888,8 @@
      "https://www.gloshospitals.nhs.uk/your-visit/patient-information-leaflets/fever-advice-children-and-young-people/",
      "https://www.gloshospitals.nhs.uk/your-visit/patient-information-leaflets/ice-and-heat-treatment/"
     ],
-    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -2901,7 +2901,7 @@
     "examples": [
      "https://www.gloshospitals.nhs.uk/media/documents/Ice_and_heat_treatment_GHPI0659_02_25.pdf"
     ],
-    "finding": "1 of 4 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 4 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 4,
     "sources": [
@@ -3034,7 +3034,7 @@
      "https://www.healthwatch.co.uk/advice-and-information/2025-09-03/how-register-gp-understanding-your-patient-rights"
     ],
     "finding": "6 of 6 cited pages are on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 6,
     "sources": [
      "page_meta.jsonl",
@@ -3666,7 +3666,7 @@
     "examples": [
      "https://pthb.nhs.wales/services/pharmacy-and-medicines-management/professionals/prescribing-guidelines/files/pthb-vitamin-d-guidance/"
     ],
-    "finding": "1 of 5 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 5 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 5,
     "sources": [
@@ -4080,8 +4080,8 @@
      "https://ukhsa.blog.gov.uk/2025/10/08/do-i-have-flu-covid-19-or-a-cold-know-the-signs-and-symptoms/",
      "https://ukhsa.blog.gov.uk/2026/09/11/what-is-rsv-and-who-is-eligible-for-the-vaccine/"
     ],
-    "finding": "2 of 2 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "2 of 2 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 2,
     "sources": [
      "page_meta.jsonl"
@@ -4108,7 +4108,7 @@
     "examples": [
      "https://phescreening.blog.gov.uk/wp-content/uploads/sites/152/2021/09/BCSP14-plain-text-April-2021.pdf"
     ],
-    "finding": "1 of 5 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 5 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 5,
     "sources": [
@@ -4383,8 +4383,8 @@
      "https://www.nutrition.org.uk/creating-a-healthy-diet/ultra-processed-foods/",
      "https://www.nutrition.org.uk/nutritional-information/fibre/"
     ],
-    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -4741,8 +4741,8 @@
      "https://www.myhealthlondon.nhs.uk/be-healthier/lose-weight/which-diet-is-right-for-me/intermittent-fasting/",
      "https://www.myhealthlondon.nhs.uk/learning-zone/find-a-programme/exercise-on-referral/"
     ],
-    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "3 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -5269,8 +5269,8 @@
      "https://www.cheshireandmerseyside.nhs.uk/posts/whooping-cough-cases-continue-to-rise/",
      "https://www.cheshireandmerseyside.nhs.uk/your-health/helping-you-stay-well/self-care/sore-throat/"
     ],
-    "finding": "2 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "2 of 3 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 3,
     "sources": [
      "page_meta.jsonl"
@@ -5660,7 +5660,7 @@
      "https://www.food.gov.uk/sites/default/files/media/document/sfbb-chinese-05-cooking-04-rice_0.pdf"
     ],
     "finding": "2 of 2 cited pages are on a host whose robots.txt returned a server error (HTTP 503), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -5899,7 +5899,7 @@
     "examples": [
      "https://www.kch.nhs.uk/wp-content/uploads/2023/01/pl-058.3-nasal-spray.pdf"
     ],
-    "finding": "1 of 3 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 3 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 3,
     "sources": [
@@ -6430,8 +6430,8 @@
     "examples": [
      "https://www.acog.org/womens-health/faqs/exercise-during-pregnancy"
     ],
-    "finding": "1 of 2 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 2 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 2,
     "sources": [
      "page_meta.jsonl"
@@ -7022,7 +7022,7 @@
     "examples": [
      "https://bso.hscni.net/wp-content/uploads/2025/10/PharmacyFirst_Shingles_Service_SpecificationGuidanceVersion2_OCTOBER2025.pdf"
     ],
-    "finding": "1 of 2 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 2 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 2,
     "sources": [
@@ -7405,7 +7405,7 @@
     "examples": [
      "https://patientinfolibrary.royalmarsden.nhs.uk/document/download/1727"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -7564,8 +7564,8 @@
     "examples": [
      "https://www.uhcw.nhs.uk/self-care/back/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -7577,7 +7577,7 @@
     "examples": [
      "https://www.uhcw.nhs.uk/download/clientfiles/files/Patient%20Information%20Leaflets/Emergency%20Medicine/ED%20Childrens/Fever%20or%20high%20temperature.pdf"
     ],
-    "finding": "1 of 2 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 2 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 2,
     "sources": [
@@ -7780,8 +7780,8 @@
      "https://www.actiononsugar.org/eat-less-sugar/nhs/",
      "https://www.actiononsugar.org/sugar-and-health/recommended-intake/"
     ],
-    "finding": "2 of 2 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "2 of 2 dated pages that loaded are dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 2,
     "sources": [
      "page_meta.jsonl"
@@ -7996,8 +7996,8 @@
     "examples": [
      "https://apps.apple.com/us/app/nhs-app/id1388411277"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -8523,8 +8523,8 @@
     "examples": [
      "https://www.boots.com/healthhub/diet-nutrition/tips-to-drink-more-water"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -8700,8 +8700,8 @@
     "examples": [
      "https://www.caba.org.uk/your-health/your-physical-health/staying-fit/daily-steps.html"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -8928,8 +8928,8 @@
     "examples": [
      "https://www.claremontroadrunners.co.uk/couch-to-5k-free-training-programme-newcastle/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -9265,8 +9265,8 @@
     "examples": [
      "https://doi.org/10.1249/fit.0000000000000433"
     ],
-    "finding": "1 of 2 cited pages is on a host whose robots.txt returned a server error (HTTP 530), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "finding": "1 of 2 cited pages is on a host whose robots.txt returned a server error (HTTP 530) (the failure was at www.ovid.com, where the pages redirect), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -9342,7 +9342,7 @@
      "https://drmarks.co.uk/blogs/vitamins/how-much-vitamin-d-winter-uk"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -9577,8 +9577,8 @@
     "examples": [
      "https://leaflets.ekhuft.nhs.uk/sepsis-know-the-signs-and-save-a-life/html/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -9640,7 +9640,7 @@
      "https://emsworthmedical.co.uk/pages/Shingles"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -10146,8 +10146,8 @@
     "examples": [
      "https://www.healthcareers.nhs.uk/explore-roles/wider-healthcare-team/roles-wider-healthcare-team/clinical-support-staff/social-prescribing-link-worker"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -10210,7 +10210,7 @@
      "https://www.healthcheck.nhs.uk/seecmsfile/?id=2729"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -10327,7 +10327,7 @@
      "https://www.healthwatchnorthyorkshire.co.uk/advice-and-information/2026-03-02/how-get-free-contraception-your-local-pharmacy"
     ],
     "finding": "2 of 2 cited pages are on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -10437,8 +10437,8 @@
     "examples": [
      "https://hiowhealthcare.nhs.uk/msk/stay-well-physical-mental-health/physical-wellbeing"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -10613,8 +10613,8 @@
     "examples": [
      "https://www.hse.gov.uk/msd/dse/work-routine.htm?trk=public_post_comment-text"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -10932,7 +10932,7 @@
      "https://www.leicspart.nhs.uk/wp-content/uploads/2017/11/03-head-lice-LPT-edition-3.pdf"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 301), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -11200,8 +11200,8 @@
     "examples": [
      "https://www.medicinesresources.nhs.uk/returning-to-physical-activity-after-covid-19.html"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -11374,8 +11374,8 @@
     "examples": [
      "https://microbiologysociety.org/resource/strep-a-what-you-need-to-know.html"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -11499,7 +11499,7 @@
      "https://millingandgrain.com/folic-acid-fortification-uk-flour/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -11670,8 +11670,8 @@
     "examples": [
      "https://myexpertmidwife.com/blogs/my-expert-midwife/coffee-caffeine-and-pregnancy"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -12145,8 +12145,8 @@
     "examples": [
      "https://norfolkstreetpharmacy.co.uk/pharmacy-first-shingles/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -12393,8 +12393,8 @@
     "examples": [
      "https://www.orthoinfo.org/staying-healthy/fitness--exercise/starting-a-strength-training-program/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -12519,8 +12519,8 @@
     "examples": [
      "https://www.plymouthhospitals.nhs.uk/display-pil/pil-constipation-in-adults-4069/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -12636,7 +12636,7 @@
     "examples": [
      "https://www.rcm.org.uk/wp-content/uploads/2024/06/caffeine-in-pregnancy.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -12820,8 +12820,8 @@
     "examples": [
      "https://www.runnersneed.com/expert-advice/training/12-weeks-to-fitness-beginners-5k-training-plan.html"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -12881,7 +12881,7 @@
     "examples": [
      "https://www.scas.nhs.uk/wp-content/uploads/2025/03/Easy-Read_When-should-I-call-999.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -12943,7 +12943,7 @@
      "https://schoollanesurgery.co.uk/news/free-emergency-contraception-at-high-street-pharmacies-no-gp-appointment-needed/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt returned a server error (HTTP 503), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -13222,8 +13222,8 @@
     "examples": [
      "https://sh24.org.uk/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -13635,8 +13635,8 @@
     "examples": [
      "https://lifestylemedicine.stanford.edu/protein-needs-for-adults-50/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -13923,7 +13923,7 @@
     "examples": [
      "https://www.swbh.nhs.uk/wp-content/uploads/2023/12/Keeping-healthy-during-pregnancy-ML5947.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -14036,7 +14036,7 @@
      "https://www.theaccessgroup.com/en-gb/blog/hsc-what-is-a-social-prescribing-link-worker/"
     ],
     "finding": "2 of 2 cited pages are on a host whose robots.txt redirected away from /robots.txt (HTTP 301), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -14814,7 +14814,7 @@
     "examples": [
      "https://www.wsh.nhs.uk/CMS-Documents/Patient-leaflets/PainService/6290-1d-Chronic-pain-self-management-stretching-exercise-and-posture.pdf"
     ],
-    "finding": "1 of 2 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 2 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 2,
     "sources": [
@@ -14879,7 +14879,7 @@
     "examples": [
      "https://www.wwl.nhs.uk/media/.leaflets/657838c49a1528.61004142.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -15002,7 +15002,7 @@
     "examples": [
      "https://www.yorkhospitals.nhs.uk/seecmsfile/?id=7282"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -15115,8 +15115,8 @@
     "examples": [
      "https://www.aad.org/public/diseases/a-z/cold-sores-treatment"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -15215,8 +15215,8 @@
     "examples": [
      "https://www.actiononsalt.org.uk/less/faqs/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -15399,7 +15399,7 @@
      "https://www.ahpsuffolk.co.uk/self-refer/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -15485,8 +15485,8 @@
     "examples": [
      "https://www.alishapharmacy.co.uk/services/chiswick-pharmacy-first-uti-women"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -15658,7 +15658,7 @@
      "https://www.asics.com/nz/en-nz/mk/running-injury-prevention/preventing-shin-splints"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -15845,7 +15845,7 @@
      "https://www.benenden.co.uk/be-healthy/nutrition/how-much-water-do-you-really-need-to-drink/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 303), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -15895,7 +15895,7 @@
     "examples": [
      "https://www.birmingham.gov.uk/download/downloads/id/29560/beactive_exercise_referral_scheme_-_information_and_guidance_for_referring_health_professionals.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -16117,7 +16117,7 @@
     "examples": [
      "https://bswtogether.org.uk/medicines/documents/right-to-choose-frequently-asked-questions/"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -16308,7 +16308,7 @@
     "examples": [
      "https://plr.cht.nhs.uk/download/1473/Dietary%20advice%20to%20increase%20your%20iron%20intake%20A4"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -16358,8 +16358,8 @@
     "examples": [
      "https://www.sexualhealthhertfordshire.clch.nhs.uk/sti-testing"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -16611,7 +16611,7 @@
     "examples": [
      "https://www.dbth.nhs.uk/wp-content/uploads/2026/02/Sepsis-Discharge-Adults.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -16920,8 +16920,8 @@
     "examples": [
      "https://epiccardiology.com/blog/understanding-common-causes-of-chest-pain-after-exercise/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -16970,7 +16970,7 @@
     "examples": [
      "https://eput.nhs.uk/wp-content/uploads/2025/04/section-23-management-of-vitamin-d-deficiency-updated-may-2024.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -17056,8 +17056,8 @@
     "examples": [
      "https://www.farrunners.co.uk/couch-to-5k/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -17537,7 +17537,7 @@
      "https://www.healthwatchsunderland.com/advice-and-information/2025-10-14/getting-started-nhs-app"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -17983,8 +17983,8 @@
     "examples": [
      "https://www.innermostglobal.com/blogs/insight/this-is-how-much-protein-you-need-to-build-muscle"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -18120,7 +18120,7 @@
      "https://www.jobs.nhs.uk/candidate/jobadvert/B0116-26-0026"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -18429,7 +18429,7 @@
     "examples": [
      "https://www.medicinesteam.co.uk/post/is-intermittent-fasting-safe-for-everyone-a-guide-for-patients-and-clinicians"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -18479,8 +18479,8 @@
     "examples": [
      "https://medlineplus.gov/ency/patientinstructions/000654.htm"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -19374,8 +19374,8 @@
     "examples": [
      "https://northcheshireandmersey.nhs.uk/news/you-can-do-so-much-more-with-the-nhs-app-than-you-realise/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -19424,7 +19424,7 @@
     "examples": [
      "https://northyorkshireccg.nhs.uk/wp-content/uploads/2023/12/Vitamin-D-guidelines-Dec-2023-Final.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -19475,7 +19475,7 @@
      "https://norwichwire.co.uk/world/cough-syrup-nhs-advice/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -19562,7 +19562,7 @@
      "https://www.nsca.com/education/articles/kinetic-select/determination-of-resistance-training-frequency/"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -19612,7 +19612,7 @@
     "examples": [
      "https://ntag.nhs.uk/wp-content/uploads/2025/04/NENC-Primary-Care-Management-of-Vitamin-D-Deficiency-in-adults-Mar-2025-Approved.pdf?UNLID=4996925852025918947"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -20123,8 +20123,8 @@
     "examples": [
      "https://ukhsa-newsroom.prgloo.com/news/ukhsa-update-on-scarlet-fever-and-invasive-group-a-strep-3"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -20223,7 +20223,7 @@
     "examples": [
      "https://www.qvh.nhs.uk/wp-content/uploads/2015/09/Acute-Lower-Back-Pain-0415.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -20274,7 +20274,7 @@
      "https://reencle.co/blogs/news/how-long-does-cooked-rice-last"
     ],
     "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "A robots.txt that is unavailable or redirected elsewhere leaves well-behaved readers treating the site as off limits; serving it at /robots.txt keeps the site's rules visible.",
+    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -20360,7 +20360,7 @@
     "examples": [
      "https://www.royaldevon.nhs.uk/media/1ypo1pnl/protein-advice-for-people-with-kidney-disease-rd-25-787-001.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -20621,7 +20621,7 @@
     "examples": [
      "https://www.sath.nhs.uk/wp-content/uploads/2020/09/Fibre-Factsheet.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -20707,8 +20707,8 @@
     "examples": [
      "https://www.sciencedaily.com/releases/2013/04/130404170225.htm"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -20757,8 +20757,8 @@
     "examples": [
      "https://www.seehearhealth.co.uk/eye-care/nhs-sight-test-who-is-eligible/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -20856,8 +20856,8 @@
     "examples": [
      "https://sheensurgery.nhs.uk/physio-self-referral/"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -20992,7 +20992,7 @@
     "examples": [
      "https://generic.wordpress.soton.ac.uk/lifelab/wp-content/uploads/sites/548/2026/03/CMO-Physical-Activity-Guidelines-Summary.pdf"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [
@@ -21077,8 +21077,8 @@
     "examples": [
      "https://www.sportengland.org/new-physical-activity-guidelines-disabled-children-and-young-people"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -21329,8 +21329,8 @@
     "examples": [
      "https://www.svetness.com/blogs/In-Pain-After-Leg-Day-Expert-Recommendations-to-Speed-Up-Recovery"
     ],
-    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; none shows a date on the page.",
-    "fix": "Show the last-updated date on the page itself, and in schema.org markup.",
+    "finding": "1 of 1 dated pages that loaded is dated only by a sitemap, an HTTP header or the search tool's page age; citewatch found no date on the page itself.",
+    "fix": "Show the last-updated date on the page and mark it up (schema.org dateModified or a <time> element), so automated readers find the date a person sees.",
     "of": 1,
     "sources": [
      "page_meta.jsonl"
@@ -21539,7 +21539,7 @@
     "examples": [
      "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/9440057"
     ],
-    "finding": "1 of 1 cited links is a document rather than web pages (for example PDFs); citewatch reads dates from web pages only.",
+    "finding": "1 of 1 cited links is a document rather than a web page (for example a PDF); citewatch reads dates from web pages only.",
     "fix": "Publish key guidance as an HTML page with a visible date, and link the document from it.",
     "of": 1,
     "sources": [

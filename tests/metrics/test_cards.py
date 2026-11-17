@@ -361,6 +361,8 @@ def test_robots_failures_are_worded_by_what_happened(tiny: Path, status, words, 
     assert words in row.finding and "HTTP no response" not in row.finding
     assert row.finding.endswith("did not read it.")
     assert ("Bot protection" in row.fix) == bot
+    if status is not None and 300 <= status < 400:
+        assert "citewatch follows a robots.txt redirect only" in row.fix
 
 
 def test_a_www_twin_answering_200_does_not_make_an_unredirected_host_readable(tiny: Path):
