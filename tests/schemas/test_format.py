@@ -17,6 +17,7 @@ TOP_LEVEL = {
     "page_meta": "PageMeta",
     "study_summary": "StudySummary",
     "domain_card": "DomainCard",
+    "improvement": "Improvement",
     "support_verdict": "SupportVerdict",
     "hand_date_label": "HandDateLabel",
     "study_config": "StudyConfig",

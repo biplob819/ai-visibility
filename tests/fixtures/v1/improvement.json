@@ -1,0 +1,11 @@
+{
+  "code": "stale",
+  "finding": "12 of 30 dated cited pages were last updated more than 365 days before the answers that cited them.",
+  "fix": "Review these pages: update and re-date them, or retire them with a redirect to a current page.",
+  "count": 12,
+  "of": 30,
+  "source": "page_meta.jsonl",
+  "examples": [
+    "https://www.nhs.uk/conditions/flu/"
+  ]
+}

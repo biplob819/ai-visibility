@@ -372,6 +372,18 @@ class DomainCard(BaseModel):         # what the demo shows
     dated_pages: int
     questions_citing: tuple[str, ...]
     cited_instead: tuple[str, ...]   # §9
+    improvement: tuple[Improvement, ...]  # why cited or not, each with a fix (OWNER D-65)
+
+
+class Improvement(BaseModel):          # one row of a card's improvement report
+    code: Literal["intent_absent", "undated", "hidden_date", "stale",
+                  "robots_blocked", "fetch_error", "unsupported"]
+    finding: str                     # sourcing, dates and readability only (NFR4)
+    fix: str
+    count: int                       # 0 < count <= of
+    of: int
+    source: Literal["summary.json", "page_meta.jsonl", "fetch_log.jsonl", "support_verdicts.jsonl"]
+    examples: tuple[str, ...]        # up to three URLs or intents
 
 
 class SupportVerdict(BaseModel):

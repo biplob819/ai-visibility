@@ -18,6 +18,35 @@ CitationRef = Annotated[
 ]
 
 
+ImprovementCode = Literal[
+    "intent_absent",
+    "undated",
+    "hidden_date",
+    "stale",
+    "robots_blocked",
+    "fetch_error",
+    "unsupported",
+]
+
+
+class Improvement(Model):
+    """One reason a publisher is or isn't cited, with a fix and its evidence (OWNER D-65)."""
+
+    code: ImprovementCode
+    finding: NonBlank
+    fix: NonBlank
+    count: NonNegInt
+    of: NonNegInt  # the denominator the count is out of
+    source: Literal["summary.json", "page_meta.jsonl", "fetch_log.jsonl", "support_verdicts.jsonl"]
+    examples: tuple[NonBlank, ...] = ()  # up to three URLs or intents behind the count
+
+    @model_validator(mode="after")
+    def _counted(self) -> Improvement:
+        if self.count == 0 or self.count > self.of:
+            raise ValueError("an improvement needs 0 < count <= of")
+        return self
+
+
 class DomainCard(Model):
     publisher: NonBlank
     share_by_model: FrozenMap[Interval]
@@ -28,6 +57,7 @@ class DomainCard(Model):
     dated_pages: NonNegInt
     questions_citing: tuple[NonBlank, ...] = ()
     cited_instead: tuple[NonBlank, ...] = ()
+    improvement: tuple[Improvement, ...] = ()
 
     @model_validator(mode="after")
     def _counts(self) -> DomainCard:

@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [D5.1] — domain cards for 361 cited publishers with `cited_instead` and an improvement report (OWNER D-65); `lookup()` through the extractor's `publisher_of`; written by `citewatch score`
 - [GREEN] [S3.1] — verified over two passes; $15.03 recomputed from provider usage; run data, raw responses and support records frozen by hash
 - [FEAT] [S3.1] — study runs 1 and 2 ($15.03, 400 answers, 0 errors), spend reconciled exactly, run data frozen by hash (RUN-04)
 - [GREEN] [M3.3] — verified over three passes (D-67, D-68); held-out rule over distinct sampled pages; checker load failures counted, never scored; 67% within 7 days (18/27)

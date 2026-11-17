@@ -594,6 +594,7 @@ def score(
     out = write_summary(path.parent, summary)
     _write_calibration(path.parent, cfg)
     _write_gaps(path.parent)
+    _write_cards(path.parent, cfg, qs, runs, summary)
     cov = summary.coverage
     payload = {
         "ok": True,
@@ -638,6 +639,14 @@ def _write_calibration(base: Path, cfg: Any) -> None:
         if x.strip()
     ]
     write_calibration(base, calibrate(verdicts, hand, cfg.seeds["support_sample"]))
+
+
+def _write_cards(base: Path, cfg: Any, qs: Any, runs: list[int], summary: Any) -> None:
+    """D5.1: one domain card per cited publisher, with its improvement report (OWNER D-65)."""
+    from citewatch.cards import build_cards, write_cards
+    from citewatch.metrics.data import load
+
+    write_cards(base, build_cards(base, load(base, cfg, qs, runs), summary, cfg.stale_days))
 
 
 def _write_gaps(base: Path) -> None:
