@@ -202,6 +202,23 @@ def _allowed_page(path: str, size: int) -> bool:
     return any(_glob(path, g) and size <= cap for g, cap, _ in ALLOWED_PAGES)
 
 
+def _embedded_end(text: str, start: int) -> int:
+    """Where a document embedded in source ends: its </html>, else the end of its string
+    literal (a triple quote), else the end of its line."""
+    ends = []
+    close = re.compile(r"</html\s*>", re.I).search(text, start)
+    if close:
+        ends.append(close.end())
+    for q in ('"""', "'''"):
+        i = text.find(q, start)
+        if i != -1:
+            ends.append(i)
+    nl = text.find("\n", start)
+    if not ends:
+        ends.append(nl if nl != -1 else len(text))
+    return min(ends)
+
+
 def page_problem(path: str, data: bytes) -> str | None:
     """Why this blob, committed at `path`, looks like a stored web page, or None."""
     text = data.decode("utf-8", "replace")
@@ -218,8 +235,13 @@ def page_problem(path: str, data: bytes) -> str | None:
         # Python sources that build or test pages carry page markup as string literals, so
         # their body text is not judged; but a large source carrying a whole document is
         # (B4.4 pass 4): the generators are allow-listed above with size caps
-        if len(data) > PAGE_MAX and re.search(r"<!doctype\s+html|<html\b", text, re.I):
-            return f"a {len(data)}-byte Python source carrying an HTML document (a stored page?)"
+        for m in re.finditer(r"<!doctype\s+html|<html\b", text, re.I):
+            end = _embedded_end(text, m.start())
+            if end - m.start() > PAGE_MAX:
+                return (
+                    f"a Python source carrying a {end - m.start()}-character HTML document "
+                    "(a stored page?)"
+                )
         return None
     bodies = [m.group(1) for m in _BODY.finditer(text)]
     head = text.lstrip("\ufeff \t\r\n")
