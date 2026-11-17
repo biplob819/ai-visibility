@@ -1,0 +1,21 @@
+# Read by the portfolio site (biplob819.github.io), which pulls docs/case-study.md.
+title: "citewatch: what AI search cites, and how fresh it is"
+slug: ai-visibility
+summary: "An open-source, pre-registered study of which sources AI search answers cite for UK health questions, and how fresh those pages are."
+case_study: docs/case-study.md
+repo: https://github.com/biplob819/ai-visibility
+links:
+  dashboard: https://biplob819.github.io/ai-visibility/
+  post: https://biplob819.github.io/ai-visibility/post/
+  signal_spec: https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf
+  data_card: https://github.com/biplob819/ai-visibility/blob/main/DATA_CARD.md
+  preregistration: https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md
+  demo: null  # set when the Streamlit demo is live
+images:
+  dataflow: docs/assets/dataflow.svg
+  architecture: docs/assets/architecture.svg
+  dashboard: docs/assets/screenshots/dashboard.png
+  post: docs/assets/screenshots/post.png
+  signal_spec: docs/assets/screenshots/signal-spec.png
+tech: [Python, uv, Anthropic API, OpenAI API, httpx, NumPy, DuckDB, Pydantic, Streamlit, WebAuthn, EvalKit, GitHub Actions]
+status: draft  # the owner approves the wording before the page uses it
