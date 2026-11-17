@@ -1,0 +1,21 @@
+# Streamlit Community Cloud installs this file: a dependency file next to the entrypoint takes
+# precedence over the root uv.lock. demo/app.py imports citewatch from ../src, so only third-party
+# packages are listed: the core dependencies plus the anthropic, openai and demo extras, pinned to
+# the versions in uv.lock (tests/demo/test_deploy.py keeps this file in step with both).
+anthropic==2.8.0
+defusedxml==0.7.1
+duckdb==2.0.0
+extruct==0.18.0
+httpx==0.28.1
+idna==3.20
+numpy==2.4.6 ; python_full_version < '3.12'
+numpy==2.5.5 ; python_full_version >= '3.12'
+openai==3.51.0
+protego==0.7.0
+pydantic==2.14.3
+python-dateutil==4.0.0
+pyyaml==6.0.3
+streamlit==1.67.0
+tldextract==5.4.0
+typer==0.29.1
+webauthn==3.0.1
