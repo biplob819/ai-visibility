@@ -109,6 +109,11 @@ def planted(tmp_path_factory: pytest.TempPathFactory):
         "docs/cut.md": "<html><head></head><body><article>" + "Words of a saved page. " * 600,
         "tests/fixtures/dates/pages/sub/deep.html": BODY_PAGE,
         "studies/s/data/plant.csv": "url,body\nhttps://e.org,a page\n",
+        "docs/padded.md": "\ufeff"
+        + " " * 1500
+        + "<HTML lang=en><body>"
+        + "Saved page text. " * 300,
+        "docs/notes-about-html.md": "We render <body> tags here. " + "Plain prose. " * 400,
         "studies/s/data/long.ndjson": '{"page_content": "' + "x" * 3000 + '"}\n',
         "tests/fixtures/dates/pages/ok.html": "<html><body><time>2024</time></body></html>",
         "tests/fixtures/dates/pages/big.html": BIG_PAGE,
@@ -282,7 +287,9 @@ def test_cut_off_pages_deep_fixtures_csv_bodies_and_other_keys_are_caught(result
     """B4.4 pass 2: a page without </body> in a .md file, a fixture glob that crossed folders,
     a CSV body column, and long text under page_content in .ndjson."""
     _, text, _ = result
+    assert "docs/notes-about-html.md" not in text  # prose that mentions a tag is not a page
     for path in (
+        "docs/padded.md",
         "docs/cut.md",
         "tests/fixtures/dates/pages/sub/deep.html",
         "studies/s/data/plant.csv",

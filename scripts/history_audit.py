@@ -212,9 +212,14 @@ def page_problem(path: str, data: bytes) -> str | None:
     doc = bool(_DOC_START.search(text)) or path.lower().endswith((".html", ".htm", ".xhtml"))
     if doc and len(data) > PAGE_MAX:
         return f"an HTML document of {len(data)} bytes (a stored page?)"
+    if path.endswith(".py"):
+        # Python sources that build or test pages carry page markup as string literals; a
+        # stored page is judged by the document-size rule above, not by its body text
+        return None
     bodies = [m.group(1) for m in _BODY.finditer(text)]
-    starts_as_page = re.search(r"<html\b", text[:1024], re.I) is not None
-    if not bodies and starts_as_page and not path.endswith(".py"):
+    head = text.lstrip("\ufeff \t\r\n")
+    starts_as_page = re.match(r"(?:<\?xml[^>]*>\s*)?<(?:!doctype\s+html|html)\b", head, re.I)
+    if not bodies and starts_as_page:
         bodies = [m.group(1) for m in _OPEN_BODY.finditer(text)]
     for body in bodies:
         visible = " ".join(_NOISE.sub(" ", body).split())
