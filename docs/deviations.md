@@ -11,14 +11,15 @@ effect on the published numbers. Decision ids link to [`decisions.md`](decisions
 
 | Decision | What changed | Effect on results |
 |---|---|---|
-| D-56 | §6.3: a page dated after the answer still counts as the answer's newest dated citation for the stale rules; NHS overdue is over cited (page, answer) pairs whose publisher or group is nhs.uk; every top-k list keeps all publishers tied at the cut; spend counts only the scored runs; bootstrap p-values are (count + 1) / (B + 1) | Defines figures the plan left open; no headline changes direction |
+| D-56, D-80 | §6.3: a page dated after the answer still counts as the answer's newest dated citation for the stale rules; NHS overdue is over cited (page, answer) pairs whose publisher or group is nhs.uk; every top-k list keeps all publishers tied at the cut; spend counts only the scored runs; bootstrap p-values are (count + 1) / (B + 1). D-80: stale rates pool both runs (114 time-sensitive answers per model = 57 questions × 2 runs), resampled with the question clusters | Defines figures the plan left open; no headline changes direction |
 | D-55 | `summary.json` gained citations per answer, paired comparisons and NHS overdue rows | Additional reported figures, all defined in §6 |
 
 ## The support check (§8.1, node M3.2)
 
 | Decision | What changed | Effect on results |
 |---|---|---|
-| OWNER D-61 | Page text was glued at paragraph breaks, which broke the judges' quote check; the text was fixed, the 58 sample pages refetched once, earlier verdicts discarded and all citations judged again | Support rates come from the second judging only |
+| OWNER D-61 | Page text was glued at paragraph breaks, which broke the judges' quote check; the text was fixed, every sample and reserve page that had fetched (58; D-61 estimated 51) was refetched once, earlier verdicts discarded and all citations judged again. The faithfulness reading also changed: each answer span is read as an answer to its question, so a fragment may take the question's subject (EvalKit 2181921) | Support rates come from the second judging only, under the changed reading |
+| D-80 | §8.1 plans 25 citations per model. Claude's symptoms stratum ran out of reserves (both reserves and the last sampled page had no usable text), so Claude's sample is 24 | Claude-cited support rates are over 24 citations |
 | D-67, D-68 | One citation (1:v-062) whose refetch failed is recorded unjudged rather than replaced by its reserve, because a replacement would have had no owner label; another (1:v-004) is unjudged after EvalKit failed twice | GPT-cited judge rates are over 23 citations, the owner's over 25 |
 | OWNER D-62 | The owner labelled all 49 citations supported, one to two seconds apart, and confirmed the labels; they are reported beside both judges with that pace stated | Judge–owner kappa is not reported (it is 0 by construction when one rater is constant); the true support rate is not settled |
 | OWNER D-65 | Judges are calibrated against the owner's labels with EvalKit's cluster kappa | An added analysis (`calibration.json`) |
@@ -27,15 +28,15 @@ effect on the published numbers. Decision ids link to [`decisions.md`](decisions
 
 | Decision | What changed | Effect on results |
 |---|---|---|
-| OWNER D-63, D-64 | The held-out dates were read by a fresh-context agent that never saw the parser's output, and approved by the owner with no edits, instead of being hand-labelled | Every place the result appears says "agent-checked, owner-approved" |
+| OWNER D-63, D-64 | The held-out dates were read by a fresh-context agent that never saw the parser's output, and approved by the owner with no edits, instead of being hand-labelled | Every place the result appears says "agent-checked, owner-approved"; of the 50 planned dated pages, 27 could be scored: 17 showed the checker no date and 6 did not load |
 | D-68 | Seven pages the agent could not load are counted and never scored | Within 7 days: 18 of 27 judgeable pages; the undated row is 2 of 4 |
 | D-67 | The sample was drawn from pages cited in runs 1–2 (not smoke-run pages), which the plan implied but did not state; a script re-draws it | None: the committed sample re-draws exactly |
 
 ## Reported against plan, not changed
 
-- **Date coverage** is 89% (745 of 841 cited URLs) against the plan's 90% target, reported as below target.
-- **Over-length answers** (48 of Claude's 200 answers, none of GPT's) are included, as pre-registered, and counted.
-- **Model snapshots** are the alias ids the providers return, not dated snapshots (S3.1 known limits).
+- **Date coverage** is 89% (745 of 841 cited URLs) against the PRD's 90% target (D-80), reported as below target.
+- **Over-length answers** (48 of Claude's 200 answers, none of GPT's) are included, as pre-registered (D-51), and counted.
+- **Model snapshots** are the alias ids the providers return, not dated snapshots (D-80).
 - **Cost** was $15.03 for the two study runs, inside the $38 the owner approved (OWNER D-48).
 
 ## Outside the analysis

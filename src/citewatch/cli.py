@@ -201,6 +201,20 @@ def doctor(study: StudyOpt = Path("."), as_json: JsonOpt = False) -> None:
         checks.append({"check": "study", "ok": False, "detail": f"{exc}{hint}"})
     for var, present in key_status(providers).items():
         checks.append({"check": var, "ok": present, "detail": "set" if present else "missing"})
+    import importlib.util
+
+    for provider in providers:  # B4.4 pass 1: the provider SDKs are optional extras
+        found = importlib.util.find_spec(provider) is not None
+        checks.append(
+            {
+                "check": f"{provider} SDK",
+                "ok": found,
+                "detail": "installed"
+                if found
+                else f"missing: install with `uv sync --extra {provider}` "
+                f"(or pip install 'citewatch[{provider}]')",
+            }
+        )
     ok = all(c["ok"] for c in checks)
     lines = [f"{'ok ' if c['ok'] else 'FIX'}  {c['check']}: {c['detail']}" for c in checks]
     lines.append("ready" if ok else "not ready: fix the lines marked FIX")

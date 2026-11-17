@@ -85,6 +85,7 @@ def test_every_percentage_carries_a_count(page: str):
         for m in re.finditer(r"\d+(?:\.\d+)?%", text)
         if not text[m.end() : m.end() + 10].startswith((" (counted)", " CI", " interval"))
         and not text[max(0, m.start() - 7) : m.start()].endswith("target ")  # a goal, not a value
+        and not text[m.end() : m.end() + 7].startswith(" target")
     ]
     assert loose == []
 

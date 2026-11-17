@@ -60,24 +60,46 @@ judges via [EvalKit](https://github.com/biplob819/evalkit) and the owner's label
 
 ## Rerun it
 
+Look at the results with no keys and no spend:
+
 ```bash
 git clone https://github.com/biplob819/ai-visibility && cd ai-visibility
 uv sync
-uv run citewatch report --example              # the bundled study's dashboard, no keys needed
-uv run citewatch init my-study --contact https://example.org/about   # your own study
-uv run citewatch doctor --study my-study       # names any missing API key
-uv run citewatch ask --run 1 --dry-run --study my-study   # cost estimate, no calls
-uv run citewatch ask --run 1 --study my-study  # needs ANTHROPIC_API_KEY / OPENAI_API_KEY
+uv run citewatch report --example     # the bundled study's dashboard and post
+```
+
+Run your own study (paid calls need the provider SDKs and your API keys):
+
+```bash
+uv sync --extra anthropic --extra openai
+uv run citewatch init my-study --contact <a page site owners can reach you at>
+# edit my-study/study.yaml and my-study/questions.jsonl, and set the API keys in my-study/.env
+uv run citewatch doctor --study my-study                  # names any missing key or SDK
+uv run citewatch ask --run 0 --dry-run --study my-study   # cost estimate, no calls
+
+# 1. A small paid smoke run measures what an answer really costs
+uv run citewatch ask --run 0 --study my-study
+uv run python scripts/measure_cost.py my-study --run 0    # writes my-study/cost_model.yaml
+
+# 2. Before the study runs: freeze the questions and the metric definitions
+#    write my-study/preregistration.md, record the sha256 of it and of questions.jsonl in a
+#    decisions.md, and commit everything (a study run refuses a dirty or non-git folder)
+
+# 3. The study runs, then the analysis
+uv run citewatch ask --run 1 --study my-study             # run 2 waits at least two hours
 uv run citewatch extract --study my-study
 uv run citewatch fetch --study my-study
 uv run citewatch score --study my-study
 uv run citewatch report --study my-study --title "my topic"
 ```
 
-**Cost.** The flagship study's two runs (400 answers) cost $15.03 in API calls; the dry run
-estimates yours before any call, and `max_cost_usd` in `study.yaml` caps it. Fetching costs
-nothing but time. Thresholds in `study.yaml` can fail a CI job when a metric crosses a bound
-([`docs/thresholds.md`](docs/thresholds.md)).
+`citewatch ask --run 1 --dry-run` lists anything the run gate still needs before it will spend.
+The gate and why each check exists are in the Tech Spec (§3 and gates G1, G2).
+
+**Cost.** The flagship study's smoke run cost $0.79 and its two study runs (400 answers) cost
+$15.03 in API calls; the dry run estimates yours before any call, and `max_cost_usd` in
+`study.yaml` caps it. Fetching costs nothing but time. Thresholds in `study.yaml` can fail a CI
+job when a metric crosses a bound ([`docs/thresholds.md`](docs/thresholds.md)).
 
 ## Responsible use
 

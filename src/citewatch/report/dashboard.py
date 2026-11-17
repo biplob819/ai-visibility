@@ -287,7 +287,7 @@ def checks(s: StudySummary) -> str:
         (
             "Date coverage",
             counted(cov),
-            "cited URLs with a resolved date or a logged reason; pre-registered target 90%"
+            "cited URLs with a resolved date or a logged reason; the study's 90% target"
             + (" (below target)" if cov.point < 0.9 else " (met)"),
         ),
     ]
@@ -597,7 +597,7 @@ def stability(s: StudySummary) -> str:
 def coverage(s: StudySummary) -> str:
     return (
         f"<p class='stat'>{counted(s.coverage)}</p><p>Cited URLs with a resolved date or a logged "
-        "reason for having none (pre-registered target 90%).</p>"
+        "reason for having none (the study's 90% target).</p>"
     )
 
 
