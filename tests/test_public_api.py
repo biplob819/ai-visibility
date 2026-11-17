@@ -138,8 +138,7 @@ def _run(cmd: list[str | Path], cwd: Path) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.contract
 def test_the_built_wheel_imports_exactly_the_public_api(tmp_path):
-    if not shutil.which("uv"):
-        pytest.skip("uv is not installed (gate 10 needs it too)")
+    assert shutil.which("uv"), "uv is required to build the wheel (gate 10 needs it too)"
     dist = tmp_path / "dist"
     p = _run(["uv", "build", "--wheel", "--out-dir", dist], ROOT)
     assert p.returncode == 0, p.stdout + p.stderr

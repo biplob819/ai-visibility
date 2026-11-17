@@ -37,6 +37,19 @@ It measures **sourcing, not medical accuracy**, and nothing here is medical advi
 
 [![The findings dashboard](docs/assets/screenshots/dashboard.png)](https://biplob819.github.io/ai-visibility/)
 
+## Install
+
+```bash
+pip install citewatch                     # the core: report, score, dates, lookup
+pip install 'citewatch[anthropic,openai]' # plus the provider SDKs for paid runs
+uvx citewatch report --example            # or try it without installing
+```
+
+Python 3.11 or newer. See the [quickstart](docs/quickstart.md) (an example report in under
+five minutes, no keys).
+
+[![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](docs/assets/screenshots/cli.png)](docs/quickstart.md)
+
 ## How it works
 
 ![citewatch data flow](docs/assets/dataflow.svg)
@@ -101,6 +114,18 @@ $15.03 in API calls; the dry run estimates yours before any call, and `max_cost_
 `study.yaml` caps it. Fetching costs nothing but time. Thresholds in `study.yaml` can fail a CI
 job when a metric crosses a bound ([`docs/thresholds.md`](docs/thresholds.md)).
 
+## Guides
+
+| Guide | What it covers |
+|---|---|
+| [Quickstart](docs/quickstart.md) | the bundled study's dashboard in under five minutes, no keys |
+| [Run your own study](docs/own-study.md) | settings, the questions format, intents, country, models, the run gate |
+| [How dates are resolved](docs/dates.md) | the seven date sources, the rules and their limits |
+| [Controlling cost](docs/cost.md) | estimates, the hard cap, resume, what the flagship study cost |
+| [Thresholds in CI](docs/thresholds.md) | rules that fail a CI job when a metric crosses a bound |
+| [Responsible use](docs/responsible-use.md) | politeness, no telemetry, privacy, not for gaming AI answers |
+| [Versioning](docs/versioning.md) | semver and the public API |
+
 ## Responsible use
 
 citewatch obeys robots.txt and a fixed politeness floor that no setting can loosen, sends
@@ -116,6 +141,24 @@ tool for gaming AI answers ([`docs/responsible-use.md`](docs/responsible-use.md)
 | `docs/` | pre-registration, deviations, decisions, signal spec, data-flow and architecture diagrams |
 | `demo/` | the Streamlit demo (lookup; live mode behind passkeys) |
 | `specs/`, `docs/graph/` | the build plan: one spec per node and the capability catalog |
+
+## Links
+
+| | |
+|---|---|
+| Repository | https://github.com/biplob819/ai-visibility |
+| Package | https://pypi.org/project/citewatch/ |
+| Dashboard | https://biplob819.github.io/ai-visibility/ |
+| Post | https://biplob819.github.io/ai-visibility/post/ |
+| Signal spec | [docs/signal-spec.pdf](docs/signal-spec.pdf) |
+| Data card | [DATA_CARD.md](DATA_CARD.md) |
+| Pre-registration | [docs/preregistration.md](docs/preregistration.md) |
+| Deviations | [docs/deviations.md](docs/deviations.md) |
+| Decisions | [docs/decisions.md](docs/decisions.md) |
+| Changelog | [changelog.md](changelog.md) |
+| Support judging | [EvalKit](https://github.com/biplob819/evalkit) |
+
+`scripts/check_links.py --online` checks every link in the README and docs.
 
 ## Licence
 
