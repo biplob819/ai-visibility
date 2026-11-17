@@ -151,7 +151,7 @@ intervals. Cost scales with questions × models × runs (this study: {answers} a
 <table>{tier_rows}</table>
 <p>No price points yet: tiers are set by panel size, refresh cadence and access to raw records.</p>
 <h2>Limits</h2>
-<ul><li>Directional: one country, two models, 100 questions per study.</li>
+<ul><li>Directional: one country, {len(MODELS)} models, {questions} questions per study.</li>
 <li>Dates only from what pages state; unreadable pages are counted, never guessed.</li></ul>
 </div></div>
 <p class="foot">github.com/biplob819/ai-visibility · dashboard: biplob819.github.io/ai-visibility ·
