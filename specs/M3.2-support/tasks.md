@@ -7,4 +7,4 @@
 - [x] 5. Blind labelling sheet, owner labels
 - [x] 6. Agreement, kappa, report rows
 - [x] 7. Finalise clean-up
-- [ ] 8. Converge twice, verifier, green
+- [x] 8. Converge twice, verifier, green

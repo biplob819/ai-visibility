@@ -47,6 +47,7 @@ def main() -> int:
     )
     cache = body_cache_dir()
     cache.mkdir(parents=True, exist_ok=True)
+    (cache / ".citewatch-body-cache").touch()  # finalise deletes only marked caches (D-68)
     out = []
     try:
         for url in urls:

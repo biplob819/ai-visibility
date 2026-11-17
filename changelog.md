@@ -2,6 +2,8 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [M3.3] — verified over three passes (D-67, D-68); held-out rule over distinct sampled pages; checker load failures counted, never scored; 67% within 7 days (18/27)
+- [GREEN] [M3.2] — verified over three passes (D-67, D-68); support rates per model and judge, owner labels, EvalKit calibration, gaps; body cache finalised
 - [FEAT] [M3.3] — held-out date check on 55 pages, agent-checked and owner-approved (OWNER D-63, D-64): 67% within 7 days (18/27 judgeable, Wilson 48–81%); label freeze tests
 - [FEAT] [M3.2] — support judging with EvalKit (two judges, OWNER D-60, D-61), owner labels (OWNER D-62), judge calibration with EvalKit's cluster kappa (OWNER D-65), body cache finalised
 - [GREEN] [M3.1] — verified over three passes (D-55, D-56); §6 metrics with the question-cluster bootstrap, Holm and Wilson; `citewatch score` writes summary.json; DuckDB views

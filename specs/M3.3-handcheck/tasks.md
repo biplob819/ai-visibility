@@ -6,4 +6,4 @@
 - [x] 4. Draw after run 2 fetch; blind sheet
 - [x] 5. Owner labels; import
 - [x] 6. Accuracy rows in summary.json
-- [ ] 7. Converge twice, verifier, green
+- [x] 7. Converge twice, verifier, green

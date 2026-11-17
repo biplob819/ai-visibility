@@ -1,6 +1,6 @@
 # M3.2 run state
 
-**Now:** labels imported (OWNER D-62), calibration built (OWNER D-65), body cache finalised; verifier pass 2 fixes applied (D-68); focused pass 3 next.
+**Now:** GREEN (verifier pass 3, 2026-11-17).
 
 ## Log
 - 2026-11-16 — support sample drawn from run 1 (50 + 20 reserves); judging adapter built offline (18 tests).
@@ -12,6 +12,8 @@
 
 - 2026-11-17 — verifier pass 2: SUP-01..06 CONFIRMED; every rate, confusion count and gap recomputed exactly; a no-EvalKit install scores and writes summary and gaps. Findings: M1 `judge_support.py` would now replace 1:v-062 (the alternative D-67 rejected) and drop unjudged reasons; L the gap list called v-062 "no text fetch"; L the finalise marker was never written; L calibration.json kappa 0 [0,0] and a silently stale calibration.json without EvalKit; nit median. Fixed per D-68.
 
+- 2026-11-17 — verifier pass 3 (focused): every D-68 fix CONFIRMED with adversarial cases (duplicate, unsampled and 24-page fresh labels block both the summary and finalise; 25 distinct pages unblock; selection logic reproduces the committed replacement log and unjudged reasons); recomputation matches; no regression. OPEN HIGH/MEDIUM: 0 (D-26 met). Rows flipped green.
+
 ## Known limits
 - One citation is unjudged by the AI (repeat extraction failure); it is covered by the owner's label and reported as unjudged.
 - The sample ended at 49 usable citations (one stratum short of reserves).
@@ -20,3 +22,4 @@
 - `SupportVerdict.hand_label` stays null; the owner's labels live in `support_labels.jsonl` and join through the page key.
 - The support sheet was built in an artifact page, so its blindness (it showed order, host, question, claim and URL only) is attested by the verifier's reading, not reproducible from code.
 - `summary.json` kappa uses citewatch's citation-level bootstrap; `calibration.json` uses EvalKit's answer-clustered one. Both are left out or flagged while the owner's labels are constant.
+- `scripts/refetch_support_text.py` now marks the cache it writes; caches filled before D-68 carry no marker, so finalise refuses a custom unmarked location (fails safe; the default location is always accepted).
