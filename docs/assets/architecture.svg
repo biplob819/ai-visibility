@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
   <title>citewatch technical architecture: components, services and hosting</title>
-  <desc>The citewatch Python package and CLI talks to the Anthropic and OpenAI APIs and fetches cited web pages politely. It keeps run data as JSONL in the repository, a temporary page cache outside it, and uses EvalKit for support judging. Its outputs are a static dashboard on Cloudflare Pages, domain cards for a Streamlit demo behind passkeys, and a PyPI package, all gated by GitHub Actions CI.</desc>
+  <desc>The citewatch Python package and CLI talks to the Anthropic and OpenAI APIs and fetches cited web pages politely. It keeps run data as JSONL in the repository, a temporary page cache outside it, and uses EvalKit for support judging. Its outputs are a static dashboard and post on GitHub Pages, domain cards for a Streamlit demo (in this repo) behind passkeys, and a PyPI package, all gated by GitHub Actions CI.</desc>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
@@ -82,11 +82,11 @@
   <rect x="40" y="502" width="260" height="110" class="b out"/>
   <text x="58" y="530" class="t">Dashboard and post</text>
   <text x="58" y="552" class="s">static HTML from summary.json</text>
-  <text x="58" y="572" class="s">Cloudflare Pages</text>
+  <text x="58" y="572" class="s">GitHub Pages (dashboard and post)</text>
 
   <rect x="320" y="502" width="260" height="110" class="b out"/>
   <text x="338" y="530" class="t">Domain cards + demo</text>
-  <text x="338" y="552" class="s">lookup() over domain_cards.json</text>
+  <text x="338" y="552" class="s">demo/ app: lookup() over the cards</text>
   <text x="338" y="572" class="s">Streamlit; live mode behind</text>
   <text x="338" y="592" class="s">passkeys, bring your own keys</text>
 

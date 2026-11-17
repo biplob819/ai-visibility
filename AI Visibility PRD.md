@@ -28,7 +28,7 @@ The study shows publishers and AI labs the same thing from two sides: which page
 | --- | --- | --- |
 | GitHub repo `ai-visibility` | Runner, citation extractor, polite fetcher, date parser, metrics, tests | GitHub, public |
 | Open-source tool `citewatch` | The same pipeline as a package: `pip install citewatch`, `citewatch init`, docs for running your own study | PyPI, MIT licence |
-| Findings dashboard | Domain share, freshness lag, overlap by intent, with counts beside every percentage | Cloudflare Pages |
+| Findings dashboard | Domain share, freshness lag, overlap by intent, with counts beside every percentage | GitHub Pages (OWNER D-70) |
 | The post | A blog-style write-up with charts | Project page |
 | Signal spec | One page: fields, buyers, delivery, pricing logic | PDF, linked from the project page |
 | Demo page | Domain lookup in the shared `portfolio-demos` app | Streamlit Community Cloud |
@@ -158,7 +158,7 @@ The top row collects citations; the second row dates every cited page and turns 
 
 - **Package.** Python 3.12 with uv; the anthropic and openai SDKs with their web search tools; `httpx` with a per-domain rate limiter for fetching; `urllib.robotparser` for robots.txt; `extruct` for schema.org JSON-LD; `tldextract` for registrable domains; DuckDB for metrics; EvalKit pinned for the support check.
 - **Storage.** Citations and page metadata as JSONL and CSV in the repo; page bodies held in memory only for the 50-citation support check, then discarded.
-- **Dashboard, post and demo.** Static HTML on Cloudflare Pages; the demo page in `portfolio-demos` reads `domain_cards.json`, so lookups never call a model.
+- **Dashboard, post and demo.** Static HTML on GitHub Pages (OWNER D-70); the demo is a Streamlit app in this repo's `demo/` (OWNER D-73) that reads `domain_cards.json`, so lookups never call a model; live mode sits behind passkeys.
 
 ## Data model and interfaces
 
