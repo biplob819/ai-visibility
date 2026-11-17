@@ -9,7 +9,7 @@ answers, Claude in 10%; the two models' sources overlapped by only 10% per quest
 of GPT's time-sensitive answers rested on no dated source under a year old, against 12% of
 Claude's. The study cost $15.03 in API calls. It ships with a dashboard, a write-up, a one-page
 signal spec for a data product, domain cards that tell each cited publisher what would make
-its pages readable and current, and a passkey-protected demo.
+its pages readable and current, and a passkey-protected demo (deploying).
 
 ## My role
 
@@ -32,9 +32,9 @@ skeptical review before it counted as done.
    and less dramatic headlines, but none that overreach.
 3. **Polite by construction.** citewatch obeys robots.txt at one request per second per host,
    never stores page bodies, and gives publishers only readability advice (a visible, marked-up
-   date; a readable robots.txt), never tips for gaming AI answers. *Trade-off:* 88 of 841
-   cited URLs could not be read at all and 221 carried no date it could find, which the study
-   reports rather than works around.
+   date; a readable robots.txt), never tips for gaming AI answers. *Trade-off:* 221 of 841
+   cited URLs ended up with no usable date, 88 of them because the page could not be read at
+   all; the study reports this rather than working around it.
 
 **Links:** [repository](https://github.com/biplob819/ai-visibility) ·
 [dashboard](https://biplob819.github.io/ai-visibility/) ·
