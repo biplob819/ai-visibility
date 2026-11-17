@@ -28,8 +28,8 @@ FROZEN = {
     # the support check's records (M3.2): results depend on them (S3.1 pass 2, L2)
     "support_verdicts.jsonl": "1cda8d1c05804c803a35e44012e01b939eb2ad1e46d61c8c2be6fe47d46c90cf",
     "support_label_key.jsonl": "de1e4c22a6596209e20161c766bd42fb5491e8f818f1c802adcb1f1b74fa7095",
-    "support_text_fetches.jsonl": "211fe5e30e05e0326ecb4cac7d1358a38bfe2047527fe0761d58b7b7df50ec9a",
-    "support_replacements.jsonl": "31382e684adfb01a3ff7570d411bc3b4824f50c7c38555f27cc4fa6bc2b995e7",
+    "support_text_fetches.jsonl": "211fe5e30e05e0326ecb4cac7d1358a38bfe2047527fe0761d58b7b7df50ec9a",  # noqa: E501
+    "support_replacements.jsonl": "31382e684adfb01a3ff7570d411bc3b4824f50c7c38555f27cc4fa6bc2b995e7",  # noqa: E501
     "support_unjudged.jsonl": "af8a88dff4c1d31d158be237eaa902d30fd0e750e9f092f36e158814ed747331",
 }
 RAW_ASK_RUNS_1_2 = "4185838436360a46d2949713ff860fb18633606e2d906f04d5be0eaee2f0ae33"
