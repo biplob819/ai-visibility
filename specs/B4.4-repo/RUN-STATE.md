@@ -1,6 +1,6 @@
 # B4.4 run state
 
-**Now:** verifier pass 1 fixes applied (D-80); history-audit hardening in a lane; pass 2 next.
+**Now:** verifier pass 1 fixes applied (D-80); history audit hardened (D-81, merged 6536130); pass 2 next.
 
 ## Log
 - 2026-11-17 — history audit: 104 commits, 2,778 file versions, no findings.
