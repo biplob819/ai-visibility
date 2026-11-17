@@ -6,4 +6,4 @@
 - [x] 4. Tests: schema walk, numbers trace, no external requests, colour-independent identity
 - [x] 5. Render and look (light, dark, phone width)
 - [x] 6. Deploy to GitHub Pages (OWNER D-70)
-- [ ] 7. Proofs, converge twice, verifier, green
+- [x] 7. Proofs, converge twice, verifier, green

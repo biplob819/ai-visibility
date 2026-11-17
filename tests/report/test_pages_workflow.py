@@ -33,7 +33,9 @@ def test_the_workflow_builds_the_dashboard_and_publishes_only_the_site():
 
 def test_the_workflow_asks_only_for_the_permissions_pages_needs():
     flow = _flow()
-    assert flow["permissions"] == {"contents": "read", "pages": "write", "id-token": "write"}
+    assert flow["permissions"] == {"contents": "read"}
+    assert flow["jobs"]["deploy"]["permissions"] == {"pages": "write", "id-token": "write"}
+    assert "permissions" not in flow["jobs"]["build"]
     triggers = flow.get("on") or flow.get(True)  # YAML reads a bare `on` key as True
     assert isinstance(triggers, dict)
     assert triggers["push"]["branches"] == ["main"]

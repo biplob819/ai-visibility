@@ -225,7 +225,8 @@ def headline(s: StudySummary) -> str:
     over = [o for o in s.overlap if o.kind == "cross_model" and o.intent is None and o.run == run]
     if over:
         items.append(
-            f"<li>The two models' cited sources overlap little: Jaccard similarity "
+            f"<li>The two models' cited sources "
+            f"{'overlap little' if over[0].value.point < 0.3 else 'overlap'}: Jaccard similarity "
             f"{counted(over[0].value)} per question, averaged over questions (run {run}).</li>"
         )
     conc = {(r.model, r.run): r for r in s.concentration}
@@ -233,7 +234,8 @@ def headline(s: StudySummary) -> str:
         parts = "; ".join(f"{esc(short(m))} {counted(conc[(m, run)].top10_share)}" for m in models)
         items.append(
             "<li>Share of citation weight (each answer counted equally, split over the URLs it "
-            f"cites) held by each model's own top 10 publishers (run {run}): {parts}.</li>"
+            f"cites) held by each model's own top 10 publishers (run {run}): {parts}. The "
+            "bootstrap re-picks the top 10 in each resample, so these intervals lean upward.</li>"
         )
     stale = {(r.model, r.definition): r for r in s.stale if r.intent is None}
     if all((m, "primary") in stale for m in models):
@@ -253,6 +255,11 @@ def _questions(s: StudySummary) -> int:
     return max(counts.values()) if counts else 0
 
 
+def _accurate() -> str:
+    """'medically accurate' for a health study, else plain 'accurate'."""
+    return "medically accurate" if "health" in str(CONTEXT.get("title", "")).lower() else "accurate"
+
+
 def scope(s: StudySummary) -> str:
     runs = ", ".join(str(r) for r in s.runs)
     models = _models(s)
@@ -263,7 +270,7 @@ def scope(s: StudySummary) -> str:
         f"<p class='scope'>This study measures <strong>sourcing</strong>: which websites "
         f"{len(models)} AI search models cite when asked {esc(CONTEXT.get('title', 'these'))} "
         "questions, and how recently those pages were updated. It does <strong>not</strong> "
-        f"judge whether any answer or page is medically accurate. {_questions(s)} "
+        f"judge whether any answer or page is {_accurate()}. {_questions(s)} "
         f"pre-registered questions across {len(intents)} intents, asked {times} "
         f"(runs {esc(runs)}) of {esc(', '.join(short(m) for m in models))} with web search"
         f"{where}: findings are <strong>directional</strong> for this setup, not a verdict on AI "

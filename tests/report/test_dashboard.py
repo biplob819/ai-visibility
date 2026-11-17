@@ -211,6 +211,7 @@ def test_scope_comes_from_the_summary_and_the_config(summary: StudySummary):
     assert "100 pre-registered questions across 5 intents, asked twice" in scope
     assert "over the 200-word limit" in page
     assert "London" not in render(summary, "X")
+    assert "medically accurate" not in render(summary, "personal finance")
 
 
 def test_comparison_columns_hold_what_their_headers_say(page: str):
