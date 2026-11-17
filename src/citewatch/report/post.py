@@ -62,6 +62,21 @@ def render(summary: StudySummary, cards: Sequence[DomainCard], title: str = "UK 
     acc = next((r for r in s.date_accuracy if r.source == "overall"), None)
     hand = s.error_counts.get("hand_dates", {})
     codes = Counter(i.code for c in cards for i in c.improvement)
+    code_words = {
+        "stale": "pages dated more than a year before a time-sensitive answer",
+        "robots_unreadable": "robots.txt files citewatch could not read",
+        "undated": "pages with no date citewatch could find",
+        "hidden_date": "pages dated only where readers cannot see it",
+        "not_html": "documents rather than web pages",
+        "blocked": "pages refused to automated readers",
+        "intent_absent": "topics where a publisher is never cited",
+        "fetch_error": "pages that failed to load",
+        "robots_blocked": "pages robots.txt disallows",
+        "unsupported": "claims the support check did not find on the page",
+    }
+    top_codes = ", ".join(
+        f"{code_words.get(c, c)} ({n} publishers)" for c, n in codes.most_common(3)
+    )
     q = d._questions(s)
     intents = sorted({r.intent for r in s.share if r.intent})
     answers = sum(v.get("answers", 0) for k, v in s.error_counts.items() if k in models)
@@ -72,11 +87,10 @@ def render(summary: StudySummary, cards: Sequence[DomainCard], title: str = "UK 
     )
     by_src = {r.source: r.within_7_days for r in s.date_accuracy}
     visible = by_src.get("visible_text")
-    hidden_src = [by_src[k] for k in ("sitemap", "http_header") if k in by_src]
+    hidden_src = [by_src[k] for k in ("sitemap", "http_header", "page_age") if k in by_src]
     hidden_k = sum(iv.k or 0 for iv in hidden_src)
     hidden_n = sum(iv.n for iv in hidden_src)
     hand_rows = [r for r in s.support if r.judge == "hand"]
-    owner_all = bool(hand_rows) and all(r.support_rate.k == r.support_rate.n for r in hand_rows)
 
     def nm(m: str) -> str:
         return d.esc(d.short(m))
@@ -92,7 +106,7 @@ def render(summary: StudySummary, cards: Sequence[DomainCard], title: str = "UK 
             else (lead.model_a, pa, lead.model_b, pb)
         )
         lead_html = (
-            f"<p class='lede'>Ask {nm(hi_m)} a UK health question with web search on and "
+            f"<p class='lede'>Ask {nm(hi_m)} a UK health question with web search on (run {run}) and "
             f"<strong>{d.esc(lead.publisher)}</strong> is among its sources in "
             f"{d.counted(hi)} of answers. Ask {nm(lo_m)} the same question and it is "
             f"{d.counted(lo)}. Same questions, same day, same place: the two models lean on "
@@ -131,9 +145,10 @@ decision are in the <a href="{REPO}">open-source repository</a>.</p>
 <h2>What was measured</h2>
 <p>{q} questions across {len(intents)} intents ({d.esc(", ".join(_prose(i) for i in intents))}),
 written and frozen before any answer was seen, were each asked of {nm(a)} and {nm(b)} with web
-search, in {len(s.runs)} runs two hours apart: {answers} answers in all. citewatch recorded every source each
+search, in {len(s.runs)} runs: {answers} answers in all. citewatch recorded every source each
 answer cited, then visited each cited page, politely and only where robots.txt allowed, to find
-when it was last updated. Every number below carries its count and a 95% interval.</p>
+when it was last reviewed, modified or published. Every share and rate below carries its count
+and a 95% interval.</p>
 
 <h2>1. The models lean on different sources</h2>
 <p>{nm(lo_m) if lead else ""} spreads its citations across the wider NHS family and
@@ -161,10 +176,10 @@ because the top 10 is re-picked in every resample).</p>
 <h2>4. Time-sensitive answers often rest on old pages</h2>
 <p>For questions where the right answer can change (services, eligibility, waiting times,
 prices, guidance), an answer is counted as stale when even its newest dated source is over a year
-old. That was true of {d.counted(stale[(b, None)])} of {nm(b)}'s time-sensitive answers and
+old (its date as last reviewed, else modified, else published). That was true of {d.counted(stale[(b, None)])} of {nm(b)}'s time-sensitive answers and
 {d.counted(stale[(a, None)])} of {nm(a)}'s, both runs pooled. On the looser definition, any
 dated source over a year old, the figures are {d.counted(secondary[b])} and
-{d.counted(secondary[a])}. Cited NHS pages already past their own review-due date:
+{d.counted(secondary[a])}. Citations of NHS pages already past their own review-due date:
 {nm(b)} {d.counted(overdue[b])}, {nm(a)} {d.counted(overdue[a])}.</p>
 {charts[1]}
 <p>Per-intent cells rest on {cell_q[0] if cell_q else 0} to {cell_q[-1] if cell_q else 0} questions each and are directional; the largest gap is for
@@ -175,14 +190,18 @@ dated source over a year old, the figures are {d.counted(secondary[b])} and
 <h2>How far to trust these numbers</h2>
 <ul>
 <li><strong>Dates.</strong> citewatch found a date, or a logged reason for having none, for
-{d.counted(s.coverage)} of cited URLs, just under the pre-registered 90% target. On {hand.get("labels", 0)}
-held-out pages, checked by an agent and approved by the owner, the parser was within 7 days on
+{d.counted(s.coverage)} of cited URLs, just under the study's 90% target. On {hand.get("labels", 0)}
+held-out pages (agent-checked, owner-approved), the parser was within 7 days on
 {d.counted(acc.within_7_days) if acc else "—"} of the pages that could be judged. Dates read from
 visible page text were within 7 days on {d.counted(visible) if visible else "—"}; dates from
-sitemaps and HTTP headers on {hidden_k} of {hidden_n} pages.</li>
+sitemaps, HTTP headers or the search tool's page age, which readers never see, on {hidden_k} of
+{hidden_n} pages.</li>
 <li><strong>Support.</strong> On a sample of citations, two AI judges from different families
-found the claim stated on the cited page in {"; ".join(f"{d.counted(r.support_rate)} ({nm(r.model)} cited, {d.esc(r.judge)})" for r in s.support if r.judge != "hand")}.
-{"The owner's own check found every sampled citation supported, so the judges look strict and the true rate lies somewhere between." if owner_all else "The owner's own check: " + "; ".join(f"{d.counted(r.support_rate)} ({nm(r.model)} cited)" for r in hand_rows) + "."}</li>
+found the claim stated on the cited page in {"; ".join(f"{d.counted(r.support_rate)} ({nm(r.model)} cited, judged by {nm(r.judge)})" for r in s.support if r.judge != "hand")}.
+The owner's own check, made at a quick pace of one to two seconds per citation, found
+{"; ".join(f"{d.counted(r.support_rate)} ({nm(r.model)} cited)" for r in hand_rows)} supported
+(two citations the judges could not assess are in the owner's count only). The judges and the
+owner disagree, and this check cannot settle the true rate.</li>
 <li><strong>Scope.</strong> One country, two models, {q} questions, two runs. This is a
 measurement of sourcing, not of medical accuracy, and not advice for anyone choosing a health
 source.</li>
@@ -191,10 +210,7 @@ source.</li>
 <h2>What publishers can take from it</h2>
 <p>citewatch builds a card for each of the {len(cards)} cited publishers: how often each model
 cites it, by topic, who is cited instead, and readability problems found on its cited pages. Across
-all cards the most common were pages last updated more than a year before a time-sensitive answer
-({codes.get("stale", 0)} publishers), robots.txt files that could not be read
-({codes.get("robots_unreadable", 0)}), and pages with no date citewatch could find
-({codes.get("undated", 0)}). The advice is about being readable and current: a visible, marked-up
+all cards the most common were {top_codes}. The advice is about being readable and current: a visible, marked-up
 date and an available robots.txt. It is not, and will not be, advice on gaming AI answers.</p>
 
 <h2>Method and reproducing it</h2>

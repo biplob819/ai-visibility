@@ -5,4 +5,4 @@
 - [x] 3. Improvement rows per code
 - [x] 4. `lookup()` with the not-cited path
 - [x] 5. `score` writes `domain_cards.json`; flagship cards committed
-- [ ] 6. Proofs, converge twice, verifier, green
+- [x] 6. Proofs, converge twice, verifier, green

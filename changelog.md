@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [D5.1] — verified over five passes (D-69, D-71, D-72, D-75); 361 domain cards with an improvement report that states only what citewatch observed
 - [GREEN] [B4.3] — verified over two passes; one-page signal spec with a build stamp tying the PDF to its HTML
 - [FEAT] [B4.2] — the write-up at /post/: opens with the finding and scope, three charts from summary.json, links the dashboard and signal spec; B9 review approved (OWNER D-74)
 - [GREEN] [B4.1] — verified over two passes; live on GitHub Pages (OWNER D-70), served bytes equal the local build

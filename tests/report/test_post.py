@@ -85,12 +85,39 @@ def test_every_value_in_the_post_traces_to_the_summary(page: str, summary: Study
         v["answers"] for k, v in summary.error_counts.items() if k.startswith(("claude", "gpt"))
     )
     assert f"{answers} answers in all" in text
+    # bare counts (pass 1, M1): improvement-code publisher counts, comparisons, held-out labels
+    from collections import Counter
+
+    codes = Counter(i.code for c in cards for i in c.improvement)
+    for code, n in codes.most_common(3):
+        assert f"({n} publishers)" in text, code
+    sep = sum(c.separated for c in summary.comparisons)
+    assert f"{sep} of {len(summary.comparisons)} paired comparisons" in text
+    assert f"On {summary.error_counts['hand_dates']['labels']} held-out pages" in text
+    hidden = [
+        r.within_7_days
+        for r in summary.date_accuracy
+        if r.source in ("sitemap", "http_header", "page_age")
+    ]
+    assert f"on {sum(iv.k or 0 for iv in hidden)} of {sum(iv.n for iv in hidden)} pages" in text
+    cells = sorted({r.rate.n // len(summary.runs) for r in summary.stale if r.intent})
+    assert f"rest on {cells[0]} to {cells[-1]} questions" in text
 
 
 def test_the_charts_are_drawn_from_the_summary(page: str):
     assert page.count('<svg class="chart"') == 3
     for caption in ("presence share", "Primary definition", "Cross-model overlap"):
         assert caption in page
+
+
+def test_the_support_paragraph_discloses_the_pace_and_does_not_settle_the_rate(page: str):
+    """OWNER D-62 (pass 1, H1): the owner's labels sit beside the judges with their pace, and
+    the post does not claim where the true rate lies."""
+    text = _text(page)
+    assert "one to two seconds per citation" in text
+    assert "this check cannot settle the true rate" in text
+    assert "somewhere between" not in text
+    assert "agent-checked, owner-approved" in text
 
 
 def test_the_post_never_advises_gaming_ai_answers(page: str):
