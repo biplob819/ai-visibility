@@ -65,7 +65,7 @@ Look at the results with no keys and no spend:
 ```bash
 git clone https://github.com/biplob819/ai-visibility && cd ai-visibility
 uv sync
-uv run citewatch report --example     # the bundled study's dashboard and post
+uv run citewatch report --example     # the bundled study's dashboard
 ```
 
 Run your own study (paid calls need the provider SDKs and your API keys):

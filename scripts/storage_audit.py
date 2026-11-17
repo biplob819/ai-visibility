@@ -63,7 +63,7 @@ HEADER_CELL = re.compile(rb"^\s*\"?(?:body|html|page_text)\"?\s*$", re.I)
 TABULAR = (".csv", ".tsv", ".psv")
 # Generic keys that hold a page body when their value is long. Short values (a quoted span, a
 # label) are ordinary metadata, so these count only above LONG_TEXT bytes, in JSON/JSONL records.
-LONG_TEXT_KEYS = ("text", "content", "main_text")
+LONG_TEXT_KEYS = ("text", "content", "main_text", "page_content", "body_text", "html_text")
 LONG_TEXT = 2048
 
 

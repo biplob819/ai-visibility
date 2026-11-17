@@ -106,6 +106,10 @@ def planted(tmp_path_factory: pytest.TempPathFactory):
         "docs/decisions.md": RULE_LINE + "\n" + "outreach " + "tracker row 3\n",
         "docs/page.html": BIG_PAGE,
         "docs/saved.md": BODY_PAGE,
+        "docs/cut.md": "<html><head></head><body><article>" + "Words of a saved page. " * 600,
+        "tests/fixtures/dates/pages/sub/deep.html": BODY_PAGE,
+        "studies/s/data/plant.csv": "url,body\nhttps://e.org,a page\n",
+        "studies/s/data/long.ndjson": '{"page_content": "' + "x" * 3000 + '"}\n',
         "tests/fixtures/dates/pages/ok.html": "<html><body><time>2024</time></body></html>",
         "tests/fixtures/dates/pages/big.html": BIG_PAGE,
         "docs/signal-spec.html": "<!doctype html><html><body>spec</body></html>",
@@ -271,3 +275,17 @@ def test_the_repository_history_is_clean():
     problems, stats = _audit().findings()
     assert problems == []
     assert stats["commits"] >= 1
+
+
+@pytest.mark.safety
+def test_cut_off_pages_deep_fixtures_csv_bodies_and_other_keys_are_caught(result):
+    """B4.4 pass 2: a page without </body> in a .md file, a fixture glob that crossed folders,
+    a CSV body column, and long text under page_content in .ndjson."""
+    _, text, _ = result
+    for path in (
+        "docs/cut.md",
+        "tests/fixtures/dates/pages/sub/deep.html",
+        "studies/s/data/plant.csv",
+        "studies/s/data/long.ndjson",
+    ):
+        assert path in text, path

@@ -30,6 +30,7 @@ effect on the published numbers. Decision ids link to [`decisions.md`](decisions
 |---|---|---|
 | OWNER D-63, D-64 | The held-out dates were read by a fresh-context agent that never saw the parser's output, and approved by the owner with no edits, instead of being hand-labelled | Every place the result appears says "agent-checked, owner-approved"; of the 50 planned dated pages, 27 could be scored: 17 showed the checker no date and 6 did not load |
 | D-68 | Seven pages the agent could not load are counted and never scored | Within 7 days: 18 of 27 judgeable pages; the undated row is 2 of 4 |
+| D-82 | §8.2's 30% demotion trigger fired for every source except visible text, each on two to six judgeable pages; precedence was left unchanged, since such small samples cannot separate sources and a demotion would need 25 fresh pages | None on the published numbers; the per-source rates are reported as directional |
 | D-67 | The sample was drawn from pages cited in runs 1–2 (not smoke-run pages), which the plan implied but did not state; a script re-draws it | None: the committed sample re-draws exactly |
 
 ## Reported against plan, not changed

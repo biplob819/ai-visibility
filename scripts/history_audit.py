@@ -131,6 +131,9 @@ PAGE_MAX = 20_000  # an HTML document bigger than this is a stored page
 BODY_TEXT_MAX = 2_000  # visible characters inside one <body>...</body>
 _DOC_START = re.compile(r"\A\s*(?:<\?xml[^>]*>\s*)?<(?:!doctype\s+html|html)\b", re.I)
 _BODY = re.compile(r"<body\b[^>]*>((?:(?!<body\b).){0,400000}?)</body", re.I | re.S)
+# a page cut off before </body> (B4.4 pass 2): the body runs to the end of the blob; source code
+# that merely builds pages (.py) is judged by the closed form only
+_OPEN_BODY = re.compile(r"<body\b[^>]*>((?:(?!</body).){0,400000})\Z", re.I | re.S)
 _NOISE = re.compile(r"<(script|style)\b.*?</\1\s*>|<[^>]*>", re.I | re.S)
 _UNESCAPE = (("\\u003c", "<"), ("\\u003e", ">"), ("&lt;", "<"), ("&gt;", ">"), ('\\"', '"'))
 
@@ -187,8 +190,14 @@ def line_key(line: str) -> str:
     return hashlib.sha256(line.strip().encode()).hexdigest()[:16]
 
 
+def _glob(path: str, pattern: str) -> bool:
+    """A glob whose `*` never crosses a folder: same depth, each part matched on its own."""
+    a, b = path.split("/"), pattern.split("/")
+    return len(a) == len(b) and all(fnmatch.fnmatchcase(x, y) for x, y in zip(a, b, strict=True))
+
+
 def _allowed_page(path: str, size: int) -> bool:
-    return any(fnmatch.fnmatchcase(path, g) and size <= cap for g, cap, _ in ALLOWED_PAGES)
+    return any(_glob(path, g) and size <= cap for g, cap, _ in ALLOWED_PAGES)
 
 
 def page_problem(path: str, data: bytes) -> str | None:
@@ -203,8 +212,12 @@ def page_problem(path: str, data: bytes) -> str | None:
     doc = bool(_DOC_START.search(text)) or path.lower().endswith((".html", ".htm", ".xhtml"))
     if doc and len(data) > PAGE_MAX:
         return f"an HTML document of {len(data)} bytes (a stored page?)"
-    for m in _BODY.finditer(text):
-        visible = " ".join(_NOISE.sub(" ", m.group(1)).split())
+    bodies = [m.group(1) for m in _BODY.finditer(text)]
+    starts_as_page = re.search(r"<html\b", text[:1024], re.I) is not None
+    if not bodies and starts_as_page and not path.endswith(".py"):
+        bodies = [m.group(1) for m in _OPEN_BODY.finditer(text)]
+    for body in bodies:
+        visible = " ".join(_NOISE.sub(" ", body).split())
         if len(visible) > BODY_TEXT_MAX:
             return f"a <body> with {len(visible)} characters of text (a stored page?)"
     return None
@@ -307,7 +320,15 @@ def report() -> Report:
                 rep.problems.append(f"{where}: HTML document marker in study data")
             if storage_audit.BODY_KEYS.search(data):
                 rep.problems.append(f"{where}: page-body key in study data")
-            if any(p.endswith((".json", ".jsonl", ".json.gz", ".jsonl.gz")) for p in paths):
+            for p in paths:  # the storage audit's CSV header rule (B4.4 pass 2)
+                head = storage_audit.header_problem(Path(p), data)
+                if head:
+                    rep.problems.append(f"{p}: page-body column {head.decode(errors='replace')!r}")
+                    break
+            if any(
+                p.endswith((".json", ".jsonl", ".ndjson", ".json.gz", ".jsonl.gz", ".ndjson.gz"))
+                for p in paths
+            ):
                 for hit in storage_audit.long_text_keys(data)[:1]:
                     rep.problems.append(f"{where}: long page-body value {hit} in study data")
         else:

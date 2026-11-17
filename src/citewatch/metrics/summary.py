@@ -29,9 +29,22 @@ def preregistration_for(study_dir: Path) -> Path | None:
     own = study_dir / "preregistration.md"
     if own.is_file():
         return own
+    import re
+
+    name = None
+    cfg = study_dir / "study.yaml"
+    if cfg.is_file():
+        m = re.search(r"^name:\s*(\S+)", cfg.read_text(encoding="utf-8"), re.M)
+        name = m.group(1) if m else None
     for parent in [study_dir, *study_dir.resolve().parents]:
         p = parent / "docs" / "preregistration.md"
-        if p.is_file():
+        # a shared pre-registration counts only if it is this study's (B4.4 pass 2): another
+        # study inside the same repository must write its own
+        if (
+            p.is_file()
+            and name
+            and re.search(rf"^name:\s*{re.escape(name)}\s*$", p.read_text("utf-8"), re.M)
+        ):
             return p
     return None
 
