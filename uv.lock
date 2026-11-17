@@ -453,9 +453,6 @@ demo = [
 openai = [
     { name = "openai" },
 ]
-support = [
-    { name = "evalkit-harness" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -465,13 +462,15 @@ dev = [
     { name = "ruff" },
     { name = "types-pyyaml" },
 ]
+support = [
+    { name = "evalkit-harness" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=1" },
     { name = "defusedxml", specifier = ">=0.7" },
     { name = "duckdb", specifier = ">=1.1" },
-    { name = "evalkit-harness", marker = "extra == 'support'", git = "https://github.com/biplob819/evalkit?rev=218192132ad601f02976d486d839e712e39bc4e2" },
     { name = "extruct", specifier = ">=0.17" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "idna", specifier = ">=3.7" },
@@ -486,7 +485,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.28" },
     { name = "webauthn", marker = "extra == 'demo'", specifier = ">=3" },
 ]
-provides-extras = ["anthropic", "openai", "support", "demo"]
+provides-extras = ["anthropic", "openai", "demo"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -496,6 +495,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
 ]
+support = [{ name = "evalkit-harness", git = "https://github.com/biplob819/evalkit?rev=218192132ad601f02976d486d839e712e39bc4e2" }]
 
 [[package]]
 name = "click"

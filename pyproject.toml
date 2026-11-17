@@ -48,10 +48,6 @@ anthropic = [
 openai = [
     "openai>=2",
 ]
-# Support check (SUP-03, D-11): EvalKit's faithfulness scorer at a pinned commit.
-support = [
-    "evalkit-harness @ git+https://github.com/biplob819/evalkit@218192132ad601f02976d486d839e712e39bc4e2",
-]
 # The demo page (D5.2, OWNER D-73): components v2 for the passkey element, py_webauthn to verify.
 demo = [
     "streamlit>=1.67",
@@ -66,19 +62,25 @@ dev = [
     "types-pyyaml>=6.0.12",
     "hypothesis>=6.100",
 ]
+# Support check (SUP-03, D-11, D-84): EvalKit's faithfulness scorer at the pinned commit the
+# flagship study used. A dependency group, not an extra: PyPI refuses a published dependency on
+# a git URL, so the pin stays in the repository; `uv sync` installs it by default.
+support = [
+    "evalkit-harness @ git+https://github.com/biplob819/evalkit@218192132ad601f02976d486d839e712e39bc4e2",
+]
+
+[tool.uv]
+default-groups = ["dev", "support"]
 
 [build-system]
 requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
-[tool.hatch.metadata]
-allow-direct-references = true  # the pinned EvalKit git dependency in the `support` extra
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/citewatch"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/citewatch", "README.md", "LICENSE", "changelog.md"]
+include = ["/src/citewatch", "/README.md", "/LICENSE", "/changelog.md"]
 
 [tool.ruff]
 line-length = 100

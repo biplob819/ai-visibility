@@ -33,10 +33,11 @@ imports exactly these names (`tests/test_public_api.py`).
 
 ## The results format has its own version
 
-`summary.json` carries `schema_version` (now `1.0`). A citewatch release reads
-any file of the same schema major version; a new major schema version is refused with a
-message naming both versions. Adding an optional field is a minor change; removing or
-redefining one is a major change.
+`summary.json` carries `schema_version` (now `1.0`). A citewatch release reads files written by
+the same or an earlier release with the same schema major version. Reading is strict: a file
+from a newer minor release that added a field is refused, so read it with that release or a
+later one. A new major schema version is refused with a message naming both versions. Adding
+an optional field is a minor change; removing or redefining one is a major change.
 
 A change that would make two studies' numbers mean different things (how a share, a stale
 rate or an interval is computed) is a metric-definition change: it is called out in the

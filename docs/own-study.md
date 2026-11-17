@@ -7,7 +7,7 @@ and results. Paid steps need the provider SDKs (`pip install 'citewatch[anthropi
 ## 1. Create the folder
 
 ```bash
-citewatch init my-study --contact https://your-site.example/about
+citewatch init my-study --contact <a page where site owners can reach you>
 ```
 
 `init` writes `study.yaml`, `questions.jsonl`, `RUBRIC.md` and `.env.example`, and never

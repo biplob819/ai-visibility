@@ -23,7 +23,7 @@ FILES = [
     "SECURITY.md",
     *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "docs").glob("*.md")),
 ]
-LINK = re.compile(r"\]\(([^)\s]+)\)")
+LINK = re.compile(r"\]\(([^)\s]+)\)|<(https?://[^>\s]+)>|(?<![(<\[])\b(https?://[^\s)<>|`\]]+)")
 UA = "citewatch-link-check (+https://github.com/biplob819/ai-visibility)"
 
 
@@ -33,7 +33,9 @@ def links() -> list[tuple[str, str]]:
         path = ROOT / f
         if path.is_file():
             text = re.sub(r"```.*?```|`[^`\n]*`", "", path.read_text(encoding="utf-8"), flags=re.S)
-            out += [(f, u) for u in LINK.findall(text)]  # code spans are examples, not links
+            for groups in LINK.findall(text):  # code spans are examples, not links
+                u = next(g for g in groups if g).rstrip(".,;:")
+                out.append((f, u))
     return out
 
 
@@ -45,6 +47,9 @@ def local_problem(src: str, url: str) -> str | None:
 
 
 def online_problem(src: str, url: str) -> str | None:
+    m = re.match(r"https://pypi\.org/project/([^/]+)/?$", url)
+    if m:  # PyPI answers scripted page requests with a 200 challenge page; ask its JSON API
+        url = f"https://pypi.org/pypi/{m.group(1)}/json"
     last: Exception | None = None
     for method in ("HEAD", "GET"):
         req = urllib.request.Request(url, method=method, headers={"User-Agent": UA})

@@ -666,7 +666,7 @@ def _write_calibration(base: Path, cfg: Any) -> None:
         if (base / "results" / "calibration.json").is_file():
             typer.echo(
                 "note: EvalKit is not installed, so results/calibration.json was not refreshed "
-                "(pip install 'citewatch[support]')",
+                "(from a clone of the repository: uv sync)",
                 err=True,
             )
         return

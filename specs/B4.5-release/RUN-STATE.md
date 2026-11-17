@@ -7,4 +7,8 @@
 
 - 2026-11-17 — guides (quickstart, own study, dates, cost), published-package smoke workflow on 3 OS, `scripts/check_links.py` (40 links online OK), CLI screenshot, release README (install, guides, links); OSS-03 end to end merged (German one-provider study through the real CLI and gate G1 on recorded fixtures, no network). Converge PASS.
 
+- 2026-11-17 — verifier pass 1: OSS-03..07, THR-01/02 CONFIRMED (wheel works from plain pip on 3.11 and 3.12 with no keys; floor cannot be lowered; no telemetry); OSS-01 DISPROVED (H: git URL in the `support` extra would make PyPI refuse the upload); OSS-02/08 PENDING-RELEASE; OSS-09 DISPROVED (M: no demo screenshot or link yet; link checker missed bare URLs and PyPI's 200 challenge page). Also M versioning overclaimed compatibility, M no 0.1.0 changelog entry; lows. Fixed per D-84; the demo screenshot and link wait on the deploy.
+
 ## Known limits
+- The published package has no support-judging extra until EvalKit 0.3 is on PyPI (D-84); the repository reproduces it with the pinned commit.
+- A pip-only user cannot write `cost_model.yaml` (the measuring script lives in the repository), and packaged prices go stale seven days after release until a study adds its own `prices.yaml`.

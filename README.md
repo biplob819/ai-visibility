@@ -35,7 +35,7 @@ It measures **sourcing, not medical accuracy**, and nothing here is medical advi
   judges and the owner disagree, so the support rate is reported, not settled.
 - These findings are directional: one country, two models, 100 questions.
 
-[![The findings dashboard](docs/assets/screenshots/dashboard.png)](https://biplob819.github.io/ai-visibility/)
+[![The findings dashboard](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/dashboard.png)](https://biplob819.github.io/ai-visibility/)
 
 ## Install
 
@@ -48,11 +48,11 @@ uvx citewatch report --example            # or try it without installing
 Python 3.11 or newer. See the [quickstart](docs/quickstart.md) (an example report in under
 five minutes, no keys).
 
-[![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](docs/assets/screenshots/cli.png)](docs/quickstart.md)
+[![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/cli.png)](docs/quickstart.md)
 
 ## How it works
 
-![citewatch data flow](docs/assets/dataflow.svg)
+![citewatch data flow](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/dataflow.svg)
 
 1. **Ask.** Each frozen question goes to each model with its native web search, from one
    location, under a cost cap; responses are stored verbatim (`citewatch ask`).
@@ -69,7 +69,7 @@ five minutes, no keys).
 
 Two checks sit under the numbers: a **support check** (do cited pages state the claim? two AI
 judges via [EvalKit](https://github.com/biplob819/evalkit) and the owner's labels) and a
-**held-out date check**. Architecture: [`docs/assets/architecture.svg`](docs/assets/architecture.svg).
+**held-out date check**. Architecture: [`docs/assets/architecture.svg`](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/architecture.svg).
 
 ## Rerun it
 

@@ -100,3 +100,30 @@ def test_the_published_package_is_smoke_tested_on_three_systems():
     }
     runs = " ".join(str(s.get("run", "")) for s in job["steps"])
     assert 'uvx "citewatch==${VERSION}" --version' in runs and "report --example" in runs
+
+
+def test_the_wheel_metadata_has_no_url_dependency(tmp_path):
+    """B4.5 pass 1 (H1): PyPI refuses any Requires-Dist with a direct URL, extras included."""
+    import shutil
+    import subprocess
+    import zipfile
+
+    assert shutil.which("uv"), "uv is required to build the wheel"
+    p = subprocess.run(
+        ["uv", "build", "--wheel", "--out-dir", str(tmp_path)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert p.returncode == 0, p.stderr
+    (wheel,) = tmp_path.glob("citewatch-*.whl")
+    with zipfile.ZipFile(wheel) as z:
+        meta = next(n for n in z.namelist() if n.endswith(".dist-info/METADATA"))
+        requires = [x for x in z.read(meta).decode().splitlines() if x.startswith("Requires-Dist:")]
+    assert requires and not [r for r in requires if " @ " in r], requires
+
+
+def test_the_link_checker_sees_bare_urls_and_autolinks():
+    mod = _script("check_links")
+    urls = {u for _, u in mod.links()}
+    assert "https://pypi.org/project/citewatch/" in urls  # a bare URL in the README links table

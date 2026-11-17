@@ -12,7 +12,11 @@ from citewatch.schemas import Interval, StudySummary
 ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 SUMMARY = ROOT / "studies" / "uk-health" / "results" / "summary.json"
-LIVE = ("https://biplob819.github.io/ai-visibility/", "https://github.com/biplob819/")
+LIVE = (
+    "https://biplob819.github.io/ai-visibility/",
+    "https://github.com/biplob819/",
+    "https://raw.githubusercontent.com/biplob819/ai-visibility/main/",
+)
 
 
 def _intervals(s: StudySummary) -> set[str]:

@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [RELEASE] [B4.5] — v0.1.0: the citewatch tool and the flagship UK health study (100 pre-registered questions, Claude Sonnet 5.5 and GPT-6.1 Sol, two runs, $15.03). nhs.uk cited in 83/100 GPT answers vs 10/100 Claude (run 1); stale time-sensitive answers 49/114 vs 14/114; cross-model Jaccard 10%; date coverage 745/841; held-out date check 18/27 (agent-checked, owner-approved). Guides, thresholds for CI, public API under semver
 - [GREEN] [B4.4] — verified over five passes (D-80–D-83); README, deviations record, hardened full-history audit (clean)
 - [FEAT] [B4.4] — public repo: README with the finding, method, rerun steps and cost; deviations record; full-history audit (clean); screenshots; diagram and PRD updated for D-70, D-73
 - [GREEN] [B4.2] — verified over two passes (D-76); post live at /post/, B9 approved (OWNER D-74)
