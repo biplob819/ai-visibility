@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [B4.4] — verified over five passes (D-80–D-83); README, deviations record, hardened full-history audit (clean)
 - [FEAT] [B4.4] — public repo: README with the finding, method, rerun steps and cost; deviations record; full-history audit (clean); screenshots; diagram and PRD updated for D-70, D-73
 - [GREEN] [B4.2] — verified over two passes (D-76); post live at /post/, B9 approved (OWNER D-74)
 - [FEAT] [D5.2] — demo: lookup, top ten by topic, passkey-gated live mode (owner's registration code), bring your own keys, spend guard, four-field logs; deploy prep (D-78)

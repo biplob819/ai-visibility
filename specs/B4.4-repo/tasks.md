@@ -5,4 +5,4 @@
 - [x] 3. README
 - [x] 4. Screenshots; diagram and PRD for D-70, D-73
 - [x] 5. Tests (README numbers and links; deviations name decisions)
-- [ ] 6. Proofs, converge twice, verifier, green
+- [x] 6. Proofs, converge twice, verifier, green
