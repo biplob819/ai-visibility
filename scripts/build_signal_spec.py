@@ -17,9 +17,11 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import get_args
 
 from citewatch.report.dashboard import counted, esc, short
 from citewatch.schemas import StudySummary
+from citewatch.schemas.cards import ImprovementCode
 
 ROOT = Path(__file__).resolve().parent.parent
 SUMMARY = ROOT / "studies" / "uk-health" / "results" / "summary.json"
@@ -31,6 +33,8 @@ CHROME = (
     "chromium",
 )
 CLAUDE, GPT = "claude-sonnet-5-5", "gpt-6.1-sol"
+MODELS = (CLAUDE, GPT)
+CODES = get_args(ImprovementCode)
 
 CSS = """
 @page{size:A4;margin:12mm 13mm}
@@ -66,16 +70,31 @@ def _pick(s: StudySummary):
     return pres, over, conc, stale, acc
 
 
+def stamp(html_without_stamp: str) -> str:
+    """A short hash of the page, put in its title so the PDF's metadata shows which build it is."""
+    import hashlib
+
+    return hashlib.sha256(html_without_stamp.encode()).hexdigest()[:12]
+
+
 def render(s: StudySummary) -> str:
+    page = _render(s)
+    return page.replace("STAMP", stamp(page))
+
+
+def _render(s: StudySummary) -> str:
     pres, over, conc, stale, acc = _pick(s)
     answers = sum(v["answers"] for k, v in s.error_counts.items() if k in (CLAUDE, GPT))
+    questions = max(r.share.n for r in s.share if r.kind == "presence" and r.intent is None)
     findings = [
         f"<strong>nhs.uk</strong> is cited in {counted(pres[('nhs.uk', GPT, 1)])} of "
         f"{short(GPT)} answers and {counted(pres[('nhs.uk', CLAUDE, 1)])} of {short(CLAUDE)}'s.",
         f"The two models' sources barely overlap: Jaccard {counted(over)} per question.",
         f"Top-10 publishers hold {counted(conc[(GPT, 1)])} of {short(GPT)}'s citation weight "
-        f"against {counted(conc[(CLAUDE, 1)])} of {short(CLAUDE)}'s.",
-        f"Time-sensitive answers with no source under a year old: {short(GPT)} "
+        f"against {counted(conc[(CLAUDE, 1)])} of {short(CLAUDE)}'s (each answer counts "
+        "equally, split over its cited URLs; the interval leans upward because the top 10 is "
+        "re-picked in each resample).",
+        f"Time-sensitive answers with no dated source under a year old: {short(GPT)} "
         f"{counted(stale[GPT])}; {short(CLAUDE)} {counted(stale[CLAUDE])}.",
     ]
     fields = [
@@ -84,22 +103,25 @@ def render(s: StudySummary) -> str:
         ("Freshness", "effective date, its source, lag to the answer, stale rate, review-due"),
         ("Readability", "robots.txt outcome, fetch errors, documents vs pages, hidden dates"),
         ("Support", "does the cited page state the claim (two AI judges + a human check)"),
-        ("Improvement codes", "ten per-publisher reasons, each with a fix and its evidence"),
+        (
+            "Improvement codes",
+            f"{len(CODES)} per-publisher reasons, each with a fix and its evidence",
+        ),
     ]
     rows = "".join(f"<tr><th>{esc(a)}</th><td>{esc(b)}</td></tr>" for a, b in fields)
     tiers = [
         ("Open", "the MIT tool and the published UK study; run your own questions on your keys"),
         ("Publisher", "your domain's card refreshed each cycle, with its improvement report"),
-        ("Sector", "a full panel for one sector and country; feed (JSON/CSV) and dashboard"),
+        ("Sector", "a full panel for one sector and country; JSON feed and dashboard"),
         ("Lab", "custom question sets and models, raw citation records and the support check"),
     ]
     tier_rows = "".join(f"<tr><th>{esc(a)}</th><td>{esc(b)}</td></tr>" for a, b in tiers)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-<title>citewatch signal spec</title><style>{CSS}</style></head><body>
+<title>citewatch signal spec STAMP</title><style>{CSS}</style></head><body>
 <h1>citewatch: a sourcing signal for AI search</h1>
 <p class="sub">Which websites AI search answers cite, how fresh those pages are, and what a publisher
-can change. Built on an open-source, pre-registered study: 100 UK health questions, two models,
-two runs.</p>
+can change. Built on an open-source, pre-registered study: {questions} UK health questions,
+{len(MODELS)} models, {len(s.runs)} runs.</p>
 <div class="box"><strong>What the first study found</strong> (run 1 unless noted; both runs pooled for stale):
 <ul>{"".join(f"<li>{f}</li>" for f in findings)}</ul>
 <p>Date coverage {counted(s.coverage)}; dates checked on held-out pages: within 7 days
@@ -118,10 +140,10 @@ measured the same way across models.</li>
 </div><div>
 <h2>Delivery</h2>
 <ul>
-<li>Scheduled re-runs of a frozen question set; a run manifest pins models, code and config.</li>
-<li>JSON results (format v1) and per-publisher cards; a static dashboard; a domain lookup.</li>
-<li>Threshold checks (with v0.1.0): a run fails loudly in CI when a tracked metric crosses its bound.</li>
-<li>Every number ships with its count and 95% interval.</li>
+<li>Re-runs of a frozen question set (started by hand today; scheduling is planned); a run manifest pins models, code and config.</li>
+<li>JSON results (format v1) and per-publisher cards; a static dashboard; a domain lookup (library function today, demo page planned).</li>
+<li>Planned for v0.1.0: threshold checks, so a run fails in CI when a tracked metric crosses its bound.</li>
+<li>Every share and rate ships with its count and 95% interval.</li>
 </ul>
 <h2>Pricing logic</h2>
 <p><strong>Unit of value:</strong> one tracked question set × one model × one run, delivered with

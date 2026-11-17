@@ -783,8 +783,8 @@
      "https://www.nhsinform.scot/care-support-and-rights/nhs-services/eyecare/nhs-community-eyecare/",
      "https://www.nhsinform.scot/healthy-living/food-and-nutrition/eating-well/eatwell-guide-how-to-eat-a-healthy-balanced-diet/"
     ],
-    "finding": "23 of 23 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "23 of 23 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 23,
     "sources": [
      "page_meta.jsonl",
@@ -1194,8 +1194,8 @@
      "https://www.nice.org.uk/Guidance/PH54/chapter/recommendations",
      "https://www.nice.org.uk/guidance/NG246/chapter/medicines-and-surgery"
     ],
-    "finding": "23 of 23 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "23 of 23 cited pages are on hosts whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 23,
     "sources": [
      "page_meta.jsonl",
@@ -1562,8 +1562,8 @@
      "https://remedy.bnssg.icb.nhs.uk/adults/self-care/exercise-on-referral/",
      "https://www.frimley.icb.nhs.uk/policies-and-documents/medicines-optimisation/prescribing-guidelines-1/ear-nose-and-throat/1352-treating-your-hayfever-a-patient-information-leaflet/file"
     ],
-    "finding": "3 of 13 cited pages are on a host whose robots.txt did not respond or redirected away from /robots.txt (HTTP 301) or refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible. An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible. citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
+    "finding": "3 of 13 cited pages are on hosts whose robots.txt did not respond or redirected away from /robots.txt (HTTP 301) or refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible. An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible. citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 13,
     "sources": [
      "page_meta.jsonl",
@@ -1938,8 +1938,8 @@
     "examples": [
      "https://ods.od.nih.gov/factsheets/Iron%20-Consumer/"
     ],
-    "finding": "1 of 12 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 12 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 12,
     "sources": [
      "page_meta.jsonl",
@@ -2205,8 +2205,8 @@
      "https://www.mayoclinic.org/diseases-conditions/cold-sore/diagnosis-treatment/drc-20371023",
      "https://www.mayoclinic.org/diseases-conditions/orthostatic-hypotension/symptoms-causes/syc-20352548"
     ],
-    "finding": "7 of 7 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "7 of 7 cited pages are on hosts whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 7,
     "sources": [
      "page_meta.jsonl",
@@ -2378,8 +2378,8 @@
     "examples": [
      "https://www.saltcoatsgrouppractice.scot.nhs.uk/act-fast-how-to-recognise-the-signs-of-a-stroke/"
     ],
-    "finding": "1 of 6 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 6 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 6,
     "sources": [
      "page_meta.jsonl",
@@ -2820,8 +2820,8 @@
      "https://digital.nhs.uk/services/nhs-app/nhs-app-features",
      "https://digital.nhs.uk/services/nhs-app/nhs-app-features/gp-health-records-in-the-app"
     ],
-    "finding": "6 of 6 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "6 of 6 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 6,
     "sources": [
      "page_meta.jsonl",
@@ -3033,7 +3033,7 @@
      "https://www.healthwatch.co.uk/advice-and-information/2025-08-22/how-can-you-find-nhs-dentist",
      "https://www.healthwatch.co.uk/advice-and-information/2025-09-03/how-register-gp-understanding-your-patient-rights"
     ],
-    "finding": "6 of 6 cited pages are on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read them.",
+    "finding": "6 of 6 cited pages are on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read them.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 6,
     "sources": [
@@ -3236,8 +3236,8 @@
      "https://www.uhsussex.nhs.uk/resources/postural-hypotension/",
      "https://www.uhsussex.nhs.uk/resources/sepsis-in-adults/"
     ],
-    "finding": "5 of 5 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "5 of 5 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 5,
     "sources": [
      "page_meta.jsonl",
@@ -3779,8 +3779,8 @@
      "https://commonslibrary.parliament.uk/research-briefings/CBP-10686/",
      "https://commonslibrary.parliament.uk/research-briefings/CBP-10700/"
     ],
-    "finding": "5 of 5 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "5 of 5 cited pages are on hosts whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 5,
     "sources": [
      "page_meta.jsonl",
@@ -4570,8 +4570,8 @@
      "https://www.bowelcanceruk.org.uk/about-bowel-cancer/diagnosis/visiting-your-gp/",
      "https://www.bowelcanceruk.org.uk/about-bowel-cancer/symptoms/"
     ],
-    "finding": "3 of 3 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "3 of 3 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 3,
     "sources": [
      "page_meta.jsonl",
@@ -4651,8 +4651,8 @@
      "https://elht.nhs.uk/services/integrated-msk-pain-and-rheumatology-service/back-pain-general-mobility-exercises",
      "https://elht.nhs.uk/services/integrated-msk-pain-and-rheumatology-service/sprained-ankle"
     ],
-    "finding": "3 of 3 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "3 of 3 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 3,
     "sources": [
      "page_meta.jsonl",
@@ -5659,7 +5659,7 @@
      "https://www.food.gov.uk/sites/default/files/media/document/sfbb-childminders-pack-reheating.pdf",
      "https://www.food.gov.uk/sites/default/files/media/document/sfbb-chinese-05-cooking-04-rice_0.pdf"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt returned a server error (HTTP 503), so citewatch, which reads only what robots.txt allows, did not read them.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt returned a server error (HTTP 503). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read them.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
@@ -6777,8 +6777,8 @@
     "examples": [
      "https://www.fhft.nhs.uk/patients-and-visitors/patient-information-library/treating-your-hayfever-otc-medicines"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -7101,8 +7101,8 @@
      "https://www.leedsth.nhs.uk/patients/resources/salt-high-blood-pressure-stroke-and-heart-conditions/",
      "https://www.leedsth.nhs.uk/services/urology/common-urological-conditions/what-should-i-do-if-i-have-blood-in-my-urine/"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -7716,8 +7716,8 @@
      "https://acsm.org/nutrition-guide-senior-athletes/?nocache=1",
      "https://www.acsm.org/docs/default-source/files-for-resource-library/delayed-onset-muscle-soreness-(doms).pdf"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "2 of 2 cited pages are on hosts whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -8130,8 +8130,8 @@
     "examples": [
      "https://www.bakerybits.co.uk/bakers-blog/folic-acid-flour-what-bakers-need-to-know"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -8826,8 +8826,8 @@
      "https://www.chss.org.uk/documents/2013/08/f22_visit_to_the_doctor.pdf",
      "https://www.chss.org.uk/wp-content/uploads/CHSS-F65-Safe-Exercise-with-Long-Covid-3.0-May25.pdf"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -9265,8 +9265,8 @@
     "examples": [
      "https://doi.org/10.1249/fit.0000000000000433"
     ],
-    "finding": "1 of 2 cited pages is on a host whose robots.txt returned a server error (HTTP 530) (the failure was at www.ovid.com, where the pages redirect), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
+    "finding": "1 of 2 cited pages is on a host whose robots.txt returned a server error (HTTP 530); the failure was at www.ovid.com, where the page redirects. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
+    "fix": "The failure was on the site these links redirect to, not on this one. An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -9341,7 +9341,7 @@
     "examples": [
      "https://drmarks.co.uk/blogs/vitamins/how-much-vitamin-d-winter-uk"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -9403,8 +9403,8 @@
     "examples": [
      "https://healthwell.eani.org.uk/healthtopic/healthy-diet/5-day-what-counts"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -9639,7 +9639,7 @@
     "examples": [
      "https://emsworthmedical.co.uk/pages/Shingles"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -9971,8 +9971,8 @@
     "examples": [
      "https://www.gbnews.com/health/doctor-qa-hay-fever-phlegm"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -10209,7 +10209,7 @@
     "examples": [
      "https://www.healthcheck.nhs.uk/seecmsfile/?id=2729"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
     "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
@@ -10326,7 +10326,7 @@
      "https://www.healthwatchnorthyorkshire.co.uk/advice-and-information/2025-02-14/nhs-referrals-and-your-right-choose",
      "https://www.healthwatchnorthyorkshire.co.uk/advice-and-information/2026-03-02/how-get-free-contraception-your-local-pharmacy"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read them.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read them.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 2,
     "sources": [
@@ -10725,8 +10725,8 @@
      "https://ico.org.uk/for-the-public/getting-copies-of-your-information-subject-access-request/?search=right%20of%20access",
      "https://ico.org.uk/for-the-public/getting-copies-of-your-information-subject-access-request/what-to-expect-after-making-a-subject-access-request/?search=manifestly"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read them.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 2,
     "sources": [
      "page_meta.jsonl",
@@ -10931,7 +10931,7 @@
     "examples": [
      "https://www.leicspart.nhs.uk/wp-content/uploads/2017/11/03-head-lice-LPT-edition-3.pdf"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 301), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 301). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
     "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
@@ -11498,7 +11498,7 @@
     "examples": [
      "https://millingandgrain.com/folic-acid-fortification-uk-flour/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -11561,8 +11561,8 @@
     "examples": [
      "https://www.moneyhelper.org.uk/en/blog/benefits-entitlements/am-i-entitled-free-eye-test-nhs-optical-vouchers"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -12206,8 +12206,8 @@
     "examples": [
      "https://www.northerncarealliance.nhs.uk/go2physio"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -12942,7 +12942,7 @@
     "examples": [
      "https://schoollanesurgery.co.uk/news/free-emergency-contraception-at-high-street-pharmacies-no-gp-appointment-needed/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt returned a server error (HTTP 503), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt returned a server error (HTTP 503). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -13697,8 +13697,8 @@
     "examples": [
      "https://www.startingwellworcs.nhs.uk/vitamins/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -14035,7 +14035,7 @@
      "https://www.theaccessgroup.com/en-gb/blog/hsc-how-to-access-your-personal-health-record/",
      "https://www.theaccessgroup.com/en-gb/blog/hsc-what-is-a-social-prescribing-link-worker/"
     ],
-    "finding": "2 of 2 cited pages are on a host whose robots.txt redirected away from /robots.txt (HTTP 301), so citewatch, which reads only what robots.txt allows, did not read them.",
+    "finding": "2 of 2 cited pages are on a host whose robots.txt redirected away from /robots.txt (HTTP 301). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read them.",
     "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 2,
     "sources": [
@@ -14591,8 +14591,8 @@
     "examples": [
      "https://healthiertogether.westlondon.nhs.uk/pregnant-women/staying-healthy-pregnancy/exercise-pre"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -15398,7 +15398,7 @@
     "examples": [
      "https://www.ahpsuffolk.co.uk/self-refer/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -15657,7 +15657,7 @@
     "examples": [
      "https://www.asics.com/nz/en-nz/mk/running-injury-prevention/preventing-shin-splints"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -15844,7 +15844,7 @@
     "examples": [
      "https://www.benenden.co.uk/be-healthy/nutrition/how-much-water-do-you-really-need-to-drink/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 303), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 303). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
     "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
@@ -16423,8 +16423,8 @@
     "examples": [
      "https://www.clinicalkey.com/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -17277,8 +17277,8 @@
     "examples": [
      "https://www.geh.nhs.uk/patients-and-visitors/patients/patient-leaflets/shin-splints/submit/5803"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -17414,8 +17414,8 @@
     "examples": [
      "https://www.guildfordspectrum.co.uk/gym-and-classes/gym/exercise-referral/new-exercise-referral/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -17536,7 +17536,7 @@
     "examples": [
      "https://www.healthwatchsunderland.com/advice-and-information/2025-10-14/getting-started-nhs-app"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -17587,8 +17587,8 @@
     "examples": [
      "https://www.heart.org/en/healthy-living/exercise-and-physical-activity/fitness-basics/warm-up-cool-down"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -17637,8 +17637,8 @@
     "examples": [
      "https://www.heartuk.org.uk/step-4-eat-and-live-smart/cholesterol-smart-eggs"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -18119,7 +18119,7 @@
     "examples": [
      "https://www.jobs.nhs.uk/candidate/jobadvert/B0116-26-0026"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -18852,8 +18852,8 @@
     "examples": [
      "https://www.myplannedcare.nhs.uk/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -19474,7 +19474,7 @@
     "examples": [
      "https://norwichwire.co.uk/world/cough-syrup-nhs-advice/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -19561,7 +19561,7 @@
     "examples": [
      "https://www.nsca.com/education/articles/kinetic-select/determination-of-resistance-training-frequency/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302), so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt redirected away from /robots.txt (HTTP 302). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
     "fix": "citewatch follows a robots.txt redirect only to another /robots.txt; serving robots.txt at its own address lets strict readers see the rules.",
     "of": 1,
     "sources": [
@@ -19922,8 +19922,8 @@
     "examples": [
      "https://www.oxfordonlinepharmacy.co.uk/blog/do-i-really-qualify-for-weight-loss-injections"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -20273,7 +20273,7 @@
     "examples": [
      "https://reencle.co/blogs/news/how-long-does-cooked-rice-last"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond, so citewatch, which reads only what robots.txt allows, did not read it.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt did not respond. citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits, so it did not read it.",
     "fix": "An unavailable robots.txt leaves well-behaved readers treating the site as off limits (RFC 9309); keeping it available keeps the site's rules visible.",
     "of": 1,
     "sources": [
@@ -20410,8 +20410,8 @@
     "examples": [
      "https://www.rpcchesterfield.nhs.uk/discover-what-you-can-do-with-the-nhs-app/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -21191,8 +21191,8 @@
     "examples": [
      "https://www.stroke.org.uk/stroke/symptoms"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -21242,8 +21242,8 @@
     "examples": [
      "https://www.sussexcommunity.nhs.uk/patients-and-visitors/resources/patient-resources?task=resource.download&resourceID=186"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -21589,8 +21589,8 @@
     "examples": [
      "https://rightasrain.uwmedicine.org/body/exercise/stretching-benefits-risks?page=1"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",
@@ -21921,8 +21921,8 @@
     "examples": [
      "https://williamsfoodequipment.com/blog/how-long-can-cooked-rice-be-kept-in-the-fridge/"
     ],
-    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403), so citewatch, which reads only what robots.txt allows, did not read it.",
-    "fix": "Bot protection that refuses robots.txt also hides the site's rules from well-behaved readers; serving robots.txt to them keeps its rules visible.",
+    "finding": "1 of 1 cited pages is on a host whose robots.txt refused the request (HTTP 403). citewatch reads a page only after reading its site's robots.txt and treats one it cannot read as off limits (stricter than RFC 9309 for refusals and redirects), so it did not read it.",
+    "fix": "Bot protection that refuses robots.txt keeps the site's rules from careful readers, which then stay away; serving robots.txt to them makes the rules visible.",
     "of": 1,
     "sources": [
      "page_meta.jsonl",

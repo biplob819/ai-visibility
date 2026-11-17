@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [B4.2] — the write-up at /post/: opens with the finding and scope, three charts from summary.json, links the dashboard and signal spec; B9 review approved (OWNER D-74)
 - [GREEN] [B4.1] — verified over two passes; live on GitHub Pages (OWNER D-70), served bytes equal the local build
 - [FEAT] [B4.3] — one-page signal spec (docs/signal-spec.pdf): fields, buyers, delivery, pricing logic as a unit of value and tiers; every quoted finding from summary.json
 - [FEAT] [B4.1] — findings dashboard: one self-contained HTML page from summary.json (inline SVG, table views, light and dark), `citewatch report` and `report --example`

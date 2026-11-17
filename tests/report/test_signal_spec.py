@@ -91,3 +91,29 @@ def test_the_checklist_items_are_on_the_page():
     for needle in ("Unit of value", "Publishers", "AI labs", "No price points"):
         assert needle in html
     assert not re.search(r"[£$€]\s?\d+\s*(?:/|per)\s*(?:month|year|run)", html, re.I)
+
+
+def test_the_pdf_is_a4_and_was_printed_from_the_current_html():
+    """B4.3 pass 1: page size and freshness are checked, not left to the eye."""
+    data = PDF.read_bytes()
+    box = re.search(rb"/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]", data)
+    assert (
+        box and abs(float(box.group(1)) - 595.28) < 1.5 and abs(float(box.group(2)) - 841.89) < 1.5
+    )
+    html_stamp = re.search(r"<title>citewatch signal spec (\w+)</title>", HTML.read_text("utf-8"))
+    pdf_stamp = re.search(rb"/Title\s*\(citewatch signal spec (\w+)\)", data)
+    assert html_stamp and pdf_stamp and pdf_stamp.group(1).decode() == html_stamp.group(1)
+
+
+def test_counts_in_the_prose_come_from_the_data():
+    from typing import get_args
+
+    from citewatch.schemas.cards import ImprovementCode
+
+    html = HTML.read_text("utf-8")
+    s = StudySummary.model_validate_json(SUMMARY.read_text("utf-8"))
+    q = max(r.share.n for r in s.share if r.kind == "presence" and r.intent is None)
+    assert f"{q} UK health questions" in html
+    assert f"{len(get_args(ImprovementCode))} per-publisher reasons" in html
+    for claim in ("CSV", "Scheduled re-runs", "Threshold checks (with"):
+        assert claim not in html, claim

@@ -277,19 +277,24 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
     if unreadable:
         statuses = {u: st.robots[robots_host(u)] for u in unreadable}
         kinds = sorted({_robots_failure(v) for v in statuses.values()})
-        elsewhere = sorted(
-            {robots_host(u) for u in unreadable if robots_host(u) != urlsplit(u).hostname}
-        )
+        hosts = {robots_host(u) for u in unreadable}
+        elsewhere = sorted(h for h in hosts if all(h != urlsplit(u).hostname for u in unreadable))
+        one = len(unreadable) == 1
         where = (
-            f" (the failure was at {', '.join(elsewhere)}, where the pages redirect)"
+            f"; the failure was at {', '.join(elsewhere)}, where "
+            f"{'the page redirects' if one else 'the pages redirect'}"
             if elsewhere
             else ""
         )
+        stricter = any(v is not None and (v < 500) for v in statuses.values())
         fixes = []
+        if elsewhere:
+            fixes.append("The failure was on the site these links redirect to, not on this one.")
         if any(v in (401, 403, 429) for v in statuses.values()):
             fixes.append(
-                "Bot protection that refuses robots.txt also hides the site's rules from "
-                "well-behaved readers; serving robots.txt to them keeps its rules visible."
+                "Bot protection that refuses robots.txt keeps the site's rules from careful "
+                "readers, which then stay away; serving robots.txt to them makes the rules "
+                "visible."
             )
         if any(v is None or v >= 500 for v in statuses.values()):
             fixes.append(
@@ -303,12 +308,18 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             )
         if not fixes:
             fixes.append("Serving robots.txt with HTTP 200 keeps the site's rules visible.")
+        rule = (
+            "citewatch reads a page only after reading its site's robots.txt and treats one it "
+            "cannot read as off limits"
+            + (" (stricter than RFC 9309 for refusals and redirects)" if stricter else "")
+        )
         rows.append(
             Improvement(
                 code="robots_unreadable",
-                finding=f"{_of(len(unreadable), len(urls), 'cited pages')} on a host whose "
-                f"robots.txt {' or '.join(kinds)}{where}, so citewatch, which reads only what "
-                f"robots.txt allows, did not read {'it' if len(unreadable) == 1 else 'them'}.",
+                finding=f"{_of(len(unreadable), len(urls), 'cited pages')} on "
+                f"{'a host' if len(hosts) == 1 else 'hosts'} whose robots.txt "
+                f"{' or '.join(kinds)}{where}. {rule}, so it did not read "
+                f"{'it' if one else 'them'}.",
                 fix=" ".join(fixes),
                 count=len(unreadable),
                 of=len(urls),
