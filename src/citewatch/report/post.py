@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Sequence
 
+from citewatch.metrics.stats import wilson
 from citewatch.report import dashboard as d
 from citewatch.schemas import DomainCard, Interval, StudySummary
 
@@ -194,8 +195,8 @@ dated source over a year old, the figures are {d.counted(secondary[b])} and
 held-out pages (agent-checked, owner-approved), the parser was within 7 days on
 {d.counted(acc.within_7_days) if acc else "—"} of the pages that could be judged. Dates read from
 visible page text were within 7 days on {d.counted(visible) if visible else "—"}; dates from
-sitemaps, HTTP headers or the search tool's page age, which readers never see, on {hidden_k} of
-{hidden_n} pages.</li>
+sitemaps, HTTP headers or the search tool's page age, which readers never see, on
+{d.counted(wilson(hidden_k, hidden_n))}.</li>
 <li><strong>Support.</strong> On a sample of citations, two AI judges from different families
 found the claim stated on the cited page in {"; ".join(f"{d.counted(r.support_rate)} ({nm(r.model)} cited, judged by {nm(r.judge)})" for r in s.support if r.judge != "hand")}.
 The owner's own check, made at a quick pace of one to two seconds per citation, found

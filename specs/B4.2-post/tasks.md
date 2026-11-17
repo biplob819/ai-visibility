@@ -5,4 +5,4 @@
 - [x] 3. Publish at /post/ via the Pages workflow
 - [x] 4. Tests (opening, links, number trace)
 - [x] 5. B9 checklist and owner sign-off
-- [ ] 6. Proofs, converge twice, verifier, green
+- [x] 6. Proofs, converge twice, verifier, green

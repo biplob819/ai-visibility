@@ -76,9 +76,11 @@ def counted(iv: Interval, scale: Callable[[float], str] = pct, directional: bool
 def short(model: str | None) -> str:
     if model is None:
         return "Both models"
-    return {"claude-sonnet-5-5": "Claude Sonnet 5.5", "gpt-6.1-sol": "GPT-6.1 Sol"}.get(
-        model, model
-    )
+    return {
+        "claude-sonnet-5-5": "Claude Sonnet 5.5",
+        "claude-opus-5-5": "Claude Opus 5.5",
+        "gpt-6.1-sol": "GPT-6.1 Sol",
+    }.get(model, model)
 
 
 def intent_name(intent: str | None) -> str:

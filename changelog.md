@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [B4.2] — verified over two passes (D-76); post live at /post/, B9 approved (OWNER D-74)
 - [FEAT] [D5.2] — demo: lookup, top ten by topic, passkey-gated live mode (owner's registration code), bring your own keys, spend guard, four-field logs; deploy prep (D-78)
 - [FEAT] [B4.5] — groundwork from lane 2: thresholds and CI gate example (D-77), responsible use, community files, versioning and public API contract
 - [GREEN] [D5.1] — verified over five passes (D-69, D-71, D-72, D-75); 361 domain cards with an improvement report that states only what citewatch observed

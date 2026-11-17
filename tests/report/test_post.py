@@ -77,7 +77,15 @@ def test_every_value_in_the_post_traces_to_the_summary(page: str, summary: Study
     values = re.findall(r"\d+(?:\.\d+)?% \([^)]*\)(?: · directional)?", text)
     assert len(values) >= 20
     zeros = {f"0% (0/{n}; 95% CI 0%–0%)" for n in dashboard._answers(summary).values()}
-    assert [v for v in values if v not in known and v not in zeros] == []
+    from citewatch.metrics.stats import wilson
+
+    hidden = [
+        r.within_7_days
+        for r in summary.date_accuracy
+        if r.source in ("sitemap", "http_header", "page_age")
+    ]
+    pooled = dashboard.counted(wilson(sum(iv.k or 0 for iv in hidden), sum(iv.n for iv in hidden)))
+    assert [v for v in values if v not in known and v not in zeros and v != pooled] == []
     cards = read_cards(STUDY / "results" / "domain_cards.json")
     assert f"each of the {len(cards)} cited publishers" in text
     assert f"${summary.spend_usd:.2f}" in text
@@ -99,7 +107,10 @@ def test_every_value_in_the_post_traces_to_the_summary(page: str, summary: Study
         for r in summary.date_accuracy
         if r.source in ("sitemap", "http_header", "page_age")
     ]
-    assert f"on {sum(iv.k or 0 for iv in hidden)} of {sum(iv.n for iv in hidden)} pages" in text
+    from citewatch.metrics.stats import wilson
+
+    k, n = sum(iv.k or 0 for iv in hidden), sum(iv.n for iv in hidden)
+    assert dashboard.counted(wilson(k, n)) in text
     cells = sorted({r.rate.n // len(summary.runs) for r in summary.stale if r.intent})
     assert f"rest on {cells[0]} to {cells[-1]} questions" in text
 
