@@ -2,6 +2,8 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [M3.3] — held-out date check on 55 pages, agent-checked and owner-approved (OWNER D-63, D-64): 67% within 7 days (18/27 judgeable, Wilson 48–81%); label freeze tests
+- [FEAT] [M3.2] — support judging with EvalKit (two judges, OWNER D-60, D-61), owner labels (OWNER D-62), judge calibration with EvalKit's cluster kappa (OWNER D-65), body cache finalised
 - [GREEN] [M3.1] — verified over three passes (D-55, D-56); §6 metrics with the question-cluster bootstrap, Holm and Wilson; `citewatch score` writes summary.json; DuckDB views
 - [GREEN] [A2.4] — paid smoke run 0 ($0.79), measured cost model, parity report, golden replay
 - [GREEN] [N1.4] — 100 owner-approved questions frozen with the pre-registration and data card (OWNER D-47, D-51)

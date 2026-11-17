@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
-pytest.importorskip("evalkit")
-
-from citewatch.schemas import SupportVerdict
+from citewatch.schemas import SupportVerdict, load_study_config
 from citewatch.support.calibrate import calibrate
+from citewatch.support.report import load_hand_labels
+
+STUDY = Path(__file__).resolve().parents[2] / "studies" / "uk-health"
 
 
 def _v(ref: str, judge: str, ok: bool) -> SupportVerdict:
@@ -41,3 +45,18 @@ def test_constant_owner_labels_are_flagged() -> None:
     assert row["kappa"] == 0.0
     assert row["strictness"] == pytest.approx(0.5)
     assert row["leniency"] is None
+
+
+def test_calibration_is_reproduced_from_the_committed_data():
+    cfg = load_study_config(STUDY / "study.yaml")
+    verdicts = [
+        SupportVerdict.model_validate(r)
+        for r in [
+            json.loads(x)
+            for x in (STUDY / "data" / "support_verdicts.jsonl").read_text("utf-8").splitlines()
+            if x.strip()
+        ]
+    ]
+    rows = calibrate(verdicts, load_hand_labels(STUDY), cfg.seeds["support_sample"])
+    stored = json.loads((STUDY / "results" / "calibration.json").read_text("utf-8"))
+    assert json.loads(json.dumps(rows)) == stored["judges"]
