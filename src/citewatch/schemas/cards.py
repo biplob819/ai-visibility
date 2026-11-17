@@ -24,8 +24,20 @@ ImprovementCode = Literal[
     "hidden_date",
     "stale",
     "robots_blocked",
+    "robots_unreadable",
+    "blocked",
+    "not_html",
     "fetch_error",
     "unsupported",
+]
+SourceFile = Literal[
+    "summary.json",
+    "answers.jsonl",
+    "questions.jsonl",
+    "page_meta.jsonl",
+    "fetch_log.jsonl",
+    "support_verdicts.jsonl",
+    "support_labels.jsonl",
 ]
 
 
@@ -37,13 +49,15 @@ class Improvement(Model):
     fix: NonBlank
     count: NonNegInt
     of: NonNegInt  # the denominator the count is out of
-    source: Literal["summary.json", "page_meta.jsonl", "fetch_log.jsonl", "support_verdicts.jsonl"]
+    sources: tuple[SourceFile, ...]  # every file the count and its denominator come from
     examples: tuple[NonBlank, ...] = ()  # up to three URLs or intents behind the count
 
     @model_validator(mode="after")
     def _counted(self) -> Improvement:
         if self.count == 0 or self.count > self.of:
             raise ValueError("an improvement needs 0 < count <= of")
+        if not self.sources:
+            raise ValueError("an improvement names the files its numbers come from")
         return self
 
 

@@ -24,3 +24,4 @@ Portfolio notes.md
 # sitemap fetch cache: whole-host lastmod maps, reproducible, and the chosen sitemap dates are kept in page_meta (D-53)
 studies/*/data/raw/sitemap/
 data/raw/sitemap/
+studies/*/results/site/

@@ -31,7 +31,7 @@ from citewatch.store import RawStore
 
 EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
-NOT_BUILT = {"score --labels": "M3.2, M3.3", "report": "B4.1"}
+NOT_BUILT = {"score --labels": "M3.2, M3.3"}
 TEMPLATES = {
     "study.yaml": "study.yaml",
     "questions.jsonl": "questions.jsonl",
@@ -733,11 +733,47 @@ def _has_run(base: Path, run: int) -> bool:
 @app.command()
 def report(
     example: Annotated[bool, typer.Option("--example", help="Render the bundled example.")] = False,
+    title: Annotated[
+        str | None, typer.Option("--title", help='What the questions are about, e.g. "UK health"')
+    ] = None,
     study: StudyOpt = Path("."),
     as_json: JsonOpt = False,
 ) -> None:
-    """Build the dashboard, the post's charts and domain cards."""
-    _not_built("report", as_json)
+    """Build the findings dashboard from summary.json (`--example`: the bundled UK study)."""
+    import gzip
+    from importlib import resources
+
+    from citewatch.report import render
+    from citewatch.schemas import StudySummary
+
+    if example:
+        blob = resources.files("citewatch") / "examples" / "uk-health-summary.json.gz"
+        text = gzip.decompress(blob.read_bytes()).decode("utf-8")
+        out_dir, name = Path("citewatch-example"), title or "UK health"
+    else:
+        path = _study_file(study)
+        summary_path = path.parent / "results" / "summary.json"
+        if not summary_path.is_file():
+            _fail(as_json, "report", f"no {summary_path}: run `citewatch score` first")
+        text = summary_path.read_text(encoding="utf-8")
+        out_dir = path.parent / "results" / "site"
+        try:
+            name = title or f"the {load_study_config(path).name} study"
+        except ConfigError as exc:
+            _fail(as_json, "report", str(exc))
+    try:
+        summary = StudySummary.model_validate_json(text)
+    except ValueError as exc:
+        _fail(as_json, "report", f"summary.json is not a valid results file: {exc}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / "index.html"
+    out.write_text(render(summary, name), encoding="utf-8", newline="\n")
+    _emit(
+        as_json,
+        {"ok": True, "command": "report", "dashboard": str(out)},
+        f"dashboard -> {out}",
+    )
+    raise typer.Exit(EXIT_OK)
 
 
 def main(argv: list[str] | None = None) -> int:

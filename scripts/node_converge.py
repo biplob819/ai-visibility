@@ -78,6 +78,7 @@ SMOKE_COMMANDS: list[tuple[list[str], int]] = [
     ),
     (["citewatch", "doctor", "--study", "smoke-study"], 2),
     (["citewatch", "ask", "--run", "0", "--dry-run", "--study", "smoke-study"], 0),
+    (["citewatch", "report", "--example"], 0),  # B4.1: the bundled study, no keys
 ]
 PYTEST_UNIT_MARKERS = "not golden and not polite and not safety"
 NA_MIN_REASON = 10

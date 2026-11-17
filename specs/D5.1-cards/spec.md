@@ -15,18 +15,21 @@ One card per cited publisher in `results/domain_cards.json`, built from `summary
 - `citewatch.cards.lookup(query, cards, intent=None)`: strips scheme, `www.`, path and port, maps through the extractor's `publisher_of` (one function, contract-tested), returns the card or a `NotCited` result: "not cited in any of the N answers in this study" plus the most-cited publishers for the chosen intent.
 - `citewatch score` writes `results/domain_cards.json` after `summary.json`.
 
-## Improvement codes (deterministic; counts over the publisher's cited pages in the scored runs)
-| code | finding | fix | source |
+## Improvement codes (deterministic; counts over the publisher's cited pages in the scored runs; D-69)
+| code | finding | fix | sources |
 |---|---|---|---|
-| `intent_absent` | not cited on any question in an intent where it is cited elsewhere | publish a page that answers that intent's questions plainly; who was cited instead | summary.json |
+| `intent_absent` | cited on ≥5 questions across ≥2 intents but on none of another intent (noted as possibly outside the site's remit) | if the site covers it, answer such questions plainly; who is cited most on those questions | summary.json |
 | `undated` | cited pages that loaded but state no date citewatch could read | add a visible "last updated" date and schema.org `dateModified` | page_meta.jsonl |
-| `hidden_date` | pages dated only by sitemap or HTTP header, which readers never see | show the date on the page | page_meta.jsonl |
-| `stale` | dated pages last updated more than `stale_days` before the answer | review and re-date, or retire | page_meta.jsonl |
-| `robots_blocked` | pages robots.txt disallows for citewatch's reader | decide whether independent checkers should read them (AI search tools use their own crawlers) | page_meta.jsonl |
+| `hidden_date` | loaded pages dated only by sitemap, HTTP header or the search tool's page age, which readers never see | show the date on the page | page_meta.jsonl |
+| `stale` | loaded pages cited on time-sensitive questions (§6.3), dated more than `stale_days` before the latest such answer | update and re-date if guidance changed; a visible reviewed date if not | page_meta, answers, questions |
+| `robots_blocked` | pages the site's own robots.txt (read with HTTP 200) disallows for citewatch's reader | decide whether independent checkers may read them | page_meta, fetch_log |
+| `robots_unreadable` | pages on a host whose robots.txt never returned 200 (the fetcher then treats the host as disallowed) | serve robots.txt to well-behaved readers | page_meta, fetch_log |
+| `blocked` | pages refused to automated readers or behind a sign-in | let well-behaved readers load public guidance | page_meta.jsonl |
+| `not_html` | cited documents (PDFs and the like) with no machine-readable date | publish key guidance as an HTML page with a visible date | page_meta.jsonl |
 | `fetch_error` | pages that failed to load (e.g. 404) | fix or redirect the URL | page_meta.jsonl |
-| `unsupported` | support-sample citations both AI judges found not stated on the page | state the key fact in the page text | support_verdicts.jsonl |
+| `unsupported` | support-sample citations both AI judges found not stated on the page, which the owner's check did not find supported | state the key fact in the page text | support_verdicts, support_labels |
 
-A code appears only when its count is above zero. Wording never judges medical accuracy (NFR4): findings describe sourcing, dates and readability only.
+A code appears only when its count is above zero. Wording never judges medical accuracy (NFR4), and never states more about a site than the data shows.
 
 ## Not in scope
 The demo page (D5.2); the dashboard (B4.1).

@@ -76,36 +76,106 @@ def test_cited_instead_ranks_who_answered_without_the_publisher(tiny: Path):
 
 
 def test_improvement_rows_by_hand(tiny: Path):
-    """nhs.uk/b (2024-01-01) and nhs.uk/c (2025-11-01) are over 365 days before the
-    2026-11-20 answers; x.com's two pages loaded with no date; bbc's page is newer."""
+    """Stale reads §6.3: only pages cited on time-sensitive questions (t-001, t-003). nhs.uk/b
+    (2024-01-01, on t-003) is over 365 days before the 2026-11-20 answers; nhs.uk/a (323 days)
+    is not; nhs.uk/c is cited only on t-002, which is not time-sensitive. x.com's two pages
+    loaded with no date; bbc's page is newer than the answer."""
     cards, _, _ = _tiny_cards(tiny)
     by = {c.publisher: {i.code: i for i in c.improvement} for c in cards}
     stale = by["nhs.uk"]["stale"]
-    assert (stale.count, stale.of, stale.source) == (2, 3, "page_meta.jsonl")
-    assert stale.examples == ("https://nhs.uk/b", "https://nhs.uk/c")
+    assert (stale.count, stale.of) == (1, 2)
+    assert stale.examples == ("https://nhs.uk/b",)
+    assert "page_meta.jsonl" in stale.sources and "answers.jsonl" in stale.sources
     undated = by["x.com"]["undated"]
     assert (undated.count, undated.of) == (2, 2)
+    assert undated.finding.startswith("2 of 2 cited pages that loaded have no date")
     assert by["bbc.co.uk"] == {}
     assert "intent_absent" not in by["nhs.uk"]  # cited on both intents
 
 
-def test_page_outcomes_and_hidden_dates_become_rows(tiny: Path):
+def _set_outcomes(tiny: Path, changes: dict[str, dict]) -> None:
     meta = tiny / "data" / "page_meta.jsonl"
     rows = [json.loads(x) for x in meta.read_text("utf-8").splitlines()]
     for r in rows:
-        if r["url"] == "https://nhs.uk/a":
-            r["effective_source"] = "sitemap"
-        if r["url"] == "https://x.com/b":
-            r["outcome"] = "robots_disallowed"
-        if r["url"] == "https://bbc.co.uk/a":
-            r.update(outcome="fetch_error", effective_date=None)
+        r.update(changes.get(r["url"], {}))
     meta.write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
+
+
+def test_page_outcomes_and_hidden_dates_become_rows(tiny: Path):
+    _set_outcomes(
+        tiny,
+        {
+            "https://nhs.uk/a": {"effective_source": "page_age"},
+            "https://x.com/b": {"outcome": "robots_disallowed"},
+            "https://bbc.co.uk/a": {"outcome": "fetch_error", "effective_date": None},
+            "https://nhs.uk/c": {"outcome": "not_html", "effective_date": None},
+        },
+    )
     cards, _, _ = _tiny_cards(tiny)
     by = {c.publisher: {i.code: i for i in c.improvement} for c in cards}
-    assert (by["nhs.uk"]["hidden_date"].count, by["nhs.uk"]["hidden_date"].of) == (1, 3)
+    assert (by["nhs.uk"]["hidden_date"].count, by["nhs.uk"]["hidden_date"].of) == (1, 2)
+    assert (by["nhs.uk"]["not_html"].count, by["nhs.uk"]["not_html"].of) == (1, 3)
     assert (by["x.com"]["robots_blocked"].count, by["x.com"]["robots_blocked"].of) == (1, 2)
+    assert by["x.com"]["robots_blocked"].finding.startswith("1 of 2 cited pages is disallowed")
     assert (by["x.com"]["undated"].count, by["x.com"]["undated"].of) == (1, 1)
     assert (by["bbc.co.uk"]["fetch_error"].count, by["bbc.co.uk"]["fetch_error"].of) == (1, 1)
+
+
+def test_an_unreadable_robots_txt_is_never_called_a_disallow(tiny: Path):
+    """D-5.1 pass 1 H1: a 403 on robots.txt is reported as such, not as the site's rule."""
+    _set_outcomes(
+        tiny,
+        {
+            "https://x.com/a": {"outcome": "robots_disallowed"},
+            "https://x.com/b": {"outcome": "blocked"},
+        },
+    )
+    log = [
+        {"url": "https://x.com/robots.txt", "host": "x.com", "status": 403, "outcome": "blocked"},
+        {
+            "url": "https://bbc.co.uk/robots.txt",
+            "host": "bbc.co.uk",
+            "status": 200,
+            "outcome": "ok",
+        },
+    ]
+    (tiny / "data" / "fetch_log.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in log), "utf-8"
+    )
+    cards, _, _ = _tiny_cards(tiny)
+    rows = {i.code: i for i in next(c for c in cards if c.publisher == "x.com").improvement}
+    assert "robots_blocked" not in rows
+    assert "(HTTP 403)" in rows["robots_unreadable"].finding
+    assert "disallowed" not in rows["robots_unreadable"].finding
+    assert (rows["blocked"].count, rows["blocked"].of) == (1, 2)
+
+
+def test_unsupported_rows_never_contradict_the_owners_labels(tiny: Path):
+    data = tiny / "data"
+    refs = ["1:t-001:claude-sonnet-5-5:1", "1:t-003:claude-sonnet-5-5:1"]
+    (data / "support_verdicts.jsonl").write_text(
+        "".join(
+            json.dumps({"citation_ref": r, "judge": j, "verdict": "unsupported"}) + "\n"
+            for r in refs
+            for j in ("opus", "sol")
+        ),
+        "utf-8",
+    )
+    (data / "support_label_key.jsonl").write_text(
+        "".join(json.dumps({"id": f"s{i}", "citation_ref": r}) + "\n" for i, r in enumerate(refs)),
+        "utf-8",
+    )
+    (data / "support_labels.jsonl").write_text(
+        json.dumps({"id": "s0", "label": "supported"})
+        + "\n"
+        + json.dumps({"id": "s1", "label": "unsupported"})
+        + "\n",
+        "utf-8",
+    )
+    cards, _, _ = _tiny_cards(tiny)
+    row = {i.code: i for i in cards[0].improvement}["unsupported"]
+    assert (row.count, row.of, row.examples) == (1, 2, (refs[1],))
+    assert "support_labels.jsonl" in row.sources
 
 
 def test_lookup_normalises_input_through_the_extractors_publisher_of(tiny: Path):
@@ -123,7 +193,22 @@ def test_lookup_of_an_uncited_publisher_names_the_study_and_the_intents_leaders(
     assert isinstance(miss, NotCited)
     assert miss.message == "example.org was not cited in any of the 15 answers in this study."
     assert miss.top_for_intent == ("bbc.co.uk", "nhs.uk")
-    assert isinstance(lookup("", cards, answers=15), NotCited)
+    with pytest.raises(ValueError, match="unknown intent"):
+        lookup("nhs.uk", cards, answers=15, intent="gamma")
+
+
+@pytest.mark.parametrize(
+    "junk", ["", "   ", "://", "http://", "nhs .uk", "nhs", "javascript:alert(1)"]
+)
+def test_junk_is_never_echoed_as_a_publisher(tiny: Path, junk: str):
+    cards, _, _ = _tiny_cards(tiny)
+    miss = lookup(junk, cards, answers=15)
+    assert isinstance(miss, NotCited) and miss.publisher is None
+    assert "is not a web address" in miss.message
+
+
+def test_an_idn_is_shown_in_unicode():
+    assert normalise("https://xn--bcher-kva.example/x") == "bücher.example"
 
 
 def test_flagship_cards_match_the_summary_and_reproduce_on_a_rerun(tmp_path: Path):
@@ -143,28 +228,76 @@ def test_flagship_cards_match_the_summary_and_reproduce_on_a_rerun(tmp_path: Pat
     assert {c.publisher for c in cards} == cited
 
 
-def test_flagship_page_counts_reproduce_from_page_meta():
+def test_flagship_page_counts_reproduce_from_the_study_files():
+    """IMP-01: every page-based code recomputed here from page_meta, fetch_log, answers and
+    questions, independently of citewatch.cards."""
+    import datetime as dt
+    from urllib.parse import urlsplit
+
     cards = read_cards(STUDY / "results" / "domain_cards.json")
-    meta = {
-        r["url"]: r
-        for r in (
-            json.loads(x)
-            for x in (STUDY / "data" / "page_meta.jsonl").read_text("utf-8").splitlines()
-        )
+    rows_of = lambda name: [  # noqa: E731
+        json.loads(x) for x in (STUDY / "data" / name).read_text("utf-8").splitlines() if x.strip()
+    ]
+    meta = {r["url"]: r for r in rows_of("page_meta.jsonl")}
+    ts = {q["id"] for q in rows_of("../questions.jsonl") if q["time_sensitive"]}
+    when = {
+        (a["run"], a["question_id"], a["model"]): dt.date.fromisoformat(a["answered_at"][:10])
+        for a in rows_of("answers.jsonl")
     }
-    runs = {1, 2}
+    robots: dict[str, list] = {}
+    for r in rows_of("fetch_log.jsonl"):
+        if urlsplit(r["url"]).path == "/robots.txt":
+            robots.setdefault(r["host"], []).append(r.get("status"))
+    readable = {h.removeprefix("www.") for h, s in robots.items() if 200 in s}
     urls: dict[str, set[str]] = {}
-    for x in (STUDY / "data" / "citations.jsonl").read_text("utf-8").splitlines():
-        c = json.loads(x)
-        if c["run"] in runs:
+    newest: dict[str, dt.date] = {}
+    for c in rows_of("citations.jsonl"):
+        if c["run"] in (1, 2):
             urls.setdefault(c["publisher"], set()).add(c["url"])
+            if c["question_id"] in ts:
+                d = when[(c["run"], c["question_id"], c["model"])]
+                newest[c["url"]] = max(d, newest.get(c["url"], d))
     for card in cards:
-        rows = {i.code: i for i in card.improvement}
-        mine = urls[card.publisher]
-        blocked = sum(meta[u]["outcome"] == "robots_disallowed" for u in mine if u in meta)
-        assert rows.get("robots_blocked") is None or rows["robots_blocked"].count == blocked
-        if blocked:
-            assert rows["robots_blocked"].of == len(mine)
+        got = {i.code: (i.count, i.of) for i in card.improvement}
+        us = urls[card.publisher]
+        out = {u: meta.get(u, {}).get("outcome") for u in us}
+        ok = [u for u in us if out[u] == "ok"]
+        dated = [u for u in ok if meta[u]["effective_date"]]
+        tsd = [u for u in dated if u in newest]
+        dis = [u for u in us if out[u] == "robots_disallowed"]
+        unread = [
+            u
+            for u in dis
+            if (h := urlsplit(u).hostname or "") in robots
+            and h.removeprefix("www.") not in readable
+        ]
+        want = {
+            "undated": (len(ok) - len(dated), len(ok)),
+            "hidden_date": (
+                sum(
+                    meta[u]["effective_source"] in ("sitemap", "http_header", "page_age")
+                    for u in dated
+                ),
+                len(dated),
+            ),
+            "stale": (
+                sum(
+                    (newest[u] - dt.date.fromisoformat(meta[u]["effective_date"])).days > 365
+                    for u in tsd
+                ),
+                len(tsd),
+            ),
+            "robots_blocked": (len(dis) - len(unread), len(us)),
+            "robots_unreadable": (len(unread), len(us)),
+            "blocked": (sum(out[u] in ("blocked", "gated") for u in us), len(us)),
+            "not_html": (sum(out[u] in ("not_html", "too_large") for u in us), len(us)),
+            "fetch_error": (sum(out[u] == "fetch_error" for u in us), len(us)),
+        }
+        for code, (k, n) in want.items():
+            assert got.get(code, (0, n)) == (k, n) or (k == 0 and code not in got), (
+                card.publisher,
+                code,
+            )
 
 
 def test_every_finding_has_a_fix_and_evidence_and_no_medical_claim():
@@ -172,7 +305,7 @@ def test_every_finding_has_a_fix_and_evidence_and_no_medical_claim():
     rows = [i for c in cards for i in c.improvement]
     assert rows
     for i in rows:
-        assert i.fix and 0 < i.count <= i.of and i.source
+        assert i.fix and 0 < i.count <= i.of and i.sources
         assert not MEDICAL_CLAIMS.search(i.finding + " " + i.fix), (i.code, i.finding, i.fix)
 
 
@@ -182,9 +315,3 @@ def test_lookup_on_the_flagship_cards_is_fast():
     for q in ("nhs.uk", "https://www.bbc.co.uk/news", "nobody.example", "nice.org.uk"):
         lookup(q, cards, answers=400, intent="treatment")
     assert time.perf_counter() - start < 1.0
-
-
-@pytest.mark.parametrize("bad", ["", "   ", "://", "http://"])
-def test_lookup_never_raises_on_junk(tiny: Path, bad: str):
-    cards, _, _ = _tiny_cards(tiny)
-    assert isinstance(lookup(bad, cards, answers=15), NotCited)

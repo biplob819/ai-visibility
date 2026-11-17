@@ -37,7 +37,6 @@ def test_help_lists_every_command(capsys):
     ("argv", "node"),
     [
         (["score", "--labels", "x.csv"], "M3.2"),
-        (["report", "--example"], "B4.1"),
     ],
 )
 def test_unbuilt_commands_exit_2_naming_their_node(capsys, argv, node):

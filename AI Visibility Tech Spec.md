@@ -376,13 +376,13 @@ class DomainCard(BaseModel):         # what the demo shows
 
 
 class Improvement(BaseModel):          # one row of a card's improvement report
-    code: Literal["intent_absent", "undated", "hidden_date", "stale",
-                  "robots_blocked", "fetch_error", "unsupported"]
+    code: Literal["intent_absent", "undated", "hidden_date", "stale", "robots_blocked",
+                  "robots_unreadable", "blocked", "not_html", "fetch_error", "unsupported"]
     finding: str                     # sourcing, dates and readability only (NFR4)
     fix: str
     count: int                       # 0 < count <= of
     of: int
-    source: Literal["summary.json", "page_meta.jsonl", "fetch_log.jsonl", "support_verdicts.jsonl"]
+    sources: tuple[str, ...]         # every study file the count and denominator come from
     examples: tuple[str, ...]        # up to three URLs or intents
 
 
