@@ -90,7 +90,11 @@ def test_the_readme_covers_finding_method_rerun_cost_licence_and_data_card():
 def test_every_local_link_in_the_readme_resolves():
     text = README.read_text("utf-8")
     links = re.findall(r"\]\(([^)]+)\)", text)
-    local = [u for u in links if not u.startswith(("http://", "https://", "#"))]
+    # B4.5 pass 2: PyPI renders the README, so repository links are absolute blob URLs; each
+    # must name a file that exists here, and no relative link is left to break on PyPI
+    assert not [u for u in links if not u.startswith(("http://", "https://", "#"))]
+    blob = "https://github.com/biplob819/ai-visibility/blob/main/"
+    local = [u[len(blob) :] for u in links if u.startswith(blob)]
     assert local
     missing = [u for u in local if not (ROOT / unquote(u.split("#")[0])).exists()]
     assert missing == []

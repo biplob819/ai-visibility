@@ -10,11 +10,11 @@ Claude Sonnet 5.5 and GPT-6.1 Sol, twice.
 
 **[Dashboard](https://biplob819.github.io/ai-visibility/)** ·
 **[Post](https://biplob819.github.io/ai-visibility/post/)** ·
-**[Signal spec (PDF)](docs/signal-spec.pdf)** ·
-**[Data card](DATA_CARD.md)** ·
-**[Pre-registration](docs/preregistration.md)** ·
-**[Deviations](docs/deviations.md)** ·
-**[Decisions](docs/decisions.md)**
+**[Signal spec (PDF)](https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf)** ·
+**[Data card](https://github.com/biplob819/ai-visibility/blob/main/DATA_CARD.md)** ·
+**[Pre-registration](https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md)** ·
+**[Deviations](https://github.com/biplob819/ai-visibility/blob/main/docs/deviations.md)** ·
+**[Decisions](https://github.com/biplob819/ai-visibility/blob/main/docs/decisions.md)**
 
 It measures **sourcing, not medical accuracy**, and nothing here is medical advice.
 
@@ -45,10 +45,10 @@ pip install 'citewatch[anthropic,openai]' # plus the provider SDKs for paid runs
 uvx citewatch report --example            # or try it without installing
 ```
 
-Python 3.11 or newer. See the [quickstart](docs/quickstart.md) (an example report in under
+Python 3.11 or newer. See the [quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) (an example report in under
 five minutes, no keys).
 
-[![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/cli.png)](docs/quickstart.md)
+[![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/cli.png)](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md)
 
 ## How it works
 
@@ -112,25 +112,25 @@ The gate and why each check exists are in the Tech Spec (§3 and gates G1, G2).
 **Cost.** The flagship study's smoke run cost $0.79 and its two study runs (400 answers) cost
 $15.03 in API calls; the dry run estimates yours before any call, and `max_cost_usd` in
 `study.yaml` caps it. Fetching costs nothing but time. Thresholds in `study.yaml` can fail a CI
-job when a metric crosses a bound ([`docs/thresholds.md`](docs/thresholds.md)).
+job when a metric crosses a bound ([`docs/thresholds.md`](https://github.com/biplob819/ai-visibility/blob/main/docs/thresholds.md)).
 
 ## Guides
 
 | Guide | What it covers |
 |---|---|
-| [Quickstart](docs/quickstart.md) | the bundled study's dashboard in under five minutes, no keys |
-| [Run your own study](docs/own-study.md) | settings, the questions format, intents, country, models, the run gate |
-| [How dates are resolved](docs/dates.md) | the seven date sources, the rules and their limits |
-| [Controlling cost](docs/cost.md) | estimates, the hard cap, resume, what the flagship study cost |
-| [Thresholds in CI](docs/thresholds.md) | rules that fail a CI job when a metric crosses a bound |
-| [Responsible use](docs/responsible-use.md) | politeness, no telemetry, privacy, not for gaming AI answers |
-| [Versioning](docs/versioning.md) | semver and the public API |
+| [Quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) | the bundled study's dashboard in under five minutes, no keys |
+| [Run your own study](https://github.com/biplob819/ai-visibility/blob/main/docs/own-study.md) | settings, the questions format, intents, country, models, the run gate |
+| [How dates are resolved](https://github.com/biplob819/ai-visibility/blob/main/docs/dates.md) | the seven date sources, the rules and their limits |
+| [Controlling cost](https://github.com/biplob819/ai-visibility/blob/main/docs/cost.md) | estimates, the hard cap, resume, what the flagship study cost |
+| [Thresholds in CI](https://github.com/biplob819/ai-visibility/blob/main/docs/thresholds.md) | rules that fail a CI job when a metric crosses a bound |
+| [Responsible use](https://github.com/biplob819/ai-visibility/blob/main/docs/responsible-use.md) | politeness, no telemetry, privacy, not for gaming AI answers |
+| [Versioning](https://github.com/biplob819/ai-visibility/blob/main/docs/versioning.md) | semver and the public API |
 
 ## Responsible use
 
 citewatch obeys robots.txt and a fixed politeness floor that no setting can loosen, sends
 nothing anywhere except to the AI providers you configure and the cited sites, and is not a
-tool for gaming AI answers ([`docs/responsible-use.md`](docs/responsible-use.md)).
+tool for gaming AI answers ([`docs/responsible-use.md`](https://github.com/biplob819/ai-visibility/blob/main/docs/responsible-use.md)).
 
 ## Repository map
 
@@ -150,17 +150,17 @@ tool for gaming AI answers ([`docs/responsible-use.md`](docs/responsible-use.md)
 | Package | https://pypi.org/project/citewatch/ |
 | Dashboard | https://biplob819.github.io/ai-visibility/ |
 | Post | https://biplob819.github.io/ai-visibility/post/ |
-| Signal spec | [docs/signal-spec.pdf](docs/signal-spec.pdf) |
-| Data card | [DATA_CARD.md](DATA_CARD.md) |
-| Pre-registration | [docs/preregistration.md](docs/preregistration.md) |
-| Deviations | [docs/deviations.md](docs/deviations.md) |
-| Decisions | [docs/decisions.md](docs/decisions.md) |
-| Changelog | [changelog.md](changelog.md) |
+| Signal spec | [docs/signal-spec.pdf](https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf) |
+| Data card | [DATA_CARD.md](https://github.com/biplob819/ai-visibility/blob/main/DATA_CARD.md) |
+| Pre-registration | [docs/preregistration.md](https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md) |
+| Deviations | [docs/deviations.md](https://github.com/biplob819/ai-visibility/blob/main/docs/deviations.md) |
+| Decisions | [docs/decisions.md](https://github.com/biplob819/ai-visibility/blob/main/docs/decisions.md) |
+| Changelog | [changelog.md](https://github.com/biplob819/ai-visibility/blob/main/changelog.md) |
 | Support judging | [EvalKit](https://github.com/biplob819/evalkit) |
 
 `scripts/check_links.py --online` checks every link in the README and docs.
 
 ## Licence
 
-MIT ([`LICENSE`](LICENSE)). Contributions: [`CONTRIBUTING.md`](CONTRIBUTING.md); security
-reports: [`SECURITY.md`](SECURITY.md).
+MIT ([`LICENSE`](https://github.com/biplob819/ai-visibility/blob/main/LICENSE)). Contributions: [`CONTRIBUTING.md`](https://github.com/biplob819/ai-visibility/blob/main/CONTRIBUTING.md); security
+reports: [`SECURITY.md`](https://github.com/biplob819/ai-visibility/blob/main/SECURITY.md).

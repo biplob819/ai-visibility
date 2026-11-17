@@ -9,6 +9,8 @@
 
 - 2026-11-17 — verifier pass 1: OSS-03..07, THR-01/02 CONFIRMED (wheel works from plain pip on 3.11 and 3.12 with no keys; floor cannot be lowered; no telemetry); OSS-01 DISPROVED (H: git URL in the `support` extra would make PyPI refuse the upload); OSS-02/08 PENDING-RELEASE; OSS-09 DISPROVED (M: no demo screenshot or link yet; link checker missed bare URLs and PyPI's 200 challenge page). Also M versioning overclaimed compatibility, M no 0.1.0 changelog entry; lows. Fixed per D-84; the demo screenshot and link wait on the deploy.
 
+- 2026-11-17 — verifier pass 2 (focused): all 7 checks PASS (wheel and sdist metadata clean, twine check passes, EvalKit still installed in the repo and CI, score byte-identical, plain-wheel score degrades with a note; pinned action SHA is release/v1). M: 23 relative README links would 404 on PyPI — fixed (absolute blob URLs, each checked to name a real file). OSS-03..07, THR-01/02 CONFIRMED; OSS-01/02/08 PENDING-RELEASE (owner: PyPI publisher, tag); OSS-09 pending only the demo screenshot and link.
+
 ## Known limits
 - The published package has no support-judging extra until EvalKit 0.3 is on PyPI (D-84); the repository reproduces it with the pinned commit.
 - A pip-only user cannot write `cost_model.yaml` (the measuring script lives in the repository), and packaged prices go stale seven days after release until a study adds its own `prices.yaml`.
