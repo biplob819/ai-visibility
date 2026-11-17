@@ -773,6 +773,16 @@ def report(
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "index.html"
     out.write_text(render(summary, name, where, words), encoding="utf-8", newline="\n")
+    cards_path = None if example else _study_file(study).parent / "results" / "domain_cards.json"
+    if cards_path is not None and cards_path.is_file():  # B4.2: the write-up beside it
+        from citewatch.cards import read_cards
+        from citewatch.report.post import render as render_post
+
+        post = out_dir / "post" / "index.html"
+        post.parent.mkdir(exist_ok=True)
+        post.write_text(
+            render_post(summary, read_cards(cards_path), name), encoding="utf-8", newline="\n"
+        )
     _emit(
         as_json,
         {"ok": True, "command": "report", "dashboard": str(out)},
