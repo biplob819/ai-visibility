@@ -126,6 +126,8 @@ ALLOWED_PAGES = (
         32768,
         "the generator of docs/signal-spec.html (its template)",
     ),
+    ("src/citewatch/report/dashboard.py", 65536, "the dashboard generator (its page template)"),
+    ("src/citewatch/report/post.py", 32768, "the post generator (its page template)"),
 )
 PAGE_MAX = 20_000  # an HTML document bigger than this is a stored page
 BODY_TEXT_MAX = 2_000  # visible characters inside one <body>...</body>
@@ -213,8 +215,11 @@ def page_problem(path: str, data: bytes) -> str | None:
     if doc and len(data) > PAGE_MAX:
         return f"an HTML document of {len(data)} bytes (a stored page?)"
     if path.endswith(".py"):
-        # Python sources that build or test pages carry page markup as string literals; a
-        # stored page is judged by the document-size rule above, not by its body text
+        # Python sources that build or test pages carry page markup as string literals, so
+        # their body text is not judged; but a large source carrying a whole document is
+        # (B4.4 pass 4): the generators are allow-listed above with size caps
+        if len(data) > PAGE_MAX and re.search(r"<!doctype\s+html|<html\b", text, re.I):
+            return f"a {len(data)}-byte Python source carrying an HTML document (a stored page?)"
         return None
     bodies = [m.group(1) for m in _BODY.finditer(text)]
     head = text.lstrip("\ufeff \t\r\n")

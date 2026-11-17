@@ -109,6 +109,7 @@ def planted(tmp_path_factory: pytest.TempPathFactory):
         "docs/cut.md": "<html><head></head><body><article>" + "Words of a saved page. " * 600,
         "tests/fixtures/dates/pages/sub/deep.html": BODY_PAGE,
         "studies/s/data/plant.csv": "url,body\nhttps://e.org,a page\n",
+        "notes/hide.py": 'PAGE = """<!doctype html><html><body>' + "Saved text. " * 2500 + '"""\n',
         "docs/padded.md": "\ufeff"
         + " " * 1500
         + "<HTML lang=en><body>"
@@ -289,6 +290,7 @@ def test_cut_off_pages_deep_fixtures_csv_bodies_and_other_keys_are_caught(result
     _, text, _ = result
     assert "docs/notes-about-html.md" not in text  # prose that mentions a tag is not a page
     for path in (
+        "notes/hide.py",
         "docs/padded.md",
         "docs/cut.md",
         "tests/fixtures/dates/pages/sub/deep.html",
