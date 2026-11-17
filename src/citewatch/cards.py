@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from citewatch.extract.urls import UrlError, publisher_of
+from citewatch.extract.urls import INSTITUTIONAL, UrlError, publisher_of
 from citewatch.metrics.data import StudyData
 from citewatch.schemas import DomainCard, Improvement, StudySummary
 
@@ -28,7 +28,8 @@ EXAMPLES = 3
 # date sources a reader never sees on the page: the search tool's page age, sitemaps, headers
 HIDDEN_SOURCES = frozenset({"sitemap", "http_header", "page_age"})
 TOP_FOR_INTENT = 5
-TS_PAGES = "dated pages cited on time-sensitive questions"
+DOCS = ("is a document", "are documents")
+TS_PAGES = "dated pages that loaded and were cited on time-sensitive questions"
 # a missing intent is reported only for publishers cited broadly enough for the gap to mean
 # something: on this many distinct questions, across at least two intents (D-69)
 INTENT_MIN_QUESTIONS = 5
@@ -69,9 +70,17 @@ def _unreadable_robots(base: Path) -> dict[str, int | None]:
     for r in _rows(base / "data" / "fetch_log.jsonl"):
         if urlsplit(r["url"]).path == "/robots.txt":
             seen[r["host"]].append(r.get("status"))
-    ok = {h for h, s in seen.items() if 200 in s}
-    bare = {h.removeprefix("www.") for h in ok}
-    return {h: s[-1] for h, s in seen.items() if h not in ok and h.removeprefix("www.") not in bare}
+
+    def readable(h: str) -> bool:
+        if 200 in seen[h]:
+            return True
+        # robots rules are per origin: x's robots.txt counts as read only when it redirected
+        # (3xx) to its www/non-www twin and that twin answered 200 (pass 2, L-d)
+        twin = h.removeprefix("www.") if h.startswith("www.") else f"www.{h}"
+        redirected = any(s is not None and 300 <= s < 400 for s in seen[h])
+        return redirected and 200 in seen.get(twin, [])
+
+    return {h: s[-1] for h, s in list(seen.items()) if not readable(h)}
 
 
 def _verdicts(base: Path) -> dict[str, dict[str, str]]:
@@ -93,6 +102,19 @@ def _citation_publishers(base: Path, runs: set[int]) -> dict[str, str]:
 def _of(k: int, n: int, noun: str, verbs: tuple[str, str] = ("is", "are")) -> str:
     """'1 of 3 cited pages is' / '2 of 3 cited pages are'."""
     return f"{k} of {n} {noun} {verbs[0] if k == 1 else verbs[1]}"
+
+
+def _robots_failure(status: int | None) -> str:
+    """What happened to a robots.txt request, in words."""
+    if status is None:
+        return "did not respond"
+    if 300 <= status < 400:
+        return f"redirected away from /robots.txt (HTTP {status})"
+    if status in (401, 403, 429):
+        return f"refused the request (HTTP {status})"
+    if status >= 500:
+        return f"returned a server error (HTTP {status})"
+    return f"could not be read (HTTP {status})"
 
 
 def cited_instead(data: StudyData, publisher: str) -> tuple[str, ...]:
@@ -183,14 +205,22 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             )
         )
     dated_ok = [u for u in ok if meta[u].get("effective_date")]
-    hidden = [u for u in dated_ok if meta[u].get("effective_source") in HIDDEN_SOURCES]
+    hidden = [
+        u
+        for u in dated_ok
+        if meta[u].get("effective_source") in HIDDEN_SOURCES
+        and not any(  # any date shown on the page itself, even a published one (pass 2, M-a)
+            c.get("source") not in HIDDEN_SOURCES and not c.get("rejected")
+            for c in meta[u].get("candidates", ())
+        )
+    ]
     if hidden:
         rows.append(
             Improvement(
                 code="hidden_date",
                 finding=f"{_of(len(hidden), len(dated_ok), 'dated pages that loaded')} dated "
-                "only by a sitemap, an HTTP header or the search tool's page age, none of which "
-                "a reader sees.",
+                "only by a sitemap, an HTTP header or the search tool's page age; none shows a "
+                "date on the page.",
                 fix="Show the last-updated date on the page itself, and in schema.org markup.",
                 count=len(hidden),
                 of=len(dated_ok),
@@ -221,7 +251,12 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             )
         )
     disallowed = [u for u in urls if outcome[u] == "robots_disallowed"]
-    unreadable = [u for u in disallowed if urlsplit(u).hostname in st.robots]
+
+    def robots_host(u: str) -> str:  # the host that refused: the final hop's, where known
+        final = urlsplit(meta.get(u, {}).get("final_url") or u).hostname or ""
+        return final if final in st.robots else urlsplit(u).hostname or ""
+
+    unreadable = [u for u in disallowed if robots_host(u) in st.robots]
     real = [u for u in disallowed if u not in set(unreadable)]
     if real:
         rows.append(
@@ -238,17 +273,22 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
             )
         )
     if unreadable:
-        statuses = sorted(
-            {str(st.robots[urlsplit(u).hostname or ""] or "no response") for u in unreadable}
-        )
+        kinds = sorted({_robots_failure(st.robots[robots_host(u)]) for u in unreadable})
+        bot = any(k.startswith("refused") for k in kinds)
         rows.append(
             Improvement(
                 code="robots_unreadable",
                 finding=f"{_of(len(unreadable), len(urls), 'cited pages')} on a host whose "
-                f"robots.txt could not be read (HTTP {', '.join(statuses)}), so citewatch did "
-                "not read them.",
-                fix="Bot protection that refuses robots.txt also hides the site's rules from "
-                "well-behaved readers; serving robots.txt to them keeps its rules visible.",
+                f"robots.txt {' or '.join(kinds)}, so citewatch, which reads only what robots.txt "
+                f"allows, did not read {'it' if len(unreadable) == 1 else 'them'}.",
+                fix=(
+                    "Bot protection that refuses robots.txt also hides the site's rules from "
+                    "well-behaved readers; serving robots.txt to them keeps its rules visible."
+                    if bot
+                    else "A robots.txt that is unavailable or redirected elsewhere leaves "
+                    "well-behaved readers treating the site as off limits; serving it at "
+                    "/robots.txt keeps the site's rules visible."
+                ),
                 count=len(unreadable),
                 of=len(urls),
                 sources=("page_meta.jsonl", "fetch_log.jsonl"),
@@ -275,8 +315,9 @@ def _improvements(publisher: str, summary: StudySummary, st: _Study) -> list[Imp
         rows.append(
             Improvement(
                 code="not_html",
-                finding=f"{_of(len(files), len(urls), 'cited links')} documents rather than web "
-                "pages (for example PDFs), which carry no machine-readable date.",
+                finding=f"{_of(len(files), len(urls), 'cited links', DOCS)} "
+                "rather than web pages (for example PDFs); citewatch reads dates from web pages "
+                "only.",
                 fix="Publish key guidance as an HTML page with a visible date, and link the "
                 "document from it.",
                 count=len(files),
@@ -424,6 +465,12 @@ def normalise(query: str) -> str:
         return host
 
 
+def _registrable(domain: str) -> bool:
+    from citewatch.extract.urls import _extractor
+
+    return bool(_extractor()(domain).domain)
+
+
 def _intents(cards: Sequence[DomainCard]) -> set[str]:
     return {k.split("/")[0] for c in cards for k in c.share_by_intent}
 
@@ -441,11 +488,13 @@ def lookup(
         raise ValueError(f"unknown intent {intent!r}; this study has {sorted(_intents(cards))}")
     host = normalise(query)
     publisher = None
-    if host and "." in host and " " not in host:
+    if host and "." in host and " " not in host and "\\" not in query:
         try:
             publisher = publisher_of(host)[0]
         except UrlError:
             publisher = None
+        if publisher and not _registrable(publisher) and publisher not in INSTITUTIONAL:
+            publisher = None  # a public suffix such as co.uk is not a site (D-4 keeps nhs.uk)
     by = {c.publisher: c for c in cards}
     if publisher in by:
         return by[publisher]
@@ -464,7 +513,9 @@ def lookup(
     if publisher is None:
         message = f"{query.strip()!r} is not a web address citewatch can look up."
     else:
-        message = f"{publisher} was not cited in any of the {answers} answers in this study."
+        message = (
+            f"{normalise(publisher)} was not cited in any of the {answers} answers in this study."
+        )
     return NotCited(
         query=query,
         publisher=publisher,

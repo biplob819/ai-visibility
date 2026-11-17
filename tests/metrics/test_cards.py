@@ -248,7 +248,13 @@ def test_flagship_page_counts_reproduce_from_the_study_files():
     for r in rows_of("fetch_log.jsonl"):
         if urlsplit(r["url"]).path == "/robots.txt":
             robots.setdefault(r["host"], []).append(r.get("status"))
-    readable = {h.removeprefix("www.") for h, s in robots.items() if 200 in s}
+    hidden_src = ("sitemap", "http_header", "page_age")
+
+    def readable(h: str) -> bool:
+        twin = h.removeprefix("www.") if h.startswith("www.") else f"www.{h}"
+        moved = any(s is not None and 300 <= s < 400 for s in robots.get(h, []))
+        return 200 in robots.get(h, []) or (moved and 200 in robots.get(twin, []))
+
     urls: dict[str, set[str]] = {}
     newest: dict[str, dt.date] = {}
     for c in rows_of("citations.jsonl"):
@@ -265,17 +271,21 @@ def test_flagship_page_counts_reproduce_from_the_study_files():
         dated = [u for u in ok if meta[u]["effective_date"]]
         tsd = [u for u in dated if u in newest]
         dis = [u for u in us if out[u] == "robots_disallowed"]
-        unread = [
-            u
-            for u in dis
-            if (h := urlsplit(u).hostname or "") in robots
-            and h.removeprefix("www.") not in readable
-        ]
+
+        def host(u: str) -> str:
+            final = urlsplit(meta[u].get("final_url") or u).hostname or ""
+            return final if final in robots and not readable(final) else urlsplit(u).hostname or ""
+
+        unread = [u for u in dis if host(u) in robots and not readable(host(u))]
         want = {
             "undated": (len(ok) - len(dated), len(ok)),
             "hidden_date": (
                 sum(
-                    meta[u]["effective_source"] in ("sitemap", "http_header", "page_age")
+                    meta[u]["effective_source"] in hidden_src
+                    and not any(
+                        c["source"] not in hidden_src and not c.get("rejected")
+                        for c in meta[u].get("candidates", ())
+                    )
                     for u in dated
                 ),
                 len(dated),
@@ -315,3 +325,68 @@ def test_lookup_on_the_flagship_cards_is_fast():
     for q in ("nhs.uk", "https://www.bbc.co.uk/news", "nobody.example", "nice.org.uk"):
         lookup(q, cards, answers=400, intent="treatment")
     assert time.perf_counter() - start < 1.0
+
+
+def test_a_page_showing_any_date_is_never_called_hidden(tiny: Path):
+    """D5.1 pass 2 M-a: a visible published date means the page shows a date."""
+    cand = [
+        {"source": "page_age", "kind": "modified", "rejected": None, "value": "2026-01-01"},
+        {"source": "visible_text", "kind": "published", "rejected": None, "value": "2025-01-01"},
+    ]
+    _set_outcomes(tiny, {"https://nhs.uk/a": {"effective_source": "page_age", "candidates": cand}})
+    cards, _, _ = _tiny_cards(tiny)
+    assert "hidden_date" not in {i.code for i in cards[0].improvement}
+
+
+@pytest.mark.parametrize(
+    ("status", "words", "bot"),
+    [
+        (403, "refused the request (HTTP 403)", True),
+        (503, "returned a server error (HTTP 503)", False),
+        (None, "did not respond", False),
+        (301, "redirected away from /robots.txt (HTTP 301)", False),
+    ],
+)
+def test_robots_failures_are_worded_by_what_happened(tiny: Path, status, words, bot):
+    """Pass 2 M-b: bot protection is named only for refusals; 'HTTP no response' never."""
+    _set_outcomes(tiny, {"https://x.com/a": {"outcome": "robots_disallowed"}})
+    log = [{"url": "https://x.com/robots.txt", "host": "x.com", "status": status, "outcome": "x"}]
+    (tiny / "data" / "fetch_log.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in log), "utf-8"
+    )
+    cards, _, _ = _tiny_cards(tiny)
+    row = {i.code: i for i in next(c for c in cards if c.publisher == "x.com").improvement}[
+        "robots_unreadable"
+    ]
+    assert words in row.finding and "HTTP no response" not in row.finding
+    assert row.finding.endswith("did not read it.")
+    assert ("Bot protection" in row.fix) == bot
+
+
+def test_a_www_twin_answering_200_does_not_make_an_unredirected_host_readable(tiny: Path):
+    """Pass 2 L-d: robots rules are per origin."""
+    _set_outcomes(tiny, {"https://x.com/a": {"outcome": "robots_disallowed"}})
+    log = [
+        {"url": "https://x.com/robots.txt", "host": "x.com", "status": 403, "outcome": "blocked"},
+        {
+            "url": "https://www.x.com/robots.txt",
+            "host": "www.x.com",
+            "status": 200,
+            "outcome": "ok",
+        },
+    ]
+    (tiny / "data" / "fetch_log.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in log), "utf-8"
+    )
+    cards, _, _ = _tiny_cards(tiny)
+    codes = {i.code for i in next(c for c in cards if c.publisher == "x.com").improvement}
+    assert "robots_unreadable" in codes and "robots_blocked" not in codes
+
+
+def test_lookup_shows_idns_in_unicode_and_rejects_public_suffixes(tiny: Path):
+    cards, _, _ = _tiny_cards(tiny)
+    miss = lookup("bücher.example", cards, answers=15)
+    assert isinstance(miss, NotCited) and miss.message.startswith("bücher.example was not cited")
+    for suffix in ("co.uk", ".uk", "nhs.uk\\@evil.com"):
+        hit = lookup(suffix, cards, answers=15)
+        assert isinstance(hit, NotCited) and hit.publisher is None, suffix
