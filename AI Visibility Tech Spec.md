@@ -925,7 +925,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | --- | --- | --- |
 | DSH-01 | Static self-contained HTML: share, freshness lag, overlap by intent; a count beside every percentage; intervals | FR9 |
 | DSH-02 | Page-one scope statement (sourcing, not medical accuracy; 100 questions is directional); coverage, error rates and hand-check results panel | NFR4, B6 |
-| DSH-03 | Deployed to Cloudflare Pages | D-15 |
+| DSH-03 | Deployed to GitHub Pages | OWNER D-70 |
 | DSH-04 | Every summary field render-tested; accessible without colour alone (EvalKit L-28) | §11 |
 
 **B4.2 The post and charts**

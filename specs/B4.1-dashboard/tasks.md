@@ -5,5 +5,5 @@
 - [x] 3. `citewatch report` (`--study`, `--example` with the bundled summary)
 - [x] 4. Tests: schema walk, numbers trace, no external requests, colour-independent identity
 - [x] 5. Render and look (light, dark, phone width)
-- [ ] 6. Deploy to Cloudflare Pages (owner approval)
+- [ ] 6. Deploy to GitHub Pages (OWNER D-70)
 - [ ] 7. Proofs, converge twice, verifier, green

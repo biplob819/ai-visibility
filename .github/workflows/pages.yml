@@ -1,0 +1,45 @@
+name: pages
+
+# The findings dashboard (B4.1, D-70): built from the committed summary.json on every push to
+# main that touches the study results or the report code, and published to GitHub Pages.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studies/uk-health/results/summary.json"
+      - "src/citewatch/report/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run citewatch report --study studies/uk-health --title "UK health"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: studies/uk-health/results/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

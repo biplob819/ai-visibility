@@ -10,7 +10,7 @@ One static, self-contained HTML page built from `summary.json` (FR9, D-15): what
 - Sections, one per `StudySummary` field: headline, scope, share (top publishers by presence, both runs), comparisons, concentration, citations, freshness, stale, nhs_overdue, overlap, stability, coverage, date_accuracy, support, check_methods, error_counts, spend and provenance (hashes, runs, generated_at).
 - Cells under 10 answers are marked "directional" (H13).
 - `citewatch report --study DIR` writes `DIR/results/site/index.html`; `citewatch report --example` renders the bundled flagship summary to `./citewatch-example/index.html` with no keys.
-- Deploy: Cloudflare Pages project for `results/site/` (owner's account; the owner approves the first deploy).
+- Deploy: GitHub Pages through `.github/workflows/pages.yml`, built from the committed summary (OWNER D-70).
 
 ## Not in scope
 The post (B4.2), the signal spec (B4.3), the demo (D5.2).
