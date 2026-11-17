@@ -6,26 +6,29 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
 from citewatch.demo.guard import SpendGuard
-from citewatch.demo.kv import SqliteKV
+from citewatch.demo.kv import KVError, SqliteKV
 from citewatch.demo.live import ProviderKeys
-from citewatch.demo.passkeys import make_code_hash
+from citewatch.demo.passkeys import STORE_DOWN, make_code_hash
 from harness_lib import ROOT
 from tests.demo.authenticator import SoftAuthenticator
-from tests.demo.test_live import KEY_A, KEY_O, fake_runners
+from tests.demo.test_live import KEY_A, KEY_O, fake_runners, with_prose
+from tests.runners.helpers import FakeAnthropic, FakeOpenAI, claude_raw, openai_raw
 
-CODE = "48151623"
+CODE = "481516234200"
 OWNER_A = "-".join(["owner", "anthropic", "key", "c0ffee"])
+OWNER_O = "-".join(["owner", "openai", "key", "decaf0"])
 
 
 @pytest.fixture
 def secrets(tmp_path) -> dict[str, str]:
-    h, s = make_code_hash(CODE, iterations=1_000)
+    h, s = make_code_hash(CODE)
     return {
         "CITEWATCH_DEMO_CODE_HASH": h,
         "CITEWATCH_DEMO_CODE_SALT": s,
@@ -85,7 +88,7 @@ def test_page_registration_code_is_checked_and_rate_limited(secrets, given_keys)
     at.run()
     code_box = next(t for t in at.text_input if t.label == "Registration code")
     for _ in range(3):
-        code_box.input("11111111")
+        code_box.input("111111111111")
         at.button[0].click().run()
         assert any("not right" in e.value for e in at.error)
         code_box = next(t for t in at.text_input if t.label == "Registration code")
@@ -216,3 +219,105 @@ def test_page_refuses_a_stranger_passkey_and_offers_a_fresh_challenge(
     assert "passkey_id" not in at.session_state
     assert any("not registered" in w.value for w in at.warning)
     assert widget.mounted["cw-sign-in"]["nonce"] != first  # the used challenge is gone
+
+
+# --- the visitor's own keys never fall back to the owner's (DEM-05) -------------------------------
+
+
+@pytest.fixture
+def sdk_clients(monkeypatch) -> list[tuple[str, str]]:
+    """Stand in for the provider SDK constructors (no network): record which provider got a
+    client and the key it would use. Like the real SDKs, a missing api_key falls back to the
+    environment variable, so a fall-back to the owner's key would show up here."""
+    made: list[tuple[str, str]] = []
+
+    def anthropic_client(*, api_key: str | None = None, **kw: Any) -> FakeAnthropic:
+        made.append(("anthropic", api_key or os.environ.get("ANTHROPIC_API_KEY", "")))
+        return FakeAnthropic([with_prose("claude-sonnet-5-5", claude_raw())])
+
+    def openai_client(*, api_key: str | None = None, **kw: Any) -> FakeOpenAI:
+        made.append(("openai", api_key or os.environ.get("OPENAI_API_KEY", "")))
+        return FakeOpenAI([with_prose("gpt-6.1-sol", openai_raw())])
+
+    monkeypatch.setattr("anthropic.Anthropic", anthropic_client)
+    monkeypatch.setattr("openai.OpenAI", openai_client)
+    return made
+
+
+@pytest.mark.safety
+@pytest.mark.parametrize(
+    ("given", "own", "missing"),
+    [("openai", ("", KEY_O), "anthropic"), ("anthropic", (KEY_A, ""), "openai")],
+)
+def test_page_own_keys_with_one_key_never_use_the_owner_key(
+    secrets, sdk_clients, monkeypatch, caplog, given, own, missing
+):
+    """The owner's keys are set (secrets and environment); the visitor picks their own keys
+    and gives only one. The other model reports the missing key; the owner's key reaches no
+    provider client, and the owner's daily budget is untouched."""
+    caplog.set_level(logging.DEBUG)
+    owner = {"ANTHROPIC_API_KEY": OWNER_A, "OPENAI_API_KEY": OWNER_O}
+    for name, value in owner.items():
+        monkeypatch.setenv(name, value)
+    at = app({**secrets, **owner})
+    _ask(at, "How much is a prescription?", own)
+    assert not at.exception
+    html = _live_markdown(at)
+    assert f"No {missing} key given." in html
+    assert "<ol class='cw-cites'>" in html  # the given key's model still answered
+    assert sdk_clients == [(given, KEY_A if given == "anthropic" else KEY_O)]
+    page = "".join(m.value for m in at.markdown)
+    for key in (OWNER_A, OWNER_O):
+        assert key not in caplog.text and key not in page
+    g = SpendGuard(SqliteKV(ROOT / secrets["CITEWATCH_DEMO_LOCAL_STORE"]))
+    assert g.spent_today() == 0
+
+
+# --- failures never show a traceback ------------------------------------------------------------
+
+
+@pytest.mark.safety
+def test_page_store_failure_during_sign_in_is_a_message_not_a_traceback(
+    secrets, given_keys, monkeypatch
+):
+    widget = FakeWidget()
+    monkeypatch.setattr("streamlit.components.v2.component", widget.component)
+    auth = SoftAuthenticator("localhost", "http://localhost:8501")
+    at = app(secrets)
+    at.run()
+    next(t for t in at.text_input if t.label == "Registration code").input(CODE)
+    at.button[0].click().run()
+    widget.replies["cw-register"] = lambda d: json.dumps(
+        {"nonce": d["nonce"], "credential": auth.create(d["options"])}
+    )
+    at.run()
+    next(b for b in at.button if b.label == "Sign out").click().run()
+
+    def down(*a: Any, **k: Any) -> Any:
+        raise KVError("https://secret-kv.example token=abc")
+
+    monkeypatch.setattr(SqliteKV, "hget", down)
+    widget.replies["cw-sign-in"] = lambda d: json.dumps(
+        {"nonce": d["nonce"], "credential": auth.get(d["options"])}
+    )
+    at.run()
+    assert not at.exception
+    assert "passkey_id" not in at.session_state
+    assert [w.value for w in at.warning] == [STORE_DOWN]
+
+
+@pytest.mark.safety
+def test_page_misconfigured_origin_is_a_message_not_a_traceback(secrets, given_keys):
+    at = app({**secrets, "CITEWATCH_DEMO_ORIGIN": "http://localhost.evil.example"})
+    at.run()
+    assert not at.exception
+    assert any("not configured correctly" in i.value for i in at.info)
+    assert all("evil" not in i.value for i in at.info)
+
+
+def test_page_hides_error_details():
+    import streamlit.config
+
+    at = AppTest.from_file(str(ROOT / "demo" / "app.py"), default_timeout=120)
+    at.run()
+    assert streamlit.config.get_option("client.showErrorDetails") == "none"

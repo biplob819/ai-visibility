@@ -85,5 +85,17 @@ def test_make_code_hash_runs_as_a_module():
         timeout=60,
         check=False,
     )
-    assert out.returncode == 2 and "8 to 32 digits" in out.stdout
-    assert "123" not in out.stdout.replace("8 to 32", "")
+    assert out.returncode == 2 and "12 to 32 digits" in out.stdout
+    assert "123" not in out.stdout.replace("12 to 32", "")
+
+
+def test_streamlit_config_hides_error_details():
+    """Next to the entrypoint, where Streamlit reads script-level config (also on Community
+    Cloud): an uncaught error shows no exception text or traceback in the browser."""
+    cfg = tomllib.loads((ROOT / "demo" / ".streamlit" / "config.toml").read_text("utf-8"))
+    assert cfg["client"]["showErrorDetails"] == "none"
+
+
+def test_readme_documents_the_registration_lockout_reset():
+    text = (ROOT / "demo" / "README.md").read_text(encoding="utf-8")
+    assert "citewatch:demo:regcode:all:" in text and "12 to 32 digits" in text

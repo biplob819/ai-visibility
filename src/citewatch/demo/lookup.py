@@ -1,18 +1,19 @@
 """Lookup mode (DEM-01, US7): a domain box over the bundled domain cards, and a top-ten picker
 by intent. Reads `domain_cards.json` only; it never calls a model.
 
-The HTML here is built from the cards' own fields, every value escaped. The cards hold shares,
-dates, publishers and improvement rows; they hold no answer text (D-17).
+The HTML here is built from the cards' own fields, every value made inert for markdown and
+HTML by `citewatch.demo.markup` (one line, syntax characters as character references). The
+cards hold shares, dates, publishers and improvement rows; they hold no answer text (D-17).
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from html import escape
 from pathlib import Path
 
 from citewatch.cards import NotCited, lookup, read_cards
+from citewatch.demo.markup import link, text
 from citewatch.schemas import DomainCard
 from citewatch.schemas.summary import Interval
 
@@ -97,16 +98,10 @@ def _share(s: Interval) -> str:
     return f"{_pct(s.point)} ({_pct(s.lo)}–{_pct(s.hi)}), {s.k or 0} of {s.n} answers"
 
 
-def _link(url: str) -> str:
-    if url.startswith(("https://", "http://")):
-        return f"<a href='{escape(url)}' rel='noopener nofollow' target='_blank'>{escape(url)}</a>"
-    return escape(url)
-
-
 def card_html(card: DomainCard) -> str:
     """A domain card: shares by model and run, freshness, who was cited instead, and the
     improvement rows with their fixes and examples."""
-    h = [f"<div class='cw-card'><h3>{escape(card.publisher)}</h3>"]
+    h = [f"<div class='cw-card'><h3>{text(card.publisher)}</h3>"]
     questions = len(card.questions_citing)
     h.append(
         f"<p>Cited {card.citations} times in {card.answers_citing} answers, "
@@ -117,8 +112,8 @@ def card_html(card: DomainCard) -> str:
     for key in sorted(card.share_by_model):
         model, _, run = key.partition("/")
         h.append(
-            f"<tr><td>{escape(model)}</td><td>{escape(run.removeprefix('run-'))}</td>"
-            f"<td>{escape(_share(card.share_by_model[key]))}</td></tr>"
+            f"<tr><td>{text(model)}</td><td>{text(run.removeprefix('run-'))}</td>"
+            f"<td>{text(_share(card.share_by_model[key]))}</td></tr>"
         )
     h.append("</table>")
     if card.median_freshness_lag_days is not None:
@@ -131,19 +126,18 @@ def card_html(card: DomainCard) -> str:
     if card.cited_instead:
         h.append(
             "<p><b>Cited instead</b> (in answers to the same questions that left it out): "
-            + ", ".join(escape(p) for p in card.cited_instead)
+            + ", ".join(text(p) for p in card.cited_instead)
             + "</p>"
         )
     if card.improvement:
         h.append("<h4>What could help</h4><ul class='cw-improve'>")
         for row in card.improvement:
-            items = "".join(f"<li>{_link(e)}</li>" for e in row.examples)
+            items = "".join(f"<li>{link(e)}</li>" for e in row.examples)
             examples = (
                 f"<details><summary>Examples</summary><ul>{items}</ul></details>" if items else ""
             )
             h.append(
-                f"<li><p>{escape(row.finding)}</p><p><b>Fix:</b> {escape(row.fix)}</p>"
-                f"{examples}</li>"
+                f"<li><p>{text(row.finding)}</p><p><b>Fix:</b> {text(row.fix)}</p>{examples}</li>"
             )
         h.append("</ul>")
     else:
@@ -153,11 +147,11 @@ def card_html(card: DomainCard) -> str:
 
 
 def not_cited_html(result: NotCited, intent: str | None) -> str:
-    h = [f"<div class='cw-card'><p>{escape(result.message)}</p>"]
+    h = [f"<div class='cw-card'><p>{text(result.message)}</p>"]
     if result.top_for_intent:
-        where = f" on {escape(label(intent))} questions" if intent else ""
+        where = f" on {text(label(intent))} questions" if intent else ""
         h.append(f"<p>Most-cited publishers{where}:</p><ol>")
-        h.extend(f"<li>{escape(p)}</li>" for p in result.top_for_intent)
+        h.extend(f"<li>{text(p)}</li>" for p in result.top_for_intent)
         h.append("</ol>")
     h.append("</div>")
     return "".join(h)

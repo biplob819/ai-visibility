@@ -161,6 +161,49 @@ def test_html_is_escaped(guard):
     assert "<script>" not in html and "<img" not in html
 
 
+INJECTED = "fine text\n\n![x](https://evil/b.png) and [t](https://evil) :red[loud] $x^2$"
+
+
+def _rendered(html: str) -> str:
+    """What a markdown renderer with raw HTML on (as st.markdown(unsafe_allow_html=True))
+    makes of the page's HTML: CommonMark rules, the ones Streamlit's renderer follows."""
+    markdown_it = pytest.importorskip("markdown_it")
+    return markdown_it.MarkdownIt("commonmark", {"html": True}).render(html)
+
+
+def _no_injection(rendered: str) -> None:
+    assert "<img" not in rendered
+    assert 'href="https://evil' not in rendered and "href='https://evil" not in rendered
+    assert "\n\n" not in rendered.strip()  # the HTML block was never broken by a blank line
+
+
+@pytest.mark.safety
+def test_a_quote_cannot_inject_markdown_into_the_page():
+    """A blank line inside a quoted span used to end the HTML block, so the rest rendered as
+    markdown: an image fetched from a stranger's server and a link. Every untrusted field is
+    one line with markdown syntax neutralised."""
+    from citewatch.demo.live import LiveResult
+
+    evil = ModelCitations(
+        A,
+        (LiveCitation("https://x.example/page", "x.example\n\n[pub](https://evil)", INJECTED),),
+        note="a note\n\n![n](https://evil/n.png)",
+    )
+    html = live_html(LiveResult(models=(evil,)))
+    assert "\n" not in html
+    _no_injection(_rendered(html))
+    assert "fine text" in html  # the quote still shows, as text
+
+
+def test_quotes_are_collapsed_to_one_line_when_extracted():
+    raw = claude_raw()
+    for block in raw["content"]:
+        for cite in block.get("citations") or []:
+            cite["cited_text"] = INJECTED
+    cites = citations_from(A, [raw])
+    assert cites and all(c.quoted_span == " ".join(INJECTED.split()) for c in cites)
+
+
 # --- the §7.1 settings --------------------------------------------------------------------------
 
 
@@ -314,3 +357,32 @@ def test_failed_calls_cost_nothing_and_settle_the_hold(guard):
     result = ask(guard, fake_runners(A, B, error=Down("bad request")), owner=True)
     assert result.cost_usd == 0 and guard.spent_today() == 0
     assert all("HTTP 400" in (m.note or "") for m in result.models)
+
+
+class Crash(BaseException):
+    """Dies past `except Exception`, as KeyboardInterrupt or SystemExit would."""
+
+
+class CrashingRunner:
+    def __init__(self, model: str) -> None:
+        self.model = model
+
+    def call(self, question: Any, cfg: Any) -> Any:
+        raise Crash("worker died")
+
+    def usage(self, responses: Any) -> Any:  # never reached
+        raise AssertionError
+
+
+@pytest.mark.safety
+def test_a_request_that_dies_keeps_the_whole_hold(guard, caplog):
+    """A BaseException in one model's call escapes the request; the finally block must keep
+    the whole hold (the day is overcounted, never undercounted) and still log one line."""
+    caplog.set_level(logging.INFO, logger="citewatch.demo")
+    runners: dict[str, Any] = {**fake_runners(A), B: CrashingRunner(B)}
+    bound = request_bound_usd(CFG, PRICES, MEASURED)
+    with pytest.raises(Crash):
+        ask(guard, runners, owner=True)
+    assert guard.spent_today() == pytest.approx(bound, abs=1e-6)
+    assert guard.spent_today() > 0
+    assert sum('"mode": "live-owner-keys"' in r.getMessage() for r in caplog.records) == 1

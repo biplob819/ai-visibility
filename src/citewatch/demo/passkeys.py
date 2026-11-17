@@ -3,8 +3,10 @@
 Registering a passkey needs the owner's numeric registration code. The code is never stored:
 the host's secret store holds a salted PBKDF2-SHA256 hash and its salt, the check is a
 constant-time compare, and attempts are rate-limited in the shared KV (per session and across
-all sessions), counted before the compare so a locked-out caller learns nothing. After
-registration, sign-in is by passkey alone.
+all sessions), counted before the compare so a locked-out caller learns nothing. The limits
+hold over any hour, not per clock hour: an attempt counts against the current and the previous
+window together, so no burst can straddle a window boundary. After registration, sign-in is by
+passkey alone.
 
 The WebAuthn ceremonies are generated and verified server-side with py_webauthn; the browser
 part (navigator.credentials) is the small Streamlit component in `citewatch.demo.component`.
@@ -19,25 +21,29 @@ import datetime as dt
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlsplit
 
 from citewatch.demo.kv import KV
 
 HASH_SCHEME = "pbkdf2_sha256"
-HASH_ITERATIONS = 600_000  # OWASP 2023 guidance for PBKDF2-HMAC-SHA256
-MIN_CODE_DIGITS = 8
+HASH_ITERATIONS = 600_000  # OWASP 2023 guidance for PBKDF2-HMAC-SHA256; also the floor
+MIN_CODE_DIGITS = 12
 MAX_CODE_DIGITS = 32
 CODE_TRIES_PER_SESSION = 3
-CODE_TRIES_GLOBAL = 10  # per window, across every visitor: 10^8 codes take ~1,000 years
+CODE_TRIES_GLOBAL = 10  # in any window, across every visitor: 10^12 codes take ~10^7 years
 CODE_WINDOW_S = 3600
 CHALLENGE_TTL_S = 300
 CEREMONY_TIMEOUT_MS = 120_000
 CREDENTIALS = "passkeys"
 RP_NAME = "citewatch demo"
+LOG = logging.getLogger("citewatch.demo")
+STORE_DOWN = "The passkey store is unavailable right now; try again later."
 
 
 class AuthRefused(Exception):
@@ -59,6 +65,8 @@ def make_code_hash(
     code: str, *, salt: bytes | None = None, iterations: int = HASH_ITERATIONS
 ) -> tuple[str, str]:
     """(`pbkdf2_sha256$<iterations>$<hex digest>`, `<hex salt>`) for the host's secret store."""
+    if iterations < HASH_ITERATIONS:
+        raise ValueError(f"the hash needs at least {HASH_ITERATIONS:,} PBKDF2 rounds")
     if not valid_code(code):
         raise ValueError(
             f"the registration code must be {MIN_CODE_DIGITS} to {MAX_CODE_DIGITS} digits"
@@ -69,7 +77,8 @@ def make_code_hash(
 
 
 def check_code(code: str, code_hash: str, salt_hex: str) -> bool:
-    """True when `code` matches the stored hash; the digests are compared in constant time."""
+    """True when `code` matches the stored hash; the digests are compared in constant time. A
+    stored hash with fewer than HASH_ITERATIONS rounds is refused outright."""
     try:
         scheme, iterations, expected = code_hash.split("$")
         salt = bytes.fromhex(salt_hex)
@@ -77,7 +86,7 @@ def check_code(code: str, code_hash: str, salt_hex: str) -> bool:
         rounds = int(iterations)
     except ValueError:
         return False
-    if scheme != HASH_SCHEME or rounds < 1 or not salt or not want:
+    if scheme != HASH_SCHEME or rounds < HASH_ITERATIONS or not salt or not want:
         return False
     got = hashlib.pbkdf2_hmac("sha256", code.strip().encode("utf-8"), salt, rounds)
     return hmac.compare_digest(got, want) and valid_code(code.strip())
@@ -116,35 +125,45 @@ class RegistrationGate:
     def check(self, session: str, code: str) -> RegistrationGrant:
         """A grant for the right code; AuthRefused for a wrong code or too many attempts. Each
         attempt is counted before the compare, so once the limit is reached even the right
-        code is refused until the window passes."""
+        code is refused. Each limit counts this window and the previous one together, so it
+        holds over any `window_s` stretch (no double burst across a boundary); a lockout ends
+        once a whole window passes with no attempts."""
         if not session:
             raise AuthRefused("No session.")
         window = int(self._clock() // self.window_s)
-        ttl = self.window_s * 2
         sid = hashlib.sha256(session.encode("utf-8")).hexdigest()[:24]
         try:
-            mine = self.kv.incr(f"regcode:s:{sid}:{window}", 1, ttl)
-            everyone = self.kv.incr(f"regcode:all:{window}", 1, ttl)
-        except Exception:
+            mine = self._count(f"regcode:s:{sid}", window)
+            everyone = self._count("regcode:all", window)
+        except Exception as exc:  # never echo the store's message: it can quote the URL
+            LOG.warning("demo store unavailable (%s)", type(exc).__name__)
             raise AuthRefused("Registration is unavailable right now; try again later.") from None
         if mine > self.per_session or everyone > self.overall:
-            raise AuthRefused("Too many registration attempts. Try again in an hour.")
+            raise AuthRefused("Too many registration attempts. Try again in an hour or two.")
         if not check_code(code, self._hash, self._salt):
             raise AuthRefused("That registration code is not right.")
         return RegistrationGrant(session=session, expires=self._clock() + CHALLENGE_TTL_S)
+
+    def _count(self, prefix: str, window: int) -> int:
+        """Count one attempt in `window`; return the attempts in it and in the window before.
+        Each window's key lives two windows, so the previous one is still there to read."""
+        now = self.kv.incr(f"{prefix}:{window}", 1, self.window_s * 2)
+        return now + self.kv.get_int(f"{prefix}:{window - 1}")
 
 
 # --- WebAuthn ceremonies -----------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass
 class Pending:
-    """A ceremony in progress: its one-time challenge, kept server-side in session memory."""
+    """A ceremony in progress: its one-time challenge, kept server-side in session memory.
+    The first finish, pass or fail, marks it used, so it can never verify a second time."""
 
     kind: str  # "register" or "sign_in"
     challenge: bytes
     expires: float
     user_id: bytes = b""
+    used: bool = field(default=False, compare=False)
 
 
 @dataclass(frozen=True)
@@ -167,20 +186,66 @@ class StoredCredential:
 
 
 class CredentialStore:
-    """Registered passkeys in the shared KV (a hash keyed by credential id)."""
+    """Registered passkeys in the shared KV (a hash keyed by credential id). Any store failure
+    (KVError, a database error, a corrupt record) becomes AuthRefused with a fixed message, so
+    the visitor never sees a traceback or the store's own text."""
 
     def __init__(self, kv: KV) -> None:
         self.kv = kv
 
     def get(self, credential_id: str) -> StoredCredential | None:
-        raw = self.kv.hget(CREDENTIALS, credential_id)
-        return None if raw is None else StoredCredential.from_json(credential_id, raw)
+        try:
+            raw = self.kv.hget(CREDENTIALS, credential_id)
+            return None if raw is None else StoredCredential.from_json(credential_id, raw)
+        except Exception as exc:
+            raise _store_down(exc) from None
 
     def put(self, cred: StoredCredential) -> None:
-        self.kv.hset(CREDENTIALS, cred.credential_id, cred.to_json())
+        try:
+            self.kv.hset(CREDENTIALS, cred.credential_id, cred.to_json())
+        except Exception as exc:
+            raise _store_down(exc) from None
 
     def count(self) -> int:
-        return self.kv.hlen(CREDENTIALS)
+        try:
+            return self.kv.hlen(CREDENTIALS)
+        except Exception as exc:
+            raise _store_down(exc) from None
+
+
+def _store_down(exc: BaseException) -> AuthRefused:
+    LOG.warning("demo store unavailable (%s)", type(exc).__name__)
+    return AuthRefused(STORE_DOWN)
+
+
+def exact_origin(origin: str, rp_id: str) -> str:
+    """The origin as `scheme://host[:port]`, checked whole rather than by prefix: https, or
+    http only for the host `localhost` (local development, set explicitly in the secrets); no
+    user info, path, query or fragment; a host equal to the RP ID or under it. ValueError
+    otherwise. py_webauthn then compares the browser's origin with this exactly."""
+    u = urlsplit(origin.strip())
+    try:
+        host, port = u.hostname, u.port
+    except ValueError:  # a malformed port
+        host, port = None, None
+    rp = rp_id.strip().lower()
+    secure = u.scheme == "https" or (u.scheme == "http" and host == "localhost")
+    if (
+        not secure
+        or not host
+        or not rp
+        or u.username is not None
+        or u.password is not None
+        or u.path not in ("", "/")
+        or u.query
+        or u.fragment
+        or (host != rp and not host.endswith("." + rp))
+    ):
+        raise ValueError(
+            "passkeys need an RP ID and an exact origin: https://<host>[:port] at or under the "
+            "RP ID (or http://localhost[:port] for local development)"
+        )
+    return f"{u.scheme}://{host}" + (f":{port}" if port is not None else "")
 
 
 def _unverified(exc: BaseException) -> str:
@@ -209,10 +274,8 @@ class Passkeys:
         *,
         clock: Callable[[], float] = time.time,
     ) -> None:
-        if not rp_id or not origin.startswith(("https://", "http://localhost")):
-            raise ValueError("passkeys need an RP ID and an https origin (or http://localhost)")
-        self.rp_id = rp_id
-        self.origin = origin.rstrip("/")
+        self.origin = exact_origin(origin, rp_id)
+        self.rp_id = rp_id.strip().lower()
         self.store = store
         self._clock = clock
 
@@ -314,5 +377,10 @@ class Passkeys:
         return updated
 
     def _live(self, pending: Pending, kind: str) -> None:
+        """Refuse a pending ceremony of the wrong kind, expired or already used; otherwise mark
+        it used before anything is verified, so it is spent whether the finish passes or not."""
+        if pending.used:
+            raise AuthRefused("That passkey request was already used; start again.")
         if pending.kind != kind or pending.expires < self._clock():
             raise AuthRefused("That passkey request expired; start again.")
+        pending.used = True

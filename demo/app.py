@@ -12,6 +12,7 @@ Run locally:  uv run --extra demo --extra anthropic --extra openai streamlit run
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import logging
 import os
 import secrets
@@ -149,7 +150,14 @@ def lookup_view() -> None:
         st.markdown(card_html(result), unsafe_allow_html=True)
     else:
         st.markdown(not_cited_html(result, intent), unsafe_allow_html=True)
-    log_request("lookup", (time.perf_counter() - t0) * 1000, 0.0)
+    # one log line per distinct lookup in a session, not one per rerun (any widget change
+    # reruns the page); the session keeps a one-way digest, never the text typed
+    seen = st.session_state.setdefault("lookups_logged", set())
+    query = f"{intent}\n{' '.join(domain.lower().split())}".encode()
+    digest = hashlib.sha256(query).hexdigest()[:24]
+    if digest not in seen:
+        seen.add(digest)
+        log_request("lookup", (time.perf_counter() - t0) * 1000, 0.0)
 
 
 def top_view() -> None:
@@ -201,6 +209,9 @@ def finish(kind: str, response: Any, nonce: str, done: Any) -> None:
             done(pending, cred)
         except AuthRefused as exc:
             st.session_state["flash"] = exc.reason
+        except Exception as exc:  # never a traceback: AuthRefused covers the known failures
+            LOG.warning("passkey step failed (%s)", type(exc).__name__)
+            st.session_state["flash"] = "The passkey step failed; try again later."
     st.rerun()
 
 
@@ -267,8 +278,16 @@ def live_view() -> None:
     if kv is None:
         st.warning(STORE_DOWN)
         return
-    pk = Passkeys(env["CITEWATCH_DEMO_RP_ID"], env["CITEWATCH_DEMO_ORIGIN"], CredentialStore(kv))
-    gate = RegistrationGate(kv, env["CITEWATCH_DEMO_CODE_HASH"], env["CITEWATCH_DEMO_CODE_SALT"])
+    try:
+        pk = Passkeys(
+            env["CITEWATCH_DEMO_RP_ID"], env["CITEWATCH_DEMO_ORIGIN"], CredentialStore(kv)
+        )
+        gate = RegistrationGate(
+            kv, env["CITEWATCH_DEMO_CODE_HASH"], env["CITEWATCH_DEMO_CODE_SALT"]
+        )
+    except ValueError:  # a malformed RP ID or origin: say so, never show the values
+        st.info("Live mode is not configured correctly on this deployment; lookup mode works.")
+        return
     identity = st.session_state.get("passkey_id")
     if not identity:
         sign_in_view(pk, gate)
@@ -325,6 +344,8 @@ def live_view() -> None:
 
 def main() -> None:
     st.set_page_config(page_title="citewatch demo", layout="centered")
+    # also in demo/.streamlit/config.toml: an uncaught error shows a generic message only
+    st.set_option("client.showErrorDetails", "none")
     st.markdown(CSS, unsafe_allow_html=True)
     st.title("Is your site cited by AI answers?")
     st.caption(

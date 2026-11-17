@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import ast
 import json
+import logging
 import re
 import time
-from html import escape
 from pathlib import Path
 
 import pytest
@@ -21,6 +21,7 @@ from citewatch.demo.lookup import (
     not_cited_html,
     top_ten,
 )
+from citewatch.demo.markup import text
 from citewatch.schemas import DomainCard
 from harness_lib import ROOT
 
@@ -57,7 +58,7 @@ def test_card_shows_shares_by_model_cited_instead_and_fixes(bundle):
         assert p in html
     assert card.improvement
     for row in card.improvement:
-        assert escape(row.finding) in html and escape(row.fix) in html
+        assert text(row.finding) in html and text(row.fix) in html
     assert f"median {card.median_freshness_lag_days:.0f} days" in html
 
 
@@ -120,6 +121,35 @@ def test_card_html_escapes_card_text():
     assert "<script>" not in card_html(card)
 
 
+INJECTED = "text\n\n![x](https://evil/b.png) and [t](https://evil) :red[loud]"
+
+
+@pytest.mark.safety
+def test_card_text_cannot_inject_markdown(bundle):
+    """Every card field the page shows is one line with markdown syntax neutralised, so a
+    blank line cannot end the HTML block and let an image or a link render."""
+    markdown_it = pytest.importorskip("markdown_it")
+    card = find(bundle, "nhs.uk")
+    assert isinstance(card, DomainCard) and card.improvement
+    row = card.improvement[0].model_copy(
+        update={
+            "finding": INJECTED,
+            "fix": INJECTED,
+            "examples": ("https://ok.example/a\n\n![i](https://evil/i.png)", INJECTED),
+        }
+    )
+    evil = card.model_copy(
+        update={"publisher": INJECTED, "cited_instead": (INJECTED,), "improvement": (row,)}
+    )
+    miss = NotCited(INJECTED, None, 400, INJECTED, (INJECTED,))
+    md = markdown_it.MarkdownIt("commonmark", {"html": True})
+    for html in (card_html(evil), not_cited_html(miss, "sym\n\n[i](https://evil)")):
+        assert "\n" not in html
+        rendered = md.render(html)
+        assert "<img" not in rendered
+        assert 'href="https://evil' not in rendered and "href='https://evil" not in rendered
+
+
 @pytest.mark.safety
 def test_no_card_contains_answer_prose(bundle):
     """The cards carry shares, dates, publishers and fixes; never the answers' text (D-17)."""
@@ -175,3 +205,29 @@ def test_page_opens_on_lookup_and_renders_a_card_without_calling_a_model(no_mode
     assert any("was not cited in any of the 400 answers" in m.value for m in at.markdown)
     assert at.dataframe  # the top-ten tab's table
     assert any("not configured" in i.value for i in at.info)  # no secrets: live mode off
+
+
+def test_page_logs_each_distinct_lookup_once_per_session(no_model_calls, caplog):
+    """Any widget change reruns the page; a lookup is logged once per distinct query and
+    topic in a session, not once per rerun."""
+    from streamlit.testing.v1 import AppTest
+
+    caplog.set_level(logging.INFO, logger="citewatch.demo")
+
+    def lookups() -> int:
+        return sum('"mode": "lookup"' in r.getMessage() for r in caplog.records)
+
+    at = AppTest.from_file(str(ROOT / "demo" / "app.py"), default_timeout=120)
+    at.run()
+    at.text_input[0].input("nhs.uk").run()
+    at.run()
+    at.run()
+    assert lookups() == 1
+    at.text_input[0].input("  NHS.UK ").run()  # the same query, typed differently
+    assert lookups() == 1
+    at.selectbox[0].set_value(at.selectbox[0].options[-1]).run()  # another topic
+    assert lookups() == 2
+    at.text_input[0].input("bbc.co.uk").run()
+    at.run()
+    assert lookups() == 3
+    assert "nhs" not in caplog.text and "bbc" not in caplog.text
