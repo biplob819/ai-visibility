@@ -151,7 +151,8 @@ def _date_accuracy(base: Path) -> list:
     for x in (data / LABELS_FILE).read_text(encoding="utf-8").splitlines():
         if x.strip():
             row = json.loads(x)
-            row.pop("dates_version", None)
+            for meta in ("dates_version", "id", "checked_by", "approved_by"):  # provenance
+                row.pop(meta, None)
             label = HandDateLabel.model_validate(row)
             labels[label.url] = label
     effective = {}
