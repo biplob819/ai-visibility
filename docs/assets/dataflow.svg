@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>citewatch data flow: from questions to citations, dates and metrics</title>
+  <desc>Row 1 collects citations: 100 frozen questions are asked of two models with web search, answers are stored verbatim and citations extracted. Row 2 fetches each cited page politely, resolves its date, and computes metrics into summary.json, which feeds the dashboard, domain cards and post. Two checked samples (support and dates) feed error rates into the metrics.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #334155; stroke-width: 1.5; rx: 10; }
+      .collect { fill: #eff6ff; stroke: #1d4ed8; }
+      .date { fill: #f0fdf4; stroke: #15803d; }
+      .out { fill: #fefce8; stroke: #a16207; }
+      .check { fill: #fdf2f8; stroke: #be185d; stroke-dasharray: 5 4; }
+      .t { font-size: 15px; font-weight: 600; fill: #0f172a; }
+      .s { font-size: 12.5px; fill: #334155; }
+      .row { font-size: 13px; font-weight: 700; fill: #64748b; letter-spacing: 0.08em; }
+      .line { stroke: #475569; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #be185d; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="640" fill="#ffffff"/>
+  <text x="40" y="44" font-size="22" font-weight="700" fill="#0f172a">citewatch: data flow</text>
+  <text x="40" y="68" class="s">Which sources do AI search answers cite for UK health questions, and how fresh are those pages?</text>
+
+  <text x="40" y="112" class="row">1 · COLLECT CITATIONS</text>
+  <rect x="40" y="124" width="250" height="110" class="box collect"/>
+  <text x="58" y="152" class="t">100 questions</text>
+  <text x="58" y="174" class="s">5 intents, 57 time-sensitive</text>
+  <text x="58" y="194" class="s">frozen with the pre-registration</text>
+  <text x="58" y="214" class="s">before any run (D-7)</text>
+
+  <rect x="330" y="124" width="250" height="110" class="box collect"/>
+  <text x="348" y="152" class="t">Ask (citewatch ask)</text>
+  <text x="348" y="174" class="s">Claude Sonnet 5.5 and GPT-6.1 Sol</text>
+  <text x="348" y="194" class="s">native web search, London</text>
+  <text x="348" y="214" class="s">2 runs × 200 answers, cost-capped</text>
+
+  <rect x="620" y="124" width="250" height="110" class="box collect"/>
+  <text x="638" y="152" class="t">Raw store</text>
+  <text x="638" y="174" class="s">verbatim API responses</text>
+  <text x="638" y="194" class="s">spend ledger and run manifests</text>
+  <text x="638" y="214" class="s">(git SHA, config hash, models)</text>
+
+  <rect x="910" y="124" width="250" height="110" class="box collect"/>
+  <text x="928" y="152" class="t">Extract (citewatch extract)</text>
+  <text x="928" y="174" class="s">citations from API fields only</text>
+  <text x="928" y="194" class="s">canonical URL, publisher</text>
+  <text x="928" y="214" class="s">→ citations.jsonl (1,219 in run 1)</text>
+
+  <path d="M290 179 H326" class="line"/>
+  <path d="M580 179 H616" class="line"/>
+  <path d="M870 179 H906" class="line"/>
+
+  <text x="40" y="290" class="row">2 · DATE EVERY CITED PAGE AND SCORE</text>
+  <rect x="910" y="302" width="250" height="110" class="box date"/>
+  <text x="928" y="330" class="t">Polite fetch (citewatch fetch)</text>
+  <text x="928" y="352" class="s">robots.txt obeyed, 1 req/s per host</text>
+  <text x="928" y="372" class="s">HTML only, bodies held in memory</text>
+  <text x="928" y="392" class="s">and never stored</text>
+
+  <rect x="620" y="302" width="250" height="110" class="box date"/>
+  <text x="638" y="330" class="t">Date resolver</text>
+  <text x="638" y="352" class="s">7 sources: visible text, schema.org,</text>
+  <text x="638" y="372" class="s">meta, page age, sitemap, header…</text>
+  <text x="638" y="392" class="s">→ page_meta.jsonl, never guessed</text>
+
+  <rect x="330" y="302" width="250" height="110" class="box date"/>
+  <text x="348" y="330" class="t">Metrics (citewatch score)</text>
+  <text x="348" y="352" class="s">share, freshness, staleness, overlap,</text>
+  <text x="348" y="372" class="s">stability; question-cluster bootstrap,</text>
+  <text x="348" y="392" class="s">Holm correction, Wilson intervals</text>
+
+  <rect x="40" y="302" width="250" height="110" class="box out"/>
+  <text x="58" y="330" class="t">summary.json</text>
+  <text x="58" y="352" class="s">every number with its interval</text>
+  <text x="58" y="372" class="s">and count → dashboard, post,</text>
+  <text x="58" y="392" class="s">domain cards and demo</text>
+
+  <path d="M1035 234 V298" class="line"/>
+  <path d="M910 357 H874" class="line"/>
+  <path d="M620 357 H584" class="line"/>
+  <path d="M330 357 H294" class="line"/>
+
+  <text x="40" y="468" class="row">3 · CHECKED SAMPLES</text>
+  <rect x="330" y="480" width="390" height="120" class="box check"/>
+  <text x="348" y="508" class="t">Support check (49 citations)</text>
+  <text x="348" y="530" class="s">Does the cited page support the claim?</text>
+  <text x="348" y="550" class="s">2 AI judges via EvalKit (Opus 5.5, GPT-6.1 Sol)</text>
+  <text x="348" y="570" class="s">+ owner labels, judge calibration</text>
+  <text x="348" y="590" class="s">page text deleted after scoring</text>
+
+  <rect x="760" y="480" width="400" height="120" class="box check"/>
+  <text x="778" y="508" class="t">Date check (55 held-out pages)</text>
+  <text x="778" y="530" class="s">Is the resolved date right?</text>
+  <text x="778" y="550" class="s">agent-checked, owner-approved</text>
+  <text x="778" y="570" class="s">within 7 days, per source, Wilson intervals</text>
+  <text x="778" y="590" class="s">blocked if the resolver changes later</text>
+
+  <path d="M455 480 V416" class="dash"/>
+  <path d="M960 480 C960 450 745 450 745 416" class="dash"/>
+</svg>

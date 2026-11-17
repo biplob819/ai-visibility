@@ -148,13 +148,13 @@ A publisher's first question is "what about my site?", so the demo answers that 
 
 ## Data flow
 
-&#91;embedded content: data flow · questions to citations to freshness\]
+![citewatch data flow: questions to citations, dates and metrics](docs/assets/dataflow.svg)
 
 The top row collects citations; the second row dates every cited page and turns both into metrics. Share and overlap need only the citations, while freshness needs the dates. Two checked samples (support: owner-labelled; dates: agent-checked, owner-approved) sit under the metrics so every headline number has an error rate beside it.
 
 ## Technical architecture
 
-&#91;embedded content: technical architecture · components, services, hosting\]
+![citewatch technical architecture: components, services and hosting](docs/assets/architecture.svg)
 
 - **Package.** Python 3.12 with uv; the anthropic and openai SDKs with their web search tools; `httpx` with a per-domain rate limiter for fetching; `urllib.robotparser` for robots.txt; `extruct` for schema.org JSON-LD; `tldextract` for registrable domains; DuckDB for metrics; EvalKit pinned for the support check.
 - **Storage.** Citations and page metadata as JSONL and CSV in the repo; page bodies held in memory only for the 50-citation support check, then discarded.

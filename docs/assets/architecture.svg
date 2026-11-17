@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>citewatch technical architecture: components, services and hosting</title>
+  <desc>The citewatch Python package and CLI talks to the Anthropic and OpenAI APIs and fetches cited web pages politely. It keeps run data as JSONL in the repository, a temporary page cache outside it, and uses EvalKit for support judging. Its outputs are a static dashboard on Cloudflare Pages, domain cards for a Streamlit demo behind passkeys, and a PyPI package, all gated by GitHub Actions CI.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .b { stroke-width: 1.5; rx: 10; }
+      .core { fill: #eff6ff; stroke: #1d4ed8; }
+      .ext { fill: #f8fafc; stroke: #64748b; }
+      .store { fill: #f0fdf4; stroke: #15803d; }
+      .out { fill: #fefce8; stroke: #a16207; }
+      .ci { fill: #f5f3ff; stroke: #6d28d9; }
+      .t { font-size: 15px; font-weight: 600; fill: #0f172a; }
+      .s { font-size: 12.5px; fill: #334155; }
+      .k { font-size: 12px; font-weight: 700; fill: #64748b; letter-spacing: 0.08em; }
+      .l { stroke: #475569; stroke-width: 1.6; fill: none; marker-end: url(#a); }
+      .lab { font-size: 11.5px; fill: #475569; }
+    </style>
+  </defs>
+  <rect width="1200" height="660" fill="#ffffff"/>
+  <text x="40" y="44" font-size="22" font-weight="700" fill="#0f172a">citewatch: technical architecture</text>
+  <text x="40" y="68" class="s">Python 3.12 · uv · open source (MIT) · pip install citewatch</text>
+
+  <text x="40" y="108" class="k">EXTERNAL SERVICES</text>
+  <rect x="40" y="120" width="260" height="96" class="b ext"/>
+  <text x="58" y="148" class="t">Anthropic API</text>
+  <text x="58" y="170" class="s">Claude Sonnet 5.5 + web search</text>
+  <text x="58" y="190" class="s">Opus 5.5 / Haiku 5.5 (judging)</text>
+
+  <rect x="40" y="232" width="260" height="96" class="b ext"/>
+  <text x="58" y="260" class="t">OpenAI API</text>
+  <text x="58" y="282" class="s">GPT-6.1 Sol + web search</text>
+  <text x="58" y="302" class="s">GPT-6.1 Sol (second judge)</text>
+
+  <rect x="40" y="344" width="260" height="96" class="b ext"/>
+  <text x="58" y="372" class="t">Cited websites</text>
+  <text x="58" y="394" class="s">robots.txt, sitemaps, HTML pages</text>
+  <text x="58" y="414" class="s">contact URL in the user agent</text>
+
+  <text x="380" y="108" class="k">THE PACKAGE</text>
+  <rect x="380" y="120" width="420" height="320" class="b core"/>
+  <text x="400" y="150" class="t">citewatch CLI and library</text>
+  <text x="400" y="176" class="s">init · doctor · ask · extract · fetch · score · report</text>
+  <text x="400" y="208" class="s"><tspan font-weight="600">runners</tspan>: both providers, cost cap, resume, spend ledger</text>
+  <text x="400" y="232" class="s"><tspan font-weight="600">extract</tspan>: citations from API fields, canonical URLs</text>
+  <text x="400" y="256" class="s"><tspan font-weight="600">fetch</tspan>: robots per origin, 1 req/s, 8 in flight</text>
+  <text x="400" y="280" class="s"><tspan font-weight="600">dates</tspan>: 7-source resolver with plausibility rules</text>
+  <text x="400" y="304" class="s"><tspan font-weight="600">metrics</tspan>: NumPy bootstrap, Holm, Wilson; DuckDB views</text>
+  <text x="400" y="328" class="s"><tspan font-weight="600">support</tspan>: sample, judge, calibrate, finalise</text>
+  <text x="400" y="352" class="s"><tspan font-weight="600">schemas</tspan>: Pydantic results format v1</text>
+  <text x="400" y="384" class="s">run gates G1/G2: frozen code, cost estimate ≤ cap,</text>
+  <text x="400" y="404" class="s">clean git tree, 2 h between runs</text>
+
+  <text x="880" y="108" class="k">STORAGE</text>
+  <rect x="880" y="120" width="280" height="96" class="b store"/>
+  <text x="898" y="148" class="t">Repository data (JSONL)</text>
+  <text x="898" y="170" class="s">answers, citations, page_meta,</text>
+  <text x="898" y="190" class="s">labels, manifests, summary.json</text>
+
+  <rect x="880" y="232" width="280" height="96" class="b store"/>
+  <text x="898" y="260" class="t">Temporary page cache</text>
+  <text x="898" y="282" class="s">~/.cache, support sample only;</text>
+  <text x="898" y="302" class="s">deleted by score --finalise</text>
+
+  <rect x="880" y="344" width="280" height="96" class="b ext"/>
+  <text x="898" y="372" class="t">EvalKit (PyPI)</text>
+  <text x="898" y="394" class="s">faithfulness judging with two</text>
+  <text x="898" y="414" class="s">judge families; calibration stats</text>
+
+  <path d="M300 168 H376" class="l"/>
+  <path d="M300 280 H376" class="l"/>
+  <path d="M300 392 H376" class="l"/>
+  <text x="312" y="160" class="lab">ask</text>
+  <text x="312" y="384" class="lab">fetch</text>
+  <path d="M800 168 H876" class="l"/>
+  <path d="M800 280 H876" class="l"/>
+  <path d="M800 392 H876" class="l"/>
+
+  <text x="40" y="462" class="k">OUTPUTS AND HOSTING</text>
+  <rect x="40" y="502" width="260" height="110" class="b out"/>
+  <text x="58" y="530" class="t">Dashboard and post</text>
+  <text x="58" y="552" class="s">static HTML from summary.json</text>
+  <text x="58" y="572" class="s">Cloudflare Pages</text>
+
+  <rect x="320" y="502" width="260" height="110" class="b out"/>
+  <text x="338" y="530" class="t">Domain cards + demo</text>
+  <text x="338" y="552" class="s">lookup() over domain_cards.json</text>
+  <text x="338" y="572" class="s">Streamlit; live mode behind</text>
+  <text x="338" y="592" class="s">passkeys, bring your own keys</text>
+
+  <rect x="600" y="502" width="260" height="110" class="b out"/>
+  <text x="618" y="530" class="t">PyPI package</text>
+  <text x="618" y="552" class="s">citewatch, trusted publishing</text>
+  <text x="618" y="572" class="s">on a release tag</text>
+
+  <rect x="880" y="502" width="280" height="110" class="b ci"/>
+  <text x="898" y="530" class="t">GitHub Actions CI</text>
+  <text x="898" y="552" class="s">12 gates per build node: tests,</text>
+  <text x="898" y="572" class="s">golden replay, politeness, secrets,</text>
+  <text x="898" y="592" class="s">storage audit; threshold gate</text>
+
+  <path d="M590 440 V478 H170 V498" class="l"/>
+  <path d="M590 478 H450 V498" class="l"/>
+  <path d="M590 478 H730 V498" class="l"/>
+</svg>
