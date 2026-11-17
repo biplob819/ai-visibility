@@ -17,6 +17,11 @@ MORE = {
     "encrypted private key": "-----BEGIN ENCRYPTED " + "PRIVATE KEY-----",
     "dsa private key": "-----BEGIN DSA " + "PRIVATE KEY-----",
     "pgp private key": "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----",
+    "google api key": "AIza" + "Sy" + "A1b2C3d4E5" * 3 + "xyz",
+    "slack token": "xox" + "p-" + "1234567890-" + "AbCdEf123456",
+    "hugging face token": "hf" + "_" + "aBcD1234eFgH5678" * 2,
+    "upstash token": "UPSTASH_REDIS_REST_" + "TOKEN=" + "AXy1" * 10,
+    "secret assignment": "api_" + 'key: "' + "Zq8Lm3Xw9Pk2Rt7Vb4Nc6Hy" + '"',
 }
 
 

@@ -42,6 +42,22 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     "private key": re.compile(
         r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY(?: BLOCK)?-----"
     ),
+    "google api key": re.compile(r"\bAIza[0-9A-Za-z_\-]{35}(?![0-9A-Za-z_\-])"),
+    "slack token": re.compile(r"\bxox[baprs]-[0-9A-Za-z]{6,}-[0-9A-Za-z\-]{6,}"),
+    "hugging face token": re.compile(r"\bhf_[A-Za-z0-9]{30,}\b"),
+    # Upstash: the REST token in an assignment, a redis:// URL with a password, or a REST URL
+    # carrying ?_token= / ?token=
+    "upstash token": re.compile(
+        r"(?i)upstash\w*token\W{0,4}[=:]\W{0,4}[A-Za-z0-9_\-=]{24,}"
+        r"|rediss?://[^\s:@/]*:[A-Za-z0-9_\-=]{16,}@[^\s/]*upstash\.io"
+        r"|upstash\.io\S*[?&]_?token=[A-Za-z0-9_\-=]{16,}"
+    ),
+    # a quoted long value assigned to a name that says password/token/secret/api key; it counts
+    # only when the value looks random (see _looks_random_value), so names and paths pass
+    "secret assignment": re.compile(
+        r"(?i)(?:password|passwd|token|secret|api_?key)[\w.-]{0,40}[\"']?\s*[:=]\s*"
+        r"[\"']([A-Za-z0-9_\-+/=.]{20,})[\"']"
+    ),
 }
 ALLOW = "secret-scan: allow"
 
@@ -60,6 +76,38 @@ def _looks_random(token: str) -> bool:
     return any(c.isupper() for c in body) and any(c.isdigit() for c in body)
 
 
+def _looks_random_value(value: str) -> bool:
+    """A generated secret mixes lower case, upper case and digits; identifiers, env-var names,
+    paths and placeholders do not."""
+    if any(w in value.lower() for w in ("example", "your", "xxxx", "placeholder", "changeme")):
+        return False
+    classes = sum(
+        (
+            any(c.islower() for c in value),
+            any(c.isupper() for c in value),
+            any(c.isdigit() for c in value),
+        )
+    )
+    return classes == 3 and len(set(value)) >= 12
+
+
+def line_hits(line: str) -> list[str]:
+    """The pattern names a line matches (none when it carries the allow marker)."""
+    if ALLOW in line:
+        return []
+    hits = []
+    for name, pat in PATTERNS.items():
+        m = pat.search(line)
+        if not m:
+            continue
+        if name == "openai key" and not _looks_random(m.group(0)):
+            continue
+        if name == "secret assignment" and not _looks_random_value(m.group(1)):
+            continue
+        hits.append(name)
+    return hits
+
+
 def scan(files: list[Path]) -> list[str]:
     hits: list[str] = []
     for f in files:
@@ -74,12 +122,7 @@ def scan(files: list[Path]) -> list[str]:
         except OSError:
             continue
         for lineno, line in enumerate(text.splitlines(), start=1):
-            if ALLOW in line:
-                continue
-            for name, pat in PATTERNS.items():
-                m = pat.search(line)
-                if m and (name != "openai key" or _looks_random(m.group(0))):
-                    hits.append(f"{f}:{lineno}: possible {name}")
+            hits.extend(f"{f}:{lineno}: possible {name}" for name in line_hits(line))
     return hits
 
 

@@ -22,6 +22,7 @@ import argparse
 import bz2
 import gzip
 import io
+import json
 import lzma
 import os
 import re
@@ -60,6 +61,43 @@ BODY_KEYS = re.compile(
 # semicolon file, so prose such as "mind, body, and mood" in stored answers never matches.
 HEADER_CELL = re.compile(rb"^\s*\"?(?:body|html|page_text)\"?\s*$", re.I)
 TABULAR = (".csv", ".tsv", ".psv")
+# Generic keys that hold a page body when their value is long. Short values (a quoted span, a
+# label) are ordinary metadata, so these count only above LONG_TEXT bytes, in JSON/JSONL records.
+LONG_TEXT_KEYS = ("text", "content", "main_text")
+LONG_TEXT = 2048
+
+
+def long_text_keys(raw: bytes) -> list[str]:
+    """`key (N chars)` for each text/content/main_text value longer than LONG_TEXT in a JSON
+    document or JSON-lines file; lines that are not JSON are skipped."""
+    out: list[str] = []
+
+    def walk(obj: object) -> None:
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k in LONG_TEXT_KEYS and isinstance(v, str) and len(v) > LONG_TEXT:
+                    out.append(f"{k} ({len(v)} chars)")
+                walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v)
+
+    text = raw.decode("utf-8", "replace")
+    try:
+        walk(json.loads(text))
+        return out
+    except ValueError:
+        pass
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith(("{", "[")):
+            try:
+                walk(json.loads(line))
+            except ValueError:
+                continue
+    return out
+
+
 COMPRESSED = (".gz", ".bz2", ".xz", ".zip")
 
 
@@ -114,6 +152,9 @@ def file_problems(path: Path, root: Path) -> list[str]:
     h = header_problem(path, raw)
     if h:
         problems.append(f"{rel}: page-body column {h.decode('ascii', 'replace')!r} in the header")
+    if ".json" in path.name.lower():
+        for hit in long_text_keys(raw)[:1]:
+            problems.append(f"{rel}: long page-body value {hit}")
     return problems
 
 
@@ -210,6 +251,8 @@ def self_test() -> int:
             "utf16.html": "<html>".encode("utf-16"),
             "tail.txt": b"ends with <body",
             "double.json": b'{"rec": "{\\"html\\": 1}"}',
+            "long_text.jsonl": b'{"text": "' + b"x" * (LONG_TEXT + 1) + b'"}\n',
+            "long_content.json": b'{"r": [{"main_text": "' + b"y" * (LONG_TEXT + 1) + b'"}]}',
         }
         for name, content in sneaky.items():
             (root / "data" / name).write_bytes(content)
@@ -250,7 +293,7 @@ def self_test() -> int:
                 b'{"answer_text": "Exercise is good for your mind, body, and mood; '
                 b'CSS, HTML, and JS aside.", "tags": ["head", "body"]}'
             ),
-            "quotes.jsonl": b'{"quoted_span": "mind; body; spirit"}\n',
+            "quotes.jsonl": b'{"quoted_span": "mind; body; spirit", "text": "short"}\n',
             "labels.csv": b"citation_ref,where_found,verdict\nv-1,body,supported\n",
         }
         for name, content in ordinary.items():
