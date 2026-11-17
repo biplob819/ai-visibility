@@ -625,6 +625,12 @@ def _write_calibration(base: Path, cfg: Any) -> None:
     try:
         from citewatch.support.calibrate import calibrate, write_calibration
     except ImportError:  # the `support` extra (EvalKit) is not installed
+        if (base / "results" / "calibration.json").is_file():
+            typer.echo(
+                "note: EvalKit is not installed, so results/calibration.json was not refreshed "
+                "(pip install 'citewatch[support]')",
+                err=True,
+            )
         return
     verdicts = [
         SupportVerdict.model_validate_json(x)
@@ -678,6 +684,7 @@ def _finalise(base: Path, as_json: bool) -> None:
     """SUP-04: once both label sets are in, delete every kept page body and the EvalKit store."""
     from citewatch.fetch.pages import body_cache_dir
     from citewatch.handcheck import LABELS_FILE as HAND_LABELS
+    from citewatch.handcheck import SAMPLE_FILE as HAND_SAMPLE
     from citewatch.handcheck import labels_meta, publish_problems
     from citewatch.support.report import LABELS_FILE, finalise
 
@@ -692,7 +699,13 @@ def _finalise(base: Path, as_json: bool) -> None:
         for x in (data / HAND_LABELS).read_text(encoding="utf-8").splitlines()
         if x.strip()
     ]
-    problems = publish_problems(labels_meta(rows))
+    sample_path = data / HAND_SAMPLE
+    sample = (
+        [json.loads(x)["url"] for x in sample_path.read_text("utf-8").splitlines() if x.strip()]
+        if sample_path.is_file()
+        else None
+    )
+    problems = publish_problems(labels_meta(rows, sample))
     if problems:
         _fail(as_json, "score", "; ".join(problems))
     left = finalise(body_cache_dir())

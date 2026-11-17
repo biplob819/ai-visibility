@@ -322,7 +322,12 @@ def test_support_and_date_accuracy_join_the_summary_when_present(tiny: Path):
     assert overall.within_7_days.k == 1 and overall.exact.k == 0
     assert s.check_methods["date_accuracy"].startswith("agent-checked, owner-approved")
     assert s.check_methods["support_hand"].startswith("owner-labelled")
-    assert s.error_counts["hand_dates"] == {"labels": 1, "stale_labels": 0, "unjudgeable": 0}
+    assert s.error_counts["hand_dates"] == {
+        "labels": 1,
+        "stale_labels": 0,
+        "unjudgeable": 0,
+        "checker_could_not_load": 0,
+    }
 
 
 def _hand_labels(data: Path, versions: list[str]) -> None:
@@ -356,8 +361,40 @@ def test_stale_date_labels_block_the_accuracy_rows_even_with_a_fresh_first_row(t
 def test_twenty_five_fresh_labels_publish_and_only_they_are_scored(tiny: Path):
     _hand_labels(tiny / "data", ["old"] * 30 + [dates_fingerprint()] * 25)
     s = _score(tiny)
-    assert s.error_counts["hand_dates"] == {"labels": 55, "stale_labels": 30, "unjudgeable": 0}
+    assert s.error_counts["hand_dates"] == {
+        "labels": 55,
+        "stale_labels": 30,
+        "unjudgeable": 0,
+        "checker_could_not_load": 0,
+    }
     assert sum(r.within_7_days.n for r in s.date_accuracy if r.source != "overall") <= 25
+
+
+def test_duplicate_or_unsampled_fresh_labels_do_not_satisfy_the_25_page_rule(tiny: Path):
+    """D-6 counts distinct sampled pages (M3.3 pass 2, M1/M2)."""
+    data = tiny / "data"
+    _hand_labels(data, ["old"] * 55)
+    fresh = {"true_modified": "2026-01-03", "not_determinable": False}
+    extra = [dict(fresh, url="https://nhs.uk/p0", dates_version=dates_fingerprint())] * 25
+    extra += [
+        dict(fresh, url=f"https://elsewhere.org/{i}", dates_version=dates_fingerprint())
+        for i in range(25)
+    ]
+    with (data / "hand_labels.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write("".join(json.dumps(r) + "\n" for r in extra))
+    s = _score(tiny)
+    assert s.date_accuracy == () and s.error_counts["hand_dates"]["blocked"] == 1
+
+
+def test_pages_the_checker_could_not_load_are_counted_and_never_scored(tiny: Path):
+    data = tiny / "data"
+    _hand_labels(data, [dates_fingerprint()] * 3)
+    rows = [json.loads(x) for x in (data / "hand_labels.jsonl").read_text("utf-8").splitlines()]
+    rows[0].update(true_modified=None, not_determinable=True, checker_loaded=False)
+    (data / "hand_labels.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
+    s = _score(tiny)
+    counts = s.error_counts["hand_dates"]
+    assert counts["checker_could_not_load"] == 1 and counts["unjudgeable"] == 0
 
 
 def test_finalise_refuses_stale_date_labels_whatever_the_row_order(tiny: Path, capsys):

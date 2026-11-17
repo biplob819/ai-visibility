@@ -110,13 +110,14 @@ def test_every_labelled_citation_gets_a_gap_or_is_listed_as_missing(tmp_path: Pa
         fh.write(json.dumps({"id": "s02", "citation_ref": "1:v-002:m:1"}) + "\n")
     out = json.loads(write_gaps(tmp_path).read_text(encoding="utf-8"))
     assert out["gaps"] == [{"citation_ref": "1:v-001:m:1", "gap_days": 0.5}]
-    assert out["no_text_fetch"] == ["1:v-002:m:1"]
+    assert out["no_post_fix_text_fetch"] == ["1:v-002:m:1"]
     assert out["median_days"] == out["max_days"] == 0.5
 
 
 def test_finalise_deletes_the_cache_and_the_store(tmp_path: Path):
     cache = tmp_path / "bodies"
     (cache / "evalkit-store" / "ab").mkdir(parents=True)
+    (cache / ".citewatch-body-cache").touch()  # the fetcher marks every cache it creates
     (cache / "page.txt").write_text("text", encoding="utf-8")
     assert finalise(cache) == [] and not cache.exists()
     assert finalise(cache) == []
@@ -129,6 +130,9 @@ def test_finalise_refuses_a_path_that_is_not_a_body_cache(tmp_path: Path):
     problems = finalise(other)
     assert problems and "does not look like a citewatch body cache" in problems[0]
     assert (other / "keep").is_dir()
+    named = tmp_path / "work" / "bodies"  # a user folder that merely shares the name
+    named.mkdir(parents=True)
+    assert finalise(named) and named.is_dir()
     marked = tmp_path / "custom-cache"
     marked.mkdir()
     (marked / ".citewatch-body-cache").write_text("", encoding="utf-8")

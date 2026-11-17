@@ -50,7 +50,7 @@ def test_constant_owner_labels_are_flagged(calibrate) -> None:
     verdicts = [_v(r, "j", i < 2) for i, r in enumerate(refs)]
     (row,) = calibrate(verdicts, hand, seed=1)
     assert row["owner_constant"] is True
-    assert row["kappa"] == 0.0
+    assert row["kappa"] is None and row["kappa_interval"] is None
     assert row["strictness"] == pytest.approx(0.5)
     assert row["leniency"] is None
 

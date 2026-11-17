@@ -17,7 +17,7 @@ from citewatch.support.report import load_hand_labels
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "studies" / "uk-health" / "data"
 SUPPORT_LABELS_SHA256 = "304274556d55a79c369e205a884c6e693c70b436906dd414b18947372795e939"
-HAND_LABELS_SHA256 = "e8accb0484f21304ed5d0a4a4434be9c1c0b002e7675f5a953db3f665ff2ad5d"
+HAND_LABELS_SHA256 = "338c02b89feb8fb8d1bbd9bffc91879caaf43256a105f8f589791b768dcffb25"
 PARSER_FIELDS = {"effective_date", "effective_source", "stratum", "candidates", "verdict"}
 
 
@@ -65,6 +65,8 @@ def test_hand_labels_cover_the_sample_and_hide_the_parser():
             {k: v for k, v in r.items() if k in HandDateLabel.model_fields}
         )
         assert r["checked_by"] == "agent" and r["approved_by"] == "owner"  # OWNER D-63
+        assert isinstance(r["checker_loaded"], bool)  # D-68
+        assert r["checker_loaded"] or r["not_determinable"]
 
 
 def test_the_held_out_rule_holds_for_the_current_resolver():

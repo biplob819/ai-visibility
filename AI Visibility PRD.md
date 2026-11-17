@@ -53,7 +53,7 @@ Three personas drive eight stories; the six marked Must make up the first releas
 | US2 | Content lead | see how stale my cited pages are compared with competitors | I know which pages to refresh first | Freshness lag per domain, with the source of each date | Must |
 | US3 | Partnerships lead | see how often time-sensitive answers rest on pages not updated in 12 months | I can size the freshness problem | Stale-answer rate per model and intent | Must |
 | US4 | Partnerships lead | see how much the two models agree on sources | I know whether one signal serves both | Jaccard overlap of cited domains per intent | Must |
-| US5 | Anyone reading | trust the numbers | the findings hold up | Two full runs with variance reported; 50 dates checked by hand with an error rate | Must |
+| US5 | Anyone reading | trust the numbers | the findings hold up | Two full runs with variance reported; 50 dates checked against the live pages (for the flagship study agent-checked and owner-approved, OWNER D-63) with an error rate | Must |
 | US6 | Product lead | read the main finding and the signal idea in two minutes | I can judge whether the signal is worth building | The post opens with the finding and links the one-page spec | Must |
 | US7 | Content lead | type my domain into a demo and see its visibility | I can try it without reading the post | The demo returns a domain card from study data in under a second | Should |
 | US8 | Partnerships lead | ask a fresh question and see live citations | I can test beyond the study set | Live mode runs one question on both models behind the passcode | Could |
@@ -131,7 +131,7 @@ A publisher, an AI lab and a data product lead will believe the findings only if
 | Layer | What it does | Risk it handles | Evidence |
 | --- | --- | --- | --- |
 | Polite collection | robots.txt honoured, one request per second per domain, a named user agent with a contact address | Harm to the sites studied | Fetch log; user agent string |
-| Date provenance | The source of every date recorded, from schema.org to the HTTP header | Wrong freshness numbers | date\_source column; 50 dates checked by hand |
+| Date provenance | The source of every date recorded, from schema.org to the HTTP header | Wrong freshness numbers | date\_source column; 50 dates checked against the live pages (OWNER D-63) |
 | Replication | Two full runs, with variance reported | One run's search results presented as fact | Run-to-run variance table |
 | Independent support check | EvalKit's calibrated judge on a 50-citation sample | Weak citations counted as good sourcing | Support rate with hand-label agreement |
 | Scope stated up front | Sourcing only, not medical accuracy; 100 questions read as directional | Over-reading the findings | Page-one statement in the post |
@@ -150,7 +150,7 @@ A publisher's first question is "what about my site?", so the demo answers that 
 
 &#91;embedded content: data flow · questions to citations to freshness\]
 
-The top row collects citations; the second row dates every cited page and turns both into metrics. Share and overlap need only the citations, while freshness needs the dates. Two hand-checked samples sit under the metrics so every headline number has an error rate beside it.
+The top row collects citations; the second row dates every cited page and turns both into metrics. Share and overlap need only the citations, while freshness needs the dates. Two checked samples (support: owner-labelled; dates: agent-checked, owner-approved) sit under the metrics so every headline number has an error rate beside it.
 
 ## Technical architecture
 

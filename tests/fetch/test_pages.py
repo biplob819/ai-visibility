@@ -103,7 +103,8 @@ def test_only_support_sample_pages_keep_their_main_text(tmp_path):
         keep_text=frozenset({"https://a.example/s"}),
         body_cache=cache,
     )
-    files = list(cache.iterdir())
+    files = [f for f in cache.iterdir() if f.name != ".citewatch-body-cache"]
+    assert (cache / ".citewatch-body-cache").is_file()  # finalise deletes only marked caches
     assert len(files) == 1
     text = files[0].read_text(encoding="utf-8")
     assert text == "Menu\nKeep this." or "Keep this." in text

@@ -562,7 +562,7 @@ Appendix C lists the provider facts to confirm against live docs at N1.2 before 
 ### 8.2 Hand date check (NFR3, US5)
 
 1. **Sample.** 50 dated URLs drawn with a recorded seed, stratified by `effective_source` in proportion to its frequency with at least 5 per source that has 5 or more pages, plus 5 undated pages to check "no date" is right.
-2. **Labelling.** The owner opens each page in a browser and records the true modified and published dates, or "not determinable", without seeing the parser's answer.
+2. **Labelling.** A checker opens each page and records the true modified and published dates, or "not determinable", without seeing the parser's answer. For the flagship study the checker was a fresh-context agent and the owner approved its labels (OWNER D-63, D-64), so results say "agent-checked, owner-approved". Pages the checker could not load are counted and never scored (D-68).
 3. **Correct** means the effective date is within 7 days of the hand date; exact-match rate is reported too.
 4. **Report.** Error rate overall and per source with Wilson intervals. A source with an error rate above 30% is demoted in the precedence only through a logged deviation, which then requires 25 freshly labelled pages before publishing (D-6).
 

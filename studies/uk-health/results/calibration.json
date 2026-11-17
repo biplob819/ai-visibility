@@ -10,11 +10,8 @@
     "tp": 29
    },
    "judge": "claude-opus-5-5",
-   "kappa": 0.0,
-   "kappa_interval": [
-    0.0,
-    0.0
-   ],
+   "kappa": null,
+   "kappa_interval": null,
    "leniency": null,
    "n": 47,
    "owner_cant_tell": 0,
@@ -32,11 +29,8 @@
     "tp": 26
    },
    "judge": "gpt-6.1-sol",
-   "kappa": 0.0,
-   "kappa_interval": [
-    0.0,
-    0.0
-   ],
+   "kappa": null,
+   "kappa_interval": null,
    "leniency": null,
    "n": 47,
    "owner_cant_tell": 0,

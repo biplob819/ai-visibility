@@ -177,14 +177,15 @@ def _date_accuracy(base: Path) -> tuple[list, dict[str, int]]:
     rows = _hand_rows(base)
     if not rows or not (data / SAMPLE_FILE).is_file():
         return [], {}
-    current = current_labels(rows)
-    counts = {"labels": len(rows), "stale_labels": len(rows) - len(current)}
-    if publish_problems(labels_meta(rows)):
-        counts["blocked"] = 1
-        return [], counts
     sample = [
         json.loads(x) for x in (data / SAMPLE_FILE).read_text(encoding="utf-8").splitlines() if x
     ]
+    sample_urls = {s["url"] for s in sample}
+    current = [r for r in current_labels(rows) if r.get("url") in sample_urls]
+    counts = {"labels": len(rows), "stale_labels": len(rows) - len(current_labels(rows))}
+    if publish_problems(labels_meta(rows, sample_urls)):
+        counts["blocked"] = 1
+        return [], counts
     labels = {}
     for row in current:
         label = HandDateLabel.model_validate(
@@ -198,11 +199,13 @@ def _date_accuracy(base: Path) -> tuple[list, dict[str, int]]:
             effective[m["url"]] = (
                 dt.date.fromisoformat(m["effective_date"]) if m.get("effective_date") else None
             )
+    unreadable = {r["url"] for r in current if r.get("checker_loaded") is False}
     dated = [s for s in sample if s["role"] == "dated" and s["url"] in labels]
-    counts["unjudgeable"] = sum(  # dated by the parser, no date found by the checker
-        labels[s["url"]].not_determinable for s in dated
+    counts["checker_could_not_load"] = len(unreadable)
+    counts["unjudgeable"] = sum(  # dated by the parser; the checker loaded it and saw no date
+        labels[s["url"]].not_determinable and s["url"] not in unreadable for s in dated
     )
-    return accuracy(sample, labels, effective), counts
+    return accuracy(sample, labels, effective, unreadable), counts
 
 
 def write_summary(base: Path, summary: StudySummary) -> Path:

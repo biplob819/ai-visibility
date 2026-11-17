@@ -146,15 +146,17 @@ def accuracy(
     sample: Sequence[Mapping[str, Any]],
     labels: Mapping[str, HandDateLabel],
     effective: Mapping[str, dt.date | None],
+    unreadable: Iterable[str] = (),
 ) -> list[AccuracyRow]:
     """Overall and per-source accuracy with Wilson intervals. A dated page the owner could not
     date is left out of its rate (it cannot be judged); undated pages form their own row."""
     within: Counter[str] = Counter()
     exact: Counter[str] = Counter()
     n: Counter[str] = Counter()
+    skip = set(unreadable)  # pages the checker could not load are never scored (pass 2, M3)
     for row in sample:
         label = labels.get(row["url"])
-        if label is None:
+        if label is None or row["url"] in skip:
             continue
         source = row["stratum"]
         if row["role"] == "undated":
@@ -179,13 +181,22 @@ def accuracy(
     ]
 
 
-def labels_meta(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+def labels_meta(
+    rows: Iterable[Mapping[str, Any]], sample_urls: Iterable[str] | None = None
+) -> dict[str, Any]:
     """The fingerprint state of a label set: one `version` if every row shares it (else None),
-    and how many rows were labelled under each version."""
-    counts = Counter(str(r.get("dates_version")) for r in rows)
+    and how many distinct sampled pages were labelled under each version. Duplicate rows and
+    rows for pages outside the sample never count (M3.3 pass 2)."""
+    rows = list(rows)
+    keep = set(sample_urls) if sample_urls is not None else {r.get("url") for r in rows}
+    versions = {str(r.get("dates_version")) for r in rows}
+    pages: dict[str, set[str]] = defaultdict(set)
+    for r in rows:
+        if r.get("url") in keep:
+            pages[str(r.get("dates_version"))].add(str(r.get("url")))
     return {
-        "version": next(iter(counts)) if len(counts) == 1 else None,
-        "labelled_by_version": dict(counts),
+        "version": next(iter(versions)) if len(versions) == 1 else None,
+        "labelled_by_version": {v: len(u) for v, u in pages.items()},
     }
 
 

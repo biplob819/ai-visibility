@@ -69,18 +69,24 @@ def main() -> int:
         if x
     ]
     ok = {p["url"] for p in pages if p["outcome"] == "ok"}
-    # OWNER D-61 / D-67: a page whose support refetch failed keeps pre-fix text, so it is not ok
+    # OWNER D-61 / D-67(d): a page whose support refetch failed keeps pre-fix text. Its citation
+    # stays in the sample (the replacement rule acts on the study fetch) but is not judged: it is
+    # recorded as unjudged with this reason.
+    stale_text: set[str] = set()
     refetch = data / "support_text_fetches.jsonl"
     if refetch.is_file():
         for x in refetch.read_text(encoding="utf-8").splitlines():
             if x.strip() and json.loads(x)["outcome"] != "ok":
-                ok.discard(json.loads(x)["url"])
+                stale_text.add(json.loads(x)["url"])
     final, log = replacements(read_sample(base), ok, cache_dir=body_cache_dir())
     cites = [
         json.loads(x)
         for x in (data / "citations.jsonl").read_text(encoding="utf-8").splitlines()
         if x
     ]
+    url_of = {f"{c['run']}:{c['question_id']}:{c['model']}:{c['ordinal']}": c["url"] for c in cites}
+    skipped = {r["citation_ref"] for r in final if url_of.get(r["citation_ref"]) in stale_text}
+    final = [r for r in final if r["citation_ref"] not in skipped]
     items = items_for(final, cites, qs, body_cache_dir())
     (data / "support_replacements.jsonl").write_text(
         "".join(json.dumps(r, sort_keys=True) + "\n" for r in log), encoding="utf-8", newline="\n"
@@ -97,8 +103,15 @@ def main() -> int:
         unjudged = sorted(exc.refs)
         everything = asyncio.run(judge(items, max_cost_usd=0.05, strict=False))
         verdicts = [v for v in everything if v.citation_ref not in set(unjudged)]
+    reasons = dict.fromkeys(unjudged, "EvalKit could not judge after a retry")
+    reasons |= dict.fromkeys(
+        skipped, "D-61 refetch failed; the kept text predates the main_text fix (D-67)"
+    )
     (data / "support_unjudged.jsonl").write_text(
-        "".join(json.dumps({"citation_ref": r}) + "\n" for r in unjudged),
+        "".join(
+            json.dumps({"citation_ref": r, "reason": why}, sort_keys=True) + "\n"
+            for r, why in sorted(reasons.items())
+        ),
         encoding="utf-8",
         newline="\n",
     )

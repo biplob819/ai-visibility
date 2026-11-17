@@ -26,6 +26,7 @@ from citewatch.schemas import SupportRow, SupportVerdict
 HAND = "hand"
 LABELS_FILE = "support_labels.jsonl"
 KEY_FILE = "support_label_key.jsonl"
+CACHE_MARKER = ".citewatch-body-cache"  # written by the fetcher when it creates a body cache
 
 
 def _rows(path: Path) -> list[dict[str, Any]]:
@@ -131,8 +132,8 @@ def write_gaps(base: Path) -> Path:
     days = sorted(r["gap_days"] for r in rows)
     payload = {
         "gaps": rows,
-        "no_text_fetch": missing,
-        "median_days": days[len(days) // 2] if days else None,
+        "no_post_fix_text_fetch": missing,  # judged text, if any, predates D-61
+        "median_days": float(np.median(days)) if days else None,
         "max_days": days[-1] if days else None,
     }
     path = base / "results" / GAPS_FILE
@@ -179,7 +180,8 @@ def gaps(base: Path) -> list[dict[str, Any]]:
 def finalise(cache_dir: Path) -> list[str]:
     """Delete the body cache (page text and the EvalKit store inside it); return problems.
     Refuses anything that does not look like a citewatch body cache (pass 1, L5)."""
-    looks_right = cache_dir.name == "bodies" or (cache_dir / ".citewatch-body-cache").exists()
+    default = Path.home() / ".cache" / "citewatch" / "bodies"
+    looks_right = cache_dir == default or (cache_dir / CACHE_MARKER).exists()
     if cache_dir.exists() and (
         not looks_right or cache_dir == Path.home() or cache_dir.parent == cache_dir
     ):

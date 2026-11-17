@@ -195,7 +195,7 @@
  ],
  "max_days": 0.115,
  "median_days": 0.113,
- "no_text_fetch": [
+ "no_post_fix_text_fetch": [
   "1:v-062:gpt-6.1-sol:4"
  ]
 }

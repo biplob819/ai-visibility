@@ -50,7 +50,9 @@ def calibrate(
         fn = sum(p.human and not p.judge for p in pairs)
         fp = sum(not p.human and p.judge for p in pairs)
         tn = sum(not p.human and not p.judge for p in pairs)
-        interval = cluster_kappa(pairs, seed=seed) if pairs else None
+        constant = len({p.human for p in pairs}) == 1
+        # kappa is 0 by construction when the owner's labels are all one value: not reported
+        interval = cluster_kappa(pairs, seed=seed) if pairs and not constant else None
         rows.append(
             {
                 "judge": judge,
@@ -60,11 +62,11 @@ def calibrate(
                 "owner_unlabelled": sum(r not in hand for r in mine),
                 "confusion": {"tp": tp, "fn": fn, "fp": fp, "tn": tn},
                 "agreement": (tp + tn) / len(pairs) if pairs else None,
-                "kappa": kappa_from(tp, fn, fp, tn) if pairs else None,
+                "kappa": kappa_from(tp, fn, fp, tn) if pairs and not constant else None,
                 "kappa_interval": [interval.lo, interval.hi] if interval else None,
                 "strictness": fn / (tp + fn) if tp + fn else None,
                 "leniency": fp / (fp + tn) if fp + tn else None,
-                "owner_constant": len({p.human for p in pairs}) == 1,
+                "owner_constant": constant,
             }
         )
     return rows

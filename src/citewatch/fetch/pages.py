@@ -230,6 +230,7 @@ def fetch_pages(
                 try:
                     d = body_cache or body_cache_dir()
                     d.mkdir(parents=True, exist_ok=True)
+                    (d / ".citewatch-body-cache").touch()  # finalise deletes only marked caches
                     name = hashlib.sha256(url.encode("utf-8")).hexdigest()[:32] + ".txt"
                     (d / name).write_text(main_text(html), encoding="utf-8")
                 except (OSError, ValueError) as exc:  # the record is kept even so

@@ -859,19 +859,19 @@
   },
   {
    "exact": {
-    "hi": 0.882379225767352,
-    "k": 3,
-    "lo": 0.2307242812760128,
-    "n": 5,
-    "point": 0.6
+    "hi": 0.8499610108478506,
+    "k": 2,
+    "lo": 0.15003898915214947,
+    "n": 4,
+    "point": 0.5
    },
    "source": "undated",
    "within_7_days": {
-    "hi": 0.882379225767352,
-    "k": 3,
-    "lo": 0.2307242812760128,
-    "n": 5,
-    "point": 0.6
+    "hi": 0.8499610108478506,
+    "k": 2,
+    "lo": 0.15003898915214947,
+    "n": 4,
+    "point": 0.5
    }
   }
  ],
@@ -893,9 +893,10 @@
    "zero_citation": 0
   },
   "hand_dates": {
+   "checker_could_not_load": 7,
    "labels": 55,
    "stale_labels": 0,
-   "unjudgeable": 23
+   "unjudgeable": 17
   },
   "nhs_no_review_date": {
    "blocked": 4,
