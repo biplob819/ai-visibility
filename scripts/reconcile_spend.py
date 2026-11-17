@@ -56,7 +56,7 @@ def main() -> int:
         )
         figures = [math.fsum(ledger), stored, recomputed]
         spread = (max(figures) - min(figures)) / max(max(figures), 1e-9)
-        ok = len(ledger) == len(raw) and spread <= TOLERANCE
+        ok = bool(raw) and len(ledger) == len(raw) and spread <= TOLERANCE  # nothing is not OK
         bad |= not ok
         print(
             f"run {run}: {len(raw)} raw, {len(ledger)} ledger lines; ledger ${figures[0]:.4f}, "

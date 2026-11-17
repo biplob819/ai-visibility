@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [S3.1] — study runs 1 and 2 ($15.03, 400 answers, 0 errors), spend reconciled exactly, run data frozen by hash (RUN-04)
 - [GREEN] [M3.3] — verified over three passes (D-67, D-68); held-out rule over distinct sampled pages; checker load failures counted, never scored; 67% within 7 days (18/27)
 - [GREEN] [M3.2] — verified over three passes (D-67, D-68); support rates per model and judge, owner labels, EvalKit calibration, gaps; body cache finalised
 - [FEAT] [M3.3] — held-out date check on 55 pages, agent-checked and owner-approved (OWNER D-63, D-64): 67% within 7 days (18/27 judgeable, Wilson 48–81%); label freeze tests

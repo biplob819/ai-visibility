@@ -8,6 +8,8 @@
 - RUN-03: ledger, raw costs and recomputation from usage agree exactly per run (`scripts/reconcile_spend.py`). The provider consoles are the remaining check, by hand.
 - 2026-11-17 — verifier pass 1: RUN-01..03 CONFIRMED (gate G1 refused each mutated condition; errors 0/100 per model per run; parity reproduced; costs recomputed from the provider usage blocks match the ledger exactly); RUN-04 manifests and committed data CONFIRMED, frozen pending labels. OPEN HIGH/MEDIUM: 0.
 
+- 2026-11-17 — labels in (M3.2, M3.3 green); run data frozen by hash (`tests/test_study_freeze.py`: answers, citations, consulted, page_meta, fetch log, spend ledger, both samples, both manifests); RUN-03 proved by `tests/runs/test_reconcile.py` (both runs reconcile exactly; a run with no records now fails, where it had printed OK).
+
 ## Known limits
 - Run 1's fetch ran from a working tree holding the then-uncommitted sampler and kept-text code; the sample is deterministic from citations and seed, and all sample text was rebuilt by the D-61 refetch, so no result depends on it.
 - Run 2 re-requested 1 cited page that differs only by a trailing slash, 17 uncited pages listed as sitemaps, and about 195 sitemaps after transient failures (by design); every page stayed within 3 requests and the audit passes.
