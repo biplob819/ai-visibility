@@ -20,6 +20,7 @@ from .summary import (
     StudySummary,
     SupportRow,
 )
+from .thresholds import Selector, ThresholdRule, parse_selector
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -41,6 +42,7 @@ __all__ = [
     "OverdueRow",
     "OverlapRow",
     "PageMeta",
+    "Selector",
     "ShareRow",
     "StabilityRow",
     "StaleRow",
@@ -49,9 +51,11 @@ __all__ = [
     "StudySummary",
     "SupportRow",
     "SupportVerdict",
+    "ThresholdRule",
     "UserLocation",
     "count_words",
     "load_questions",
     "load_study_config",
+    "parse_selector",
     "provider_of",
 ]

@@ -13,11 +13,20 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import Field, StringConstraints, ValidationError, field_validator, model_validator
+from pydantic import (
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    ValidationError,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
 from ._base import FrozenMap, Model, ModelId, NonBlank, NonNegFloat, Slug
 from ._iso import COUNTRIES, HINTS
 from .study import StudyQuestion
+from .thresholds import ThresholdRule
 
 REQUIRED_SEEDS = ("order", "support_sample", "hand_sample", "bootstrap")
 # example.org/.com/.net, localhost and the reserved test TLDs are never real contacts
@@ -69,6 +78,8 @@ class StudyConfig(Model):
     seeds: FrozenMap[Annotated[int, Field(strict=True)]]
     max_cost_usd: NonNegFloat | None = None
     user_agent: NonBlank
+    # THR-01 (OWNER D-65): checked by `citewatch score`; never part of the config hash
+    thresholds: tuple[ThresholdRule, ...] = ()
 
     @field_validator("intents", "models")
     @classmethod
@@ -108,6 +119,31 @@ class StudyConfig(Model):
         if missing:
             raise ValueError(f"seeds is missing {missing}")
         return self
+
+    @model_validator(mode="after")
+    def _threshold_scopes(self) -> StudyConfig:
+        # a selector naming a model or intent the study does not have is a typo, not a miss
+        for i, rule in enumerate(self.thresholds):
+            sel = rule.selector
+            if sel.model is not None and sel.model not in self.models:
+                raise ValueError(
+                    f"thresholds.{i}: selector {rule.metric!r} names model {sel.model!r}, which "
+                    f"is not in models ({', '.join(self.models)})"
+                )
+            if sel.intent is not None and sel.intent not in self.intents:
+                raise ValueError(
+                    f"thresholds.{i}: selector {rule.metric!r} names intent {sel.intent!r}, "
+                    f"which is not in intents ({', '.join(self.intents)})"
+                )
+        return self
+
+    @model_serializer(mode="wrap")
+    def _omit_no_thresholds(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # a study without rules serialises exactly as before THR-01 existed
+        data = handler(self)
+        if not self.thresholds and isinstance(data, dict):
+            data.pop("thresholds", None)
+        return data
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
