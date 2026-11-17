@@ -750,6 +750,7 @@ def report(
         blob = resources.files("citewatch") / "examples" / "uk-health-summary.json.gz"
         text = gzip.decompress(blob.read_bytes()).decode("utf-8")
         out_dir, name = Path("citewatch-example"), title or "UK health"
+        where, words = "London, GB", 150  # the bundled flagship study's settings
     else:
         path = _study_file(study)
         summary_path = path.parent / "results" / "summary.json"
@@ -758,16 +759,20 @@ def report(
         text = summary_path.read_text(encoding="utf-8")
         out_dir = path.parent / "results" / "site"
         try:
-            name = title or f"the {load_study_config(path).name} study"
+            cfg = load_study_config(path)
         except ConfigError as exc:
             _fail(as_json, "report", str(exc))
+        name = title or f"the {cfg.name} study"
+        loc = cfg.user_location
+        where = ", ".join(x for x in (loc.city, loc.country) if x)
+        words = cfg.word_limit
     try:
         summary = StudySummary.model_validate_json(text)
     except ValueError as exc:
         _fail(as_json, "report", f"summary.json is not a valid results file: {exc}")
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "index.html"
-    out.write_text(render(summary, name), encoding="utf-8", newline="\n")
+    out.write_text(render(summary, name, where, words), encoding="utf-8", newline="\n")
     _emit(
         as_json,
         {"ok": True, "command": "report", "dashboard": str(out)},

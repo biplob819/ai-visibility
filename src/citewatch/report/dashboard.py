@@ -65,10 +65,11 @@ def pct(x: float) -> str:
     return f"{v:.0f}%" if abs(v) >= 9.5 or v == 0 else f"{v:.1f}%"
 
 
-def counted(iv: Interval, scale: Callable[[float], str] = pct) -> str:
-    """A value with its count and interval: '83% (83/100; 95% CI 75%–90%)'."""
+def counted(iv: Interval, scale: Callable[[float], str] = pct, directional: bool = False) -> str:
+    """A value with its count and interval: '83% (83/100; 95% CI 75%–90%)'. Cells under
+    DIRECTIONAL_N, and any the caller marks (per-intent rows, H13), say so."""
     base = f"{iv.k}/{iv.n}" if iv.k is not None else f"n={iv.n}"
-    flag = " · directional" if iv.n < DIRECTIONAL_N else ""
+    flag = " · directional" if directional or iv.n < DIRECTIONAL_N else ""
     return f"{scale(iv.point)} ({base}; 95% CI {scale(iv.lo)}–{scale(iv.hi)}){flag}"
 
 
@@ -81,7 +82,9 @@ def short(model: str | None) -> str:
 
 
 def intent_name(intent: str | None) -> str:
-    return "All intents" if intent is None else intent.replace("_", " ").capitalize()
+    if intent is None:
+        return "All intents"
+    return intent.replace("_", " ").capitalize().replace("Nhs", "NHS")
 
 
 # ---------------------------------------------------------------- chart primitives
@@ -138,8 +141,8 @@ def dot_chart(
         parts.append(
             f'<text x="{label_w}" y="{y + h / 2 + 4:.1f}" class="rowlabel" text-anchor="end">{esc(label)}</text>'
         )
-        for j, (i, iv) in enumerate(values):
-            cy = y + 6 + j * row_h + row_h / 2
+        for i, iv in values:  # a series keeps its own lane, present or not
+            cy = y + 6 + i * row_h + row_h / 2
             text = f"{label} · {series[i]}: {counted(iv)}"
             parts.append(
                 f'<line x1="{sx(iv.lo):.1f}" x2="{sx(iv.hi):.1f}" y1="{cy:.1f}" y2="{cy:.1f}" '
@@ -156,7 +159,15 @@ def dot_chart(
 
 def table(headers: Sequence[str], rows: Sequence[Sequence[object]], caption: str = "") -> str:
     head = "".join(f"<th scope='col'>{esc(h)}</th>" for h in headers)
-    body = "".join("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in r) + "</tr>" for r in rows)
+    body = "".join(
+        "<tr>"
+        + "".join(
+            f"<th scope='row'>{esc(c)}</th>" if j == 0 else f"<td>{esc(c)}</td>"
+            for j, c in enumerate(r)
+        )
+        + "</tr>"
+        for r in rows
+    )
     cap = f"<caption>{esc(caption)}</caption>" if caption else ""
     return f'<div class="tablewrap"><table>{cap}<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
 
@@ -178,6 +189,21 @@ def _presence(s: StudySummary) -> dict[tuple[str, str, str | None, int], Interva
     }
 
 
+def _answers(s: StudySummary) -> dict[tuple[str, int], int]:
+    """(model, run) -> answers behind its presence shares (the n of any of its rows)."""
+    return {
+        (r.model, r.run): r.share.n for r in s.share if r.kind == "presence" and r.intent is None
+    }
+
+
+def _share_of(s: StudySummary, pres: dict, p: str, m: str, run: int) -> Interval:
+    """A publisher's presence share; one the model never cited is 0 of its answers (pass 1)."""
+    hit = pres.get((p, m, None, run))
+    if hit is not None:
+        return hit
+    return Interval(point=0.0, lo=0.0, hi=0.0, n=_answers(s).get((m, run), 0), k=0)
+
+
 def headline(s: StudySummary) -> str:
     models = _models(s)
     run = s.runs[0]
@@ -189,7 +215,8 @@ def headline(s: StudySummary) -> str:
     items = []
     if sep:
         c = sep[0]
-        a, b = pres[(c.publisher, c.model_a, None, run)], pres[(c.publisher, c.model_b, None, run)]
+        a = _share_of(s, pres, c.publisher, c.model_a, run)
+        b = _share_of(s, pres, c.publisher, c.model_b, run)
         items.append(
             f"<li><strong>{esc(c.publisher)}</strong> appears in {counted(b)} of "
             f"{esc(short(c.model_b))}'s answers but {counted(a)} of {esc(short(c.model_a))}'s "
@@ -205,28 +232,42 @@ def headline(s: StudySummary) -> str:
     if all((m, run) in conc for m in models):
         parts = "; ".join(f"{esc(short(m))} {counted(conc[(m, run)].top10_share)}" for m in models)
         items.append(
-            f"<li>Share of citations going to each model's top 10 publishers: {parts}.</li>"
+            "<li>Share of citation weight (each answer counted equally, split over the URLs it "
+            f"cites) held by each model's own top 10 publishers (run {run}): {parts}.</li>"
         )
     stale = {(r.model, r.definition): r for r in s.stale if r.intent is None}
     if all((m, "primary") in stale for m in models):
         parts = "; ".join(f"{esc(short(m))} {counted(stale[(m, 'primary')].rate)}" for m in models)
         items.append(
             "<li>Time-sensitive answers whose newest dated source is over 365 days old "
-            f"(no fresh source at all): {parts}.</li>"
+            f"(no fresh source at all), both runs pooled: {parts}.</li>"
         )
     return f'<ul class="findings">{"".join(items)}</ul>'
 
 
+CONTEXT: dict[str, object] = {}  # set by render(): the study's title, location, word limit
+
+
+def _questions(s: StudySummary) -> int:
+    counts = _answers(s)
+    return max(counts.values()) if counts else 0
+
+
 def scope(s: StudySummary) -> str:
     runs = ", ".join(str(r) for r in s.runs)
+    models = _models(s)
+    intents = sorted({r.intent for r in s.share if r.intent})
+    where = f", from {esc(CONTEXT['location'])}" if CONTEXT.get("location") else ""
+    times = {1: "once", 2: "twice"}.get(len(s.runs), f"{len(s.runs)} times")
     return (
-        "<p class='scope'>This study measures <strong>sourcing</strong>: which websites two AI "
-        "search models cite when asked UK health questions, and how recently those pages were "
-        "updated. It does <strong>not</strong> judge whether any answer or page is medically "
-        "accurate. 100 pre-registered questions across five intents, asked twice "
-        f"(runs {esc(runs)}) of {esc(', '.join(short(m) for m in _models(s)))} with web search, "
-        "from London: findings are <strong>directional</strong> for this setup, not a verdict "
-        "on AI search in general. Every percentage carries its count and 95% interval.</p>"
+        f"<p class='scope'>This study measures <strong>sourcing</strong>: which websites "
+        f"{len(models)} AI search models cite when asked {esc(CONTEXT.get('title', 'these'))} "
+        "questions, and how recently those pages were updated. It does <strong>not</strong> "
+        f"judge whether any answer or page is medically accurate. {_questions(s)} "
+        f"pre-registered questions across {len(intents)} intents, asked {times} "
+        f"(runs {esc(runs)}) of {esc(', '.join(short(m) for m in models))} with web search"
+        f"{where}: findings are <strong>directional</strong> for this setup, not a verdict on AI "
+        "search in general. Every percentage carries its count and 95% interval.</p>"
     )
 
 
@@ -234,7 +275,12 @@ def checks(s: StudySummary) -> str:
     cov = s.coverage
     hand = s.error_counts.get("hand_dates", {})
     rows = [
-        ("Date coverage", counted(cov), "cited URLs with a resolved date or a logged reason"),
+        (
+            "Date coverage",
+            counted(cov),
+            "cited URLs with a resolved date or a logged reason; pre-registered target 90%"
+            + (" (below target)" if cov.point < 0.9 else " (met)"),
+        ),
     ]
     overall = next((r for r in s.date_accuracy if r.source == "overall"), None)
     if overall:
@@ -268,7 +314,8 @@ def checks(s: StudySummary) -> str:
         e = s.error_counts.get(m, {})
         errs.append(
             f"{short(m)}: {e.get('answers', 0)} answers, {e.get('refusal', 0)} refusals, "
-            f"{e.get('transport', 0)} transport errors, {e.get('over_length', 0)} over length"
+            f"{e.get('transport', 0)} transport errors, {e.get('over_length', 0)} over the "
+            f"{CONTEXT.get('word_limit', 'requested')}-word limit asked for (kept and scored)"
         )
     note = (
         f"<p class='note'>Errors: {esc('; '.join(errs))}. Date check: "
@@ -291,11 +338,7 @@ def share(s: StudySummary) -> str:
         rows = [
             (
                 p,
-                [
-                    (i, pres[(p, m, None, run)])
-                    for i, m in enumerate(models)
-                    if (p, m, None, run) in pres
-                ],
+                [(i, _share_of(s, pres, p, m, run)) for i, m in enumerate(models)],
             )
             for p in top
         ]
@@ -307,15 +350,9 @@ def share(s: StudySummary) -> str:
                 f"(presence share), top {TOP_PUBLISHERS} publishers, 95% intervals.",
             )
         )
-        if run == s.runs[0]:
+        if True:  # a table for every run (pass 1: run 2 had only tooltips)
             table_rows = [
-                (
-                    p,
-                    *(
-                        counted(pres[(p, m, None, run)]) if (p, m, None, run) in pres else "—"
-                        for m in models
-                    ),
-                )
+                (p, *(counted(_share_of(s, pres, p, m, run)) for m in models))
                 for p in sorted(pooled, key=lambda p: (-pooled[p], p))[:SHARE_TABLE_TOP]
             ]
             out.append(
@@ -349,7 +386,16 @@ def comparisons(s: StudySummary) -> str:
         "<p>Paired differences in presence share for each run's most-cited publishers, with a "
         "two-sided bootstrap p-value and Holm correction (alpha 0.05, pre-registered).</p>"
         + table(
-            ["Run", "Publisher", "Difference", "Presence share", "p", "p (Holm)", "Separated"], rows
+            [
+                "Run",
+                "Publisher",
+                "Models compared",
+                "Difference in presence share",
+                "p",
+                "p (Holm)",
+                "Separated",
+            ],
+            rows,
         )
     )
 
@@ -371,7 +417,9 @@ def concentration(s: StudySummary) -> str:
     chart = dot_chart(
         rows,
         [short(m) for m in models],
-        "Share of citations going to the model's own top 10 publishers.",
+        "Top-10 share: citation weight (each answer counted equally) held by the model's own "
+        "top 10 publishers. The bootstrap re-picks the top 10 in each resample, so the "
+        "interval leans upward of the point.",
     )
     t = table(
         ["Model", "Run", "Top-10 share", "HHI"],
@@ -429,7 +477,13 @@ def stale(s: StudySummary) -> str:
     t = table(
         ["Model", "Intent", "Definition", "Rate", "Undated"],
         [
-            (short(r.model), intent_name(r.intent), r.definition, counted(r.rate), r.undated)
+            (
+                short(r.model),
+                intent_name(r.intent),
+                r.definition,
+                counted(r.rate, directional=r.intent is not None),  # H13: per-intent rows
+                r.undated,
+            )
             for r in s.stale
         ],
     )
@@ -452,7 +506,8 @@ def freshness(s: StudySummary) -> str:
         for r in pooled
     ]
     return (
-        "<p>Lag is days from the page's last modified date to the answer that cited it. "
+        "<p>Lag is days from the page's effective date (last reviewed, else modified, else "
+        "published) to the answer that cited it. "
         f"Top {SHARE_TABLE_TOP} publishers by dated pages (both models); per-model rows are in "
         "summary.json.</p>"
         + table(
@@ -515,7 +570,18 @@ def overlap(s: StudySummary) -> str:
 def stability(s: StudySummary) -> str:
     return table(
         ["Model", "Publisher", "Metric", "Value"],
-        [(short(r.model), r.publisher or "all", r.metric, counted(r.value)) for r in s.stability],
+        [
+            (
+                short(r.model),
+                r.publisher or "all",
+                r.metric,
+                counted(r.value)
+                if r.metric != "share_change"
+                else f"{r.value.point * 100:+.0f} pts (95% CI {r.value.lo * 100:+.0f} to "
+                f"{r.value.hi * 100:+.0f}; n={r.value.n})",
+            )
+            for r in s.stability
+        ],
     )
 
 
@@ -635,9 +701,9 @@ p,li{color:var(--text-secondary)} strong{color:var(--text-primary)}
 .stat{font-size:1.6rem;font-weight:650;color:var(--text-primary);margin:4px 0}
 nav{font-size:.9rem;margin:16px 0 8px;display:flex;flex-wrap:wrap;gap:6px 14px}
 nav a,a{color:var(--accent)}
-figure{margin:12px 0;background:var(--surface-1);border:1px solid var(--line);border-radius:8px;padding:12px}
+figure{overflow-x:auto;margin:12px 0;background:var(--surface-1);border:1px solid var(--line);border-radius:8px;padding:12px}
 figcaption{font-size:.88rem;color:var(--text-muted);margin-top:6px}
-.chart{width:100%;height:auto;display:block}
+.chart{width:100%;min-width:560px;height:auto;display:block}
 .chart .grid{stroke:var(--line);stroke-width:1}
 .chart .tick{font-size:11px;fill:var(--text-muted)}
 .chart .rowlabel{font-size:12px;fill:var(--text-primary)}
@@ -654,9 +720,16 @@ footer{margin-top:48px;font-size:.85rem;color:var(--text-muted)}
 """
 
 
-def render(summary: StudySummary, study: str = "UK health") -> str:
-    """`study` completes "What AI search cites for … questions"."""
-    """The dashboard as one HTML document."""
+def render(
+    summary: StudySummary,
+    study: str = "UK health",
+    location: str | None = None,
+    word_limit: int | None = None,
+) -> str:
+    """The dashboard as one HTML document. `study` completes "What AI search cites for …
+    questions"; `location` and `word_limit` come from the study's config."""
+    CONTEXT.clear()
+    CONTEXT.update(title=study, location=location, word_limit=word_limit)
     nav = "".join(f'<a href="#{key}">{esc(title)}</a>' for key, title in SECTIONS)
     body = []
     for key, title in SECTIONS:
@@ -665,12 +738,13 @@ def render(summary: StudySummary, study: str = "UK health") -> str:
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f"<title>citewatch: {esc(study)}</title>"
-        '<meta name="description" content="Which sources AI search answers cite for UK health '
+        f'<meta name="description" content="Which sources AI search answers cite for {esc(study)} '
         'questions, and how fresh those pages are.">'
         f"<style>{CSS}</style></head><body><main>"
         f"<h1>What AI search cites for {esc(study)} questions</h1>"
-        "<p class='lede'>citewatch asked two AI search models 100 pre-registered questions, "
-        "twice, and recorded every source they cited and how recently each page was updated.</p>"
+        f"<p class='lede'>citewatch asked {len(_models(summary))} AI search models "
+        f"{_questions(summary)} pre-registered questions in {len(summary.runs)} runs, and "
+        "recorded every source they cited and how recently each page was updated.</p>"
         f"<nav aria-label='Sections'>{nav}</nav>"
         + "".join(body)
         + "<footer>Built by citewatch from summary.json. Open source: "

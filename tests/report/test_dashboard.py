@@ -178,3 +178,48 @@ def test_the_bundled_example_is_the_flagship_summary():
 
     blob = ROOT / "src" / "citewatch" / "examples" / "uk-health-summary.json.gz"
     assert gzip.decompress(blob.read_bytes()) == (STUDY / "results" / "summary.json").read_bytes()
+
+
+def test_the_headline_survives_a_publisher_one_model_never_cited(summary: StudySummary):
+    """B4.1 pass 1 M2: the largest separated difference may be a publisher with no row for one
+    model; it shows as 0 of that model's answers, never a crash."""
+    rows = [r for r in summary.share if not (r.publisher == "nhs.uk" and r.model == "gpt-6.1-sol")]
+    s = summary.model_copy(update={"share": tuple(rows)})
+    page = render(s, "UK health")
+    head = page[page.index('id="headline"') : page.index('id="scope"')]
+    assert "0% (0/100" in head
+
+
+def test_per_intent_stale_rows_are_marked_directional(page: str):
+    """H13 (pass 1 M1): every per-intent stale row says directional, whatever its n."""
+    table = page[page.index('id="stale"') : page.index('id="freshness"')]
+    rows = re.findall(
+        r"<tr><th scope='row'>[^<]+</th><td>([^<]+)</td>"
+        r"<td>(primary|secondary)</td><td>([^<]+)</td>",
+        table,
+    )
+    assert rows
+    for intent, _definition, value in rows:
+        assert value.endswith("directional") == (intent != "All intents"), (intent, value)
+
+
+def test_scope_comes_from_the_summary_and_the_config(summary: StudySummary):
+    """Pass 1 M3: nothing about the flagship study is hard-coded."""
+    page = render(summary, "Irish health", location="Dublin, IE", word_limit=200)
+    scope = page[page.index('id="scope"') : page.index('id="checks"')]
+    assert "Irish health questions" in scope and "from Dublin, IE" in scope
+    assert "100 pre-registered questions across 5 intents, asked twice" in scope
+    assert "over the 200-word limit" in page
+    assert "London" not in render(summary, "X")
+
+
+def test_comparison_columns_hold_what_their_headers_say(page: str):
+    table = page[page.index('id="comparisons"') : page.index('id="concentration"')]
+    assert (
+        "<th scope='col'>Models compared</th><th scope='col'>Difference in presence share</th>"
+        in table
+    )
+    first = re.search(
+        r"<tr><th scope='row'>run 1</th><td>[^<]+</td><td>([^<]+)</td><td>([^<]+)</td>", table
+    )
+    assert first and "−" in first.group(1) and "pts" in first.group(2)
