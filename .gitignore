@@ -15,8 +15,9 @@ build/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 
-# Streamlit local secrets
+# Streamlit local secrets and the demo's local development store
 .streamlit/secrets.toml
+.demo-state/
 
 # personal notes, not for the public repo (OWNER D-22)
 Portfolio notes.md
