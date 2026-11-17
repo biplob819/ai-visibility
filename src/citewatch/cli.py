@@ -1,7 +1,8 @@
 """The `citewatch` command line (Tech Spec §5, STO-03, STO-04).
 
-Exit codes: 0 done, 2 configuration or runtime error, 3 stopped at the cost cap, 4 judging
-pending. Commands whose node is not built yet exit 2 and say which node, never a fake success.
+Exit codes: 0 done, 1 a threshold rule with severity fail failed (`score`, THR-01), 2
+configuration or runtime error, 3 stopped at the cost cap, 4 judging pending. Commands whose
+node is not built yet exit 2 and say which node, never a fake success.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from citewatch.schemas import (
 )
 from citewatch.store import RawStore
 
-EXIT_OK, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 2, 3, 4
+EXIT_OK, EXIT_THRESHOLD, EXIT_ERROR, EXIT_CAP, EXIT_PENDING = 0, 1, 2, 3, 4
 PRICE_MAX_AGE_DAYS = 7  # doctor flags prices.yaml older than this
 NOT_BUILT = {"score --labels": "M3.2, M3.3"}
 TEMPLATES = {
@@ -43,7 +44,10 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Measure which websites AI answers with web search cite, and how fresh those pages are.",
-    epilog="Exit codes: 0 done, 2 error, 3 stopped at the cost cap, 4 judging pending.",
+    epilog=(
+        "Exit codes: 0 done, 1 a threshold failed (score), 2 error, 3 stopped at the cost cap, "
+        "4 judging pending."
+    ),
 )
 JsonOpt = Annotated[bool, typer.Option("--json", help="Print one JSON object instead of text.")]
 StudyOpt = Annotated[
@@ -571,7 +575,8 @@ def score(
     study: StudyOpt = Path("."),
     as_json: JsonOpt = False,
 ) -> None:
-    """Compute the metrics and run the support and hand-check samples."""
+    """Compute the metrics and run the support and hand-check samples, then check the study's
+    thresholds: exit 1 when a rule with severity fail fails."""
     if labels is not None:
         _not_built("score --labels", as_json)  # labels are imported from the review pages
     from citewatch.metrics import COVERAGE_TARGET, build_summary, write_summary
@@ -610,8 +615,26 @@ def score(
     )
     if cov.point < COVERAGE_TARGET:
         text += "  BELOW TARGET"
+    failed_hard = False
+    if cfg.thresholds:  # THR-01 (OWNER D-65): checked after summary.json is written
+        from citewatch.thresholds import ThresholdError, check_all
+
+        try:
+            results = check_all(cfg.thresholds, summary)
+        except ThresholdError as exc:
+            _fail(as_json, "score", f"{path}: thresholds: {exc}")
+        misses = [r for r in results if not r.passed]
+        failed_hard = any(r.severity == "fail" for r in misses)
+        payload["thresholds"] = [r.as_dict() for r in results]
+        payload["thresholds_failed"] = [r.metric for r in misses if r.severity == "fail"]
+        payload["thresholds_warned"] = [r.metric for r in misses if r.severity == "warn"]
+        payload["ok"] = not failed_hard
+        text += f"\nthresholds: {len(results) - len(misses)} of {len(results)} rules pass"
+        text += "".join(
+            f"\n  {'FAIL' if r.severity == 'fail' else 'WARN'} {r.describe()}" for r in misses
+        )
     _emit(as_json, payload, text)
-    raise typer.Exit(EXIT_OK)
+    raise typer.Exit(EXIT_THRESHOLD if failed_hard else EXIT_OK)
 
 
 def _write_calibration(base: Path, cfg: Any) -> None:

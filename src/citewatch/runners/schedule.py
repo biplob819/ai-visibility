@@ -57,8 +57,10 @@ def answer_config_hash(cfg: StudyConfig) -> str:
 
 
 def config_hash(cfg: StudyConfig) -> str:
-    """The whole study config, for the run manifest (not part of any store key)."""
-    return hashlib.sha256(canonical_json(cfg.model_dump(mode="json"))).hexdigest()[:16]
+    """The whole study config, for the run manifest (not part of any store key). Threshold
+    rules are left out: they judge results and never change what a run measures (THR-01)."""
+    data = cfg.model_dump(mode="json", exclude={"thresholds"})
+    return hashlib.sha256(canonical_json(data)).hexdigest()[:16]
 
 
 def question_order(questions: Sequence[StudyQuestion], seed: int, run: int) -> list[StudyQuestion]:

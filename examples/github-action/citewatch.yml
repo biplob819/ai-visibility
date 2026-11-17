@@ -1,0 +1,45 @@
+# Example GitHub Actions workflow (THR-02): re-score a study from its committed data and fail
+# the job when a threshold rule in study.yaml fails. Copy it to .github/workflows/citewatch.yml
+# in your own repository and set STUDY to your study folder.
+#
+# It makes no provider calls and fetches no pages: `citewatch score` reads only the study's
+# committed data/ files, so it needs no API keys and spends nothing. See docs/thresholds.md.
+#
+# Exit codes: 0 every `fail` rule passed (warn misses are printed), 1 a `fail` rule failed,
+# 2 the study or a rule is invalid.
+
+name: citewatch thresholds
+
+on:
+  push:
+    paths:
+      - "studies/**"
+      - ".github/workflows/citewatch.yml"
+  pull_request:
+    paths:
+      - "studies/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STUDY: studies/my-study
+
+jobs:
+  thresholds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Check the study's thresholds
+        run: uvx --from "citewatch>=0.1,<0.2" citewatch score --study "$STUDY"
+      - name: Keep the summary that was checked
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: citewatch-summary
+          path: ${{ env.STUDY }}/results/summary.json
+          if-no-files-found: ignore
