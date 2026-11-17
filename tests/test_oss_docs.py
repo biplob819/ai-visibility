@@ -49,7 +49,8 @@ def test_responsible_use_quotes_the_real_floor():
 @pytest.mark.safety
 def test_no_telemetry_only_the_fetcher_and_provider_runners_touch_the_network():
     """Static: the only network-capable imports are the fetcher (httpx), the provider runners
-    (their SDKs) and the support judge (EvalKit, which calls the same providers)."""
+    (their SDKs), the support judge (EvalKit, which calls the same providers) and the opt-in
+    demo (its KV store and live mode). None sends anything anywhere else."""
     net = {"httpx", "socket", "urllib.request", "http.client", "requests", "aiohttp", "urllib3"}
     sdks = {"anthropic", "openai", "evalkit"}
     src = ROOT / "src" / "citewatch"
@@ -72,6 +73,10 @@ def test_no_telemetry_only_the_fetcher_and_provider_runners_touch_the_network():
         "runners/openai_runner.py": {"openai"},
         "support/calibrate.py": {"evalkit"},  # statistics only, no calls
         "support/judge.py": {"evalkit"},
+        # the opt-in demo (D5.2, `demo` extra): its spend/passkey store and live mode's providers
+        "demo/kv.py": {"httpx"},
+        "demo/live.py": {"anthropic", "openai"},
+        "demo/settings.py": {"httpx"},
     }
 
 

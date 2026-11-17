@@ -981,7 +981,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
-| DEM-01 | Streamlit page in `portfolio-demos`: lookup by default, top-ten picker | US7 |
+| DEM-01 | Streamlit page in this repo's `demo/` (OWNER D-73): lookup by default, top-ten picker | US7 |
 | DEM-02 | Live mode behind passkey sign-in (WebAuthn) through the shared spend guard; citations only (D-17) | US8, B5, B6, OWNER D-58 |
 | DEM-03 | Aggregate-only logging; secrets in the host's secret store | §9 |
 | DEM-04 | Deployed | FR11 |

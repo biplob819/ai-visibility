@@ -53,6 +53,10 @@ single self-contained HTML file that loads nothing from the network.
   check, the cited passage and page text being judged.
 - **The sites your answers cited**: one request per cited page, plus robots.txt and listed
   sitemaps on those hosts, with your study's user agent.
+- **Only if you deploy the optional demo** (`citewatch[demo]`, `demo/README.md`): its key-value
+  store (Upstash) holds registered passkeys' public keys and the spend and rate counters, and
+  live mode sends one visitor question to the providers. Its logs hold time, mode, latency
+  and cost only.
 
 **Stored on your machine, in the study folder:**
 
