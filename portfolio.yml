@@ -12,6 +12,7 @@ links:
   preregistration: https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md
   demo: null  # set when the Streamlit demo is live
 images:
+  walkthrough: docs/assets/walkthrough.gif  # OWNER D-86: replaces the video
   dataflow: docs/assets/dataflow.svg
   architecture: docs/assets/architecture.svg
   dashboard: docs/assets/screenshots/dashboard.png

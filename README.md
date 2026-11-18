@@ -18,6 +18,8 @@ Claude Sonnet 5.5 and GPT-6.1 Sol, twice.
 
 It measures **sourcing, not medical accuracy**, and nothing here is medical advice.
 
+[![A walkthrough of the dashboard, CLI, demo lookup and post](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/walkthrough.gif)](https://biplob819.github.io/ai-visibility/)
+
 ## What the first study found
 
 | | GPT-6.1 Sol | Claude Sonnet 5.5 |

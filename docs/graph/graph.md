@@ -60,4 +60,4 @@ Generated from AI Visibility Tech Spec §12.2 on 2026-11-15 (B4.5 added by OWNER
 | --- | --- | --- | --- | --- | --- |
 | **D5.1** | Domain cards and lookup | M3.1, S3.1 | node_converge + verifier | `domain_cards.json`, `lookup()` | US7 |
 | **D5.2** | Demo page and live mode | D5.1, N1.2 | node_converge + verifier | Streamlit page in `portfolio-demos`, guarded live mode | US7, US8 |
-| **D5.3** | Project page, video, supporting notes | B4.5, D5.2 | node_converge + verifier | Case study page, 90-second video, how-I-built-it note, one-page PRD | US6 |
+| **D5.3** | Project page, walkthrough GIF, supporting notes | B4.5, D5.2 | node_converge + verifier | Case study page, walkthrough GIF (OWNER D-86), how-I-built-it note, one-page PRD | US6 |
