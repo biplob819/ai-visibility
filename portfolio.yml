@@ -18,4 +18,4 @@ images:
   post: docs/assets/screenshots/post.png
   signal_spec: docs/assets/screenshots/signal-spec.png
 tech: [Python, uv, Anthropic API, OpenAI API, httpx, NumPy, DuckDB, Pydantic, Streamlit, WebAuthn, EvalKit, GitHub Actions]
-status: draft  # the owner approves the wording before the page uses it
+status: approved  # OWNER D-85, 2026-11-18
