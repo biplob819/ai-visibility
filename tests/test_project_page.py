@@ -273,7 +273,17 @@ def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
     allowed |= {"365", "7", "5%", "$25", "$38", "3.11", "22.5", "90%", "100%"}
     text = _manifest_text()
     found = re.findall(r"\$\d+(?:\.\d+)?|\d+(?:\.\d+)?%|\d+/\d+|\b\d+(?:\.\d+)?\b", text)
-    assert set(found) <= allowed, sorted(set(found) - allowed)
+    # a learning drawn from the lessons log may also quote that log's figures
+    lessons = (DOCS / "lessons.md").read_text(encoding="utf-8")
+    learned = {
+        n
+        for le in META["story"]["learnings"]
+        if le["url"].endswith("/docs/lessons.md")
+        for n in re.findall(r"\$\d+(?:\.\d+)?|\d+%|\b\d+(?:\.\d+)?\b", le["lesson"] + le["now"])
+        if n in lessons
+    }
+    assert set(found) <= allowed | learned, sorted(set(found) - allowed - learned)
+    assert len(META["story"]["learnings"]) >= 5  # the owner-approved set on the site
     # the headline pairs, the coverage miss and the unsettled support check, said as recorded
     assert META["headline"]["value"] == f"{_p(stale[0]['point'])} vs {_p(stale[1]['point'])}"
     assert f"{_p(cov['point'])} ({cov['k']}/{cov['n']})" in text
