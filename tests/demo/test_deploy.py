@@ -89,6 +89,21 @@ def test_make_code_hash_runs_as_a_module():
     assert "123" not in out.stdout.replace("12 to 32", "")
 
 
+def test_make_code_hash_piped_never_prints_the_code():
+    """With no terminal the code is read from stdin; it appears in neither output stream."""
+    code = "804317265590"
+    out = subprocess.run(
+        [sys.executable, "-m", "citewatch.demo.make_code_hash"],
+        input=f"{code}\n{code}\n",
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert out.returncode == 0 and "CITEWATCH_DEMO_CODE_HASH" in out.stdout
+    assert code not in out.stdout and code not in out.stderr
+
+
 def test_streamlit_config_hides_error_details():
     """Next to the entrypoint, where Streamlit reads script-level config (also on Community
     Cloud): an uncaught error shows no exception text or traceback in the browser."""

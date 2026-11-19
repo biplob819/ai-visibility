@@ -1,6 +1,6 @@
 [project]
 name = "citewatch"
-version = "0.1.0"
+version = "0.1.1"
 description = "Measure which websites AI answers with web search cite, and how fresh those pages are."
 readme = "README.md"
 license = "MIT"
