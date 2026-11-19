@@ -275,6 +275,7 @@ def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
     found = re.findall(r"\$\d+(?:\.\d+)?|\d+(?:\.\d+)?%|\d+/\d+|\b\d+(?:\.\d+)?\b", text)
     # a learning drawn from the lessons log may also quote that log's figures
     lessons = (DOCS / "lessons.md").read_text(encoding="utf-8")
+    lessons += (ROOT / "changelog.md").read_text(encoding="utf-8")  # e.g. the smoke run's cost
     learned = {
         n
         for le in META["story"]["learnings"]
@@ -319,7 +320,11 @@ def test_each_measured_improvement_is_in_its_record():
             for n in re.findall(NUM, imp[field]):
                 assert n in flat, (imp["metric"], n)
     sources = {
-        "Pre-run cost estimate": ["docs/lessons.md", "specs/S3.1-study-runs/RUN-STATE.md"],
+        "Pre-run cost estimate": [
+            "docs/lessons.md",
+            "specs/S3.1-study-runs/RUN-STATE.md",
+            "changelog.md",
+        ],
         "Support-check citations": ["specs/M3.2-support/RUN-STATE.md", "docs/decisions.md"],
         "Shortest gap between requests": ["specs/A2.2-fetcher/RUN-STATE.md"],
     }
