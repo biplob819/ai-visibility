@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [FEAT] [D5.3] — project page sources: case study with every artefact linked (demo included), walkthrough GIF (OWNER D-86), how-I-built-it note and one-page PRD; tests pin every figure to summary.json
 - [GREEN] [B4.5] — v0.1.0 and v0.1.1 on PyPI by trusted publishing, smoke-tested on 3 OS; verifier: OSS-01, 02, 08 confirmed; OSS-09's one high (stale PyPI page) fixed by v0.1.1
 - [GREEN] [D5.2] — demo live at https://citewatch.streamlit.app; verified over two security passes (D-79) and the live check (OWNER D-88)
 - [RELEASE] [B4.5] — v0.1.1 on PyPI (2026-11-19): the PyPI page carries the released README (install from PyPI, demo section and screenshot); no code change to the package beyond `make_code_hash` reading piped input (D-87)
