@@ -27,7 +27,7 @@ import httpx2  # the HTTP library the openai SDK is built on
 import pytest
 import yaml
 
-from citewatch import cli
+from citewatch import __version__, cli
 from citewatch import fetch as fetch_pkg
 from citewatch.schemas import StudySummary
 from tests.fetch.web import VClock, audit
@@ -368,7 +368,7 @@ def test_a_custom_one_provider_study_runs_end_to_end_on_recorded_fixtures(
     log = fetch_pkg.FetchLog(own_study / "data" / "fetch_log.jsonl")
     assert audit(log) == []  # the gate-8 politeness audit passes on this log
     assert {r["user_agent"] for r in log.rows()} == {
-        "citewatch/0.1.0 (+https://github.com/me/de-study)"
+        f"citewatch/{__version__} (+https://github.com/me/de-study)"
     }
 
     code, out = run(["score", "--study", str(own_study)], capsys)
