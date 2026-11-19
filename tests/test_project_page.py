@@ -271,6 +271,7 @@ def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
     assert sup["status"] == "provisional" and "not settled" in sup["result"]
     assert "agent-checked" in text and "hand-checked" not in text  # D-63
     assert "dashboard on GitHub Pages" in text  # OWNER D-70
+    assert "run-1 answers" in META["story"]["impact"][0]  # shares are run 1 (owner wording)
 
 
 def test_the_case_study_opens_with_the_sites_write_up_heading():

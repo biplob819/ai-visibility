@@ -114,7 +114,7 @@ story:
     so anyone can run the study on their own questions.
   impact:
   - 'Showed the two leading AI search models source UK health answers very differently: nhs.uk appears
-    in 83% of GPT-6.1 Sol''s answers but 10% of Claude Sonnet 5.5''s, and their cited sources overlap
+    in 83% of GPT-6.1 Sol''s run-1 answers but 10% of Claude Sonnet 5.5''s, and their cited sources overlap
     only 10% per question.'
   - '43% of GPT''s time-sensitive answers had no source updated in the past year, against 12% for
     Claude: the freshness gap the proposed signal targets.'
