@@ -9,7 +9,7 @@ answers, Claude in 10%; the two models' sources overlapped by only 10% per quest
 of GPT's time-sensitive answers rested on no dated source under a year old, against 12% of
 Claude's. The study cost $15.03 in API calls. It ships with a dashboard, a write-up, a one-page
 signal spec for a data product, domain cards that tell each cited publisher what would make
-its pages readable and current, and a passkey-protected demo (deploying).
+its pages readable and current, and a passkey-protected demo.
 
 ## My role
 
@@ -39,4 +39,5 @@ skeptical review before it counted as done.
 **Links:** [repository](https://github.com/biplob819/ai-visibility) ·
 [dashboard](https://biplob819.github.io/ai-visibility/) ·
 [post](https://biplob819.github.io/ai-visibility/post/) ·
+[demo](https://citewatch.streamlit.app) ·
 [signal spec](https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf)

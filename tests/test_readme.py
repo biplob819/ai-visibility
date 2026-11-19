@@ -16,6 +16,7 @@ LIVE = (
     "https://biplob819.github.io/ai-visibility/",
     "https://github.com/biplob819/",
     "https://raw.githubusercontent.com/biplob819/ai-visibility/main/",
+    "https://citewatch.streamlit.app",  # the demo (D5.2)
 )
 
 

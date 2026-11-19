@@ -10,6 +10,7 @@ Claude Sonnet 5.5 and GPT-6.1 Sol, twice.
 
 **[Dashboard](https://biplob819.github.io/ai-visibility/)** ·
 **[Post](https://biplob819.github.io/ai-visibility/post/)** ·
+**[Demo](https://citewatch.streamlit.app)** ·
 **[Signal spec (PDF)](https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf)** ·
 **[Data card](https://github.com/biplob819/ai-visibility/blob/main/DATA_CARD.md)** ·
 **[Pre-registration](https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md)** ·
@@ -47,8 +48,7 @@ pip install 'citewatch[anthropic,openai]' # plus the provider SDKs for paid runs
 uvx citewatch report --example            # or try it without installing
 ```
 
-v0.1.0 is not on PyPI yet; until it is, install from the repository with
-`pip install git+https://github.com/biplob819/ai-visibility`. Python 3.11 or newer. See the [quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) (an example report in under
+Python 3.11 or newer. See the [quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) (an example report in under
 five minutes, no keys).
 
 [![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/cli.png)](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md)
@@ -73,6 +73,15 @@ five minutes, no keys).
 Two checks sit under the numbers: a **support check** (do cited pages state the claim? two AI
 judges via [EvalKit](https://github.com/biplob819/evalkit) and the owner's labels) and a
 **held-out date check**. Architecture: [`docs/assets/architecture.svg`](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/architecture.svg).
+
+## Demo
+
+[citewatch.streamlit.app](https://citewatch.streamlit.app): type any website to see how often the two models cited it
+in the study, how fresh its cited pages were, who was cited instead and what could help. No
+model is called. A live mode behind passkeys asks both models a new question and shows only
+their citations ([`demo/README.md`](https://github.com/biplob819/ai-visibility/blob/main/demo/README.md)).
+
+[![The demo looking up nhs.uk](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/demo.png)](https://citewatch.streamlit.app)
 
 ## Rerun it
 
@@ -153,6 +162,7 @@ tool for gaming AI answers ([`docs/responsible-use.md`](https://github.com/biplo
 | Package | https://pypi.org/project/citewatch/ |
 | Dashboard | https://biplob819.github.io/ai-visibility/ |
 | Post | https://biplob819.github.io/ai-visibility/post/ |
+| Demo | https://citewatch.streamlit.app |
 | Signal spec | [docs/signal-spec.pdf](https://github.com/biplob819/ai-visibility/blob/main/docs/signal-spec.pdf) |
 | Data card | [DATA_CARD.md](https://github.com/biplob819/ai-visibility/blob/main/DATA_CARD.md) |
 | Pre-registration | [docs/preregistration.md](https://github.com/biplob819/ai-visibility/blob/main/docs/preregistration.md) |

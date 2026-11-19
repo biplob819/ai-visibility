@@ -1,6 +1,6 @@
 # B4.5 run state
 
-**Now:** building.
+**Now:** released (v0.1.0 on PyPI); final verifier pass on OSS-01, 02, 08, 09.
 
 ## Log
 - 2026-11-17 — lane 2 merged (3f1e9a6): thresholds (D-77), responsible use, community files, versioning, public API contract.
@@ -14,3 +14,5 @@
 ## Known limits
 - The published package has no support-judging extra until EvalKit 0.3 is on PyPI (D-84); the repository reproduces it with the pinned commit.
 - A pip-only user cannot write `cost_model.yaml` (the measuring script lives in the repository), and packaged prices go stale seven days after release until a study adds its own `prices.yaml`.
+
+- 2026-11-19 — CI fixed on all three platforms (D-87); main green at 5c6c034. Owner added the PyPI pending publisher and approved the tag. `v0.1.0` pushed: release workflow build + publish succeeded (trusted publishing, no token); PyPI serves `citewatch-0.1.0-py3-none-any.whl` and `citewatch-0.1.0.tar.gz`; published-smoke passed on ubuntu, macos, windows (`uvx citewatch==0.1.0 --version`, `report --example`); a clean local `uvx citewatch==0.1.0` reproduces both. Demo live at https://citewatch.streamlit.app (D5.2): README gains a Demo section, screenshot and link (OSS-09); changelog and install wording restored to released.
