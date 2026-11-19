@@ -9,6 +9,7 @@ Exit 1 lists each broken link with the file that holds it.
 from __future__ import annotations
 
 import argparse
+import http.cookiejar
 import re
 import sys
 import urllib.request
@@ -54,7 +55,12 @@ def online_problem(src: str, url: str) -> str | None:
     for method in ("HEAD", "GET"):
         req = urllib.request.Request(url, method=method, headers={"User-Agent": UA})
         try:
-            with urllib.request.urlopen(req, timeout=20) as r:
+            # a fresh cookie jar per link: some hosts (Streamlit Community Cloud) redirect
+            # through a cookie-setting page and loop forever for a client without cookies
+            opener = urllib.request.build_opener(
+                urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+            )
+            with opener.open(req, timeout=20) as r:
                 if r.status < 400:
                     return None
         except Exception as exc:
