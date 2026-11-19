@@ -32,7 +32,8 @@ and results; the [dashboard](https://biplob819.github.io/ai-visibility/), the
 thresholds that fail a CI job when a metric crosses a bound.
 
 **Constraints.** Obey robots.txt and a fixed politeness floor; never store page bodies; a hard
-cost cap per run and a $45 budget for the study; the pre-registration frozen before the first
+cost cap per run and a $45 budget for the whole study ($38
+approved for the two study runs); the pre-registration frozen before the first
 answer.
 
 **Key risks and how they were handled.** Date parsing could be wrong: seven sources, explicit

@@ -1,8 +1,8 @@
 # How I built it
 
-citewatch went from PRD to a released study in three days (15–17 November 2026), built with
-Claude Code. This note covers how the work was organised and what the process caught. It is a
-companion to the [PRD](prd-one-page.md), the [decision log](decisions.md) and the
+citewatch went from PRD to a published study in three days (15–17 November 2026), and to a
+PyPI release and a live demo two days later (19 November), built with Claude Code. This note
+covers how the work was organised and what the process caught. It is a companion to the [PRD](prd-one-page.md), the [decision log](decisions.md) and the
 [lessons](lessons.md).
 
 ## A plan as a graph, not a to-do list
@@ -25,7 +25,7 @@ stored page bodies), a build smoke test, tests for every changed file, and compl
 
 Then a fresh agent that had not built the node tried to **disprove** it, with no access to the
 builder's reasoning, only the repository. A node was done only when every criterion was
-confirmed and no high or medium finding was open. Nodes took one to five review passes. Among
+confirmed and no high or medium finding was open. Nodes took one to nine review passes. Among
 the reviews' finds:
 
 - a PyPI upload that would have failed after the tag, because an optional dependency pointed at
@@ -46,7 +46,7 @@ exceeds the cap or whose prices are stale. Everything decided afterwards is in t
 ## The owner decided; the agent recorded
 
 Choices that changed scope, cost or what the study claims went to the owner as a question with
-options, and each answer became a numbered decision (84 in all, `OWNER D-…` for the owner's
+options, and each answer became a numbered decision (88 in all, `OWNER D-…` for the owner's
 own). Examples: hosting the dashboard on GitHub Pages, approving the post against the
 responsible-publishing checklist, and having a fresh agent check held-out dates with the owner
 approving, disclosed wherever the result appears. Spending had a hard budget ($45) and every

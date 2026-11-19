@@ -5,7 +5,7 @@ those pages are current. I built citewatch, an open-source tool that asks AI mod
 with web search on, records every citation, visits each cited page politely to date it, and
 reports who gets cited with counts and 95% intervals. Its first study asked Claude Sonnet 5.5
 and GPT-6.1 Sol 100 pre-registered UK health questions, twice. GPT cited nhs.uk in 83% of
-answers, Claude in 10%; the two models' sources overlapped by only 10% per question; and 43%
+run-1 answers, Claude in 10%; the two models' sources overlapped by only 10% per question; and 43%
 of GPT's time-sensitive answers rested on no dated source under a year old, against 12% of
 Claude's. The study cost $15.03 in API calls. It ships with a dashboard, a write-up, a one-page
 signal spec for a data product, domain cards that tell each cited publisher what would make

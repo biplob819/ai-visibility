@@ -85,7 +85,9 @@ def test_the_case_study_follows_the_template_and_links_every_artefact():
 
 def test_every_figure_in_the_case_study_comes_from_the_summary():
     f = _figures()
-    assert f"GPT cited nhs.uk in {f['gpt_nhs']} of\nanswers, Claude in {f['claude_nhs']}" in CASE
+    assert (
+        f"GPT cited nhs.uk in {f['gpt_nhs']} of\nrun-1 answers, Claude in {f['claude_nhs']}" in CASE
+    )
     assert f"overlapped by only {f['overlap']} per question" in CASE
     assert f"{f['gpt_stale']}\nof GPT's time-sensitive answers" in CASE
     assert f"against {f['claude_stale']} of\nClaude's" in CASE
@@ -97,18 +99,28 @@ def test_every_figure_in_the_case_study_comes_from_the_summary():
 
 
 def test_portfolio_metadata_points_at_the_case_study_with_the_same_links():
+    """The manifest follows the site's `portfolio add` schema (its templates/portfolio.yml):
+    required fields, allowed values and link keys, images as a list with alt text."""
     assert META["case_study"] == "docs/case-study.md" and META["slug"] == "ai-visibility"
-    assert META["repo"] == REPO
+    for k in ("title", "tagline", "kind", "status", "year"):
+        assert META.get(k), k
+    assert META["kind"] in {"product", "open-source", "case-study", "prototype"}
+    assert META["status"] in {"live", "launching", "shipped", "building", "design"}
+    assert len(META["tagline"]) <= 200
+    keys = {"repo", "site", "demo", "report", "package", "video", "prd", "prdOnePage"}
+    keys |= {"techspec", "howBuilt", "architecture", "dataflow", "methodology"}
     links = META["links"]
-    assert (links["dashboard"], links["post"], links["signal_spec"], links["demo"]) == (
-        DASHBOARD,
-        POST,
-        SPEC,
-        DEMO,
-    )
-    for path in META["images"].values():
-        assert (ROOT / path).is_file(), path
-    assert META["status"] == "approved"  # OWNER D-85
+    assert set(links) <= keys and all(v.startswith("https://") for v in links.values())
+    assert (links["repo"], links["report"], links["demo"]) == (REPO, DASHBOARD, DEMO)
+    assert links["package"] == "https://pypi.org/project/citewatch/"
+    proofs = {p["url"] for p in META["proof"]}
+    assert {POST, SPEC} <= proofs
+    assert isinstance(META["images"], list)
+    for im in META["images"]:
+        assert im["alt"] and (ROOT / im["src"]).is_file(), im["src"]
+    kinds = {im["kind"] for im in META["images"]}
+    assert {"walkthrough", "architecture", "dataflow", "screenshot"} <= kinds
+    assert "Cloudflare" not in json.dumps(META)  # OWNER D-70: GitHub Pages
 
 
 def _gif_frames(data: bytes) -> tuple[int, int, list[int], bool]:
@@ -156,7 +168,8 @@ def test_the_walkthrough_gif_is_the_specified_loop_and_is_shown():
     shots = re.findall(r"^\| (\d+) \|", (DOCS / "walkthrough.md").read_text("utf-8"), re.M)
     assert 6 <= len(shots) <= 10
     assert abs(seconds - 2.5 * len(shots)) < 1.0 and frames >= len(shots)
-    assert META["images"]["walkthrough"] == "docs/assets/walkthrough.gif"
+    walk = [im["src"] for im in META["images"] if im["kind"] == "walkthrough"]
+    assert walk == ["docs/assets/walkthrough.gif"]
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "docs/assets/walkthrough.gif" in readme
     assert "video" not in json.dumps(META["links"])  # OWNER D-86: no video is posted
@@ -177,3 +190,26 @@ def test_the_supporting_notes_exist_and_agree_with_the_summary():
     for text in (built, prd):
         for m in re.findall(r"\$\d+\.\d\d", text):
             assert m == cost, m
+    decisions = (DOCS / "decisions.md").read_text(encoding="utf-8")
+    n = len(re.findall(r"^\| (?:OWNER )?D-\d+ \|", decisions, re.M))
+    assert f"({n} in all," in built  # the decision count is the log's
+    budget = re.search(r"^\| OWNER D-19 \|[^|]*\| Study budget about (\$\d+)", decisions, re.M)
+    assert budget and f"hard budget ({budget[1]})" in built and f"{budget[1]} budget" in prd
+    assert "$38" in prd and "OWNER D-48" in decisions  # the runs' approval
+    passes = {
+        len(re.findall(r"verifier pass \d+", (d / "RUN-STATE.md").read_text("utf-8"), re.I))
+        for d in (ROOT / "specs").iterdir()
+        if (d / "RUN-STATE.md").is_file()
+    } - {0}
+    assert f"one to {_WORDS[max(passes)]} review passes" in flat
+    assert "the PRD's 90% target" in " ".join(prd.split()) or "at least 90%" in prd
+    links = META["links"]
+    assert links["howBuilt"].endswith("/docs/how-i-built-it.md")
+    assert links["prdOnePage"].endswith("/docs/prd-one-page.md")
+
+
+_WORDS = dict(
+    enumerate(
+        ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+    )
+)
