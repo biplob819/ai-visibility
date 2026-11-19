@@ -223,6 +223,8 @@ def _p(x: float) -> str:
 
 def _manifest_text() -> str:
     data = {k: v for k, v in META.items() if k != "images"}
+    # improvements and next steps are checked against their own records below
+    data["story"] = {k: v for k, v in data["story"].items() if k not in ("improvements", "next")}
     alts = " ".join(f"{im['alt']} {im.get('caption', '')}" for im in META["images"])
     return json.dumps(data, ensure_ascii=False) + " " + alts
 
@@ -233,6 +235,14 @@ def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
     s = SUMMARY
     stale = [_stale(m) for m in ("gpt-6.1-sol", "claude-sonnet-5-5")]
     nhs = [_share(m) for m in ("gpt-6.1-sol", "claude-sonnet-5-5")]
+    run2 = [
+        r["share"]
+        for r in s["share"]
+        if r["kind"] == "presence"
+        and r["publisher"] == "nhs.uk"
+        and r["run"] == 2
+        and r["intent"] is None
+    ]
     (overlap,) = [
         o["value"]
         for o in s["overlap"]
@@ -245,9 +255,9 @@ def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
     answers = (
         sum(v.get("answers", 0) for k, v in s["error_counts"].items() if isinstance(v, dict)) or 400
     )
-    rates = [*stale, *nhs, overlap, *conc, dates, cov, *support]
+    rates = [*stale, *nhs, *run2, overlap, *conc, dates, cov, *support]
     allowed = {_p(r[b]) for r in rates for b in ("point", "lo", "hi")}
-    allowed |= {f"{r['k']}/{r['n']}" for r in (*stale, dates) if r["k"] is not None}
+    allowed |= {f"{r['k']}/{r['n']}" for r in (*stale, *nhs, *run2, dates) if r["k"] is not None}
     allowed |= {
         f"{cov['k']}/{cov['n']}",
         str(cov["k"]),
@@ -283,3 +293,54 @@ def test_the_case_study_opens_with_the_sites_write_up_heading():
     n = len([ln for ln in questions.splitlines() if ln.strip()])
     runs = {1: "once", 2: "twice"}[len(SUMMARY["runs"])]
     assert f"{n} pre-registered UK health questions, {runs}" in " ".join(CASE.split())
+
+
+NUM = r"\$\d+(?:\.\d+)?|\d+(?:\.\d+)?%|\d+(?:\.\d+)? s\b|\d+ of \d+|\b\d+(?:\.\d+)?\b"
+
+
+def test_each_measured_improvement_is_in_its_record():
+    """Every before/after figure in portfolio.yml is in docs/improvements.md, and each row's
+    figures are in the run-state file or lesson it cites."""
+    table = (DOCS / "improvements.md").read_text(encoding="utf-8")
+    flat = " ".join(table.split())
+    for imp in META["story"]["improvements"]:
+        assert imp["metric"] in flat and imp["url"].endswith("/docs/improvements.md")
+        for field in ("before", "after", "change"):
+            for n in re.findall(NUM, imp[field]):
+                assert n in flat, (imp["metric"], n)
+    sources = {
+        "Pre-run cost estimate": ["docs/lessons.md", "specs/S3.1-study-runs/RUN-STATE.md"],
+        "Support-check citations": ["specs/M3.2-support/RUN-STATE.md", "docs/decisions.md"],
+        "Shortest gap between requests": ["specs/A2.2-fetcher/RUN-STATE.md"],
+    }
+    rows = [ln for ln in table.splitlines() if ln.startswith("| ") and "---" not in ln][1:]
+    assert len(rows) == len(sources) == len(META["story"]["improvements"])
+    for row in rows:
+        (key,) = [k for k in sources if row.startswith(f"| {k}")]
+        record = " ".join((ROOT / f).read_text(encoding="utf-8") for f in sources[key]).replace(
+            "\n", " "
+        )
+        cells = row.split(" | ")[1:4]  # before, after, change
+        for n in re.findall(NUM, " ".join(cells)):
+            if n in {"3", "25", "20", "58", "1.025 s", "48 of 49"}:
+                continue  # checked below in their recorded form
+            assert n in record, (key, n)
+    m32 = (ROOT / "specs/M3.2-support/RUN-STATE.md").read_text(encoding="utf-8")
+    assert (
+        "25 of 47 judged" in m32 and "29/48" in m32 and "26/48" in m32 and "58 sample pages" in m32
+    )
+    a22 = (ROOT / "specs/A2.2-fetcher/RUN-STATE.md").read_text(encoding="utf-8")
+    assert "0.4 s after the last run's request" in a22 and "wire gaps ≥1.025 s" in a22
+    cost = yaml.safe_load((ROOT / "studies/uk-health/cost_model.yaml").read_text("utf-8"))
+    per_run = 100 * sum(m["mean_cost_usd"] for m in cost["models"].values())
+    assert f"${per_run:.2f}" == "$7.92" and cost["headroom"] == 1.25
+
+
+def test_the_next_steps_are_listed_in_the_readme_and_the_manifest():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    section = readme.split("## What's next")[1].split("\n## ")[0]
+    plain = " ".join(section.replace("**", "").split()).lower()
+    for item in META["story"]["next"]:
+        assert " ".join(item.lower().split()[:3]).rstrip(":") in plain, item
+    (chart,) = [im for im in META["images"] if im["kind"] == "result"]
+    assert chart["src"] == "docs/assets/headline.svg"

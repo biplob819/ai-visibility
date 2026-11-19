@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 346" width="760" height="346" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">What AI search cites for UK health questions</title>
+<desc id="d">Answers citing nhs.uk run 1: Claude Sonnet 5.5 10% (10/100, 95% CI 5.0% to 16%), GPT-6.1 Sol 83% (83/100, 95% CI 75% to 90%); Answers citing nhs.uk run 2: Claude Sonnet 5.5 13% (13/100, 95% CI 7.0% to 20%), GPT-6.1 Sol 84% (84/100, 95% CI 77% to 91%); Time-sensitive answers with no dated source under a year old (both runs): Claude Sonnet 5.5 12% (14/114, 95% CI 5.8% to 20%), GPT-6.1 Sol 43% (49/114, 95% CI 31% to 55%)</desc>
+<rect width="760" height="346" fill="#fbfbfa"/>
+<text x="24" y="34" font-size="18" font-weight="700" fill="#33332f">What AI search cites for UK health questions</text>
+<text x="24" y="56" font-size="13" fill="#6b6a64">100 pre-registered questions, each model asked twice with web search on. Dots: estimates; lines: 95% intervals.</text>
+<circle cx="255" cy="76" r="5" fill="#3987e5"/><text x="266" y="80" font-size="13" fill="#33332f">Claude Sonnet 5.5</text>
+<rect x="400" y="71" width="10" height="10" rx="1.5" fill="#d95926"/><text x="416" y="80" font-size="13" fill="#33332f">GPT-6.1 Sol</text>
+<line x1="250.0" y1="92" x2="250.0" y2="290" stroke="#e5e4df" stroke-width="1"/><text x="250.0" y="308" font-size="12" fill="#6b6a64" text-anchor="middle">0%</text>
+<line x1="367.5" y1="92" x2="367.5" y2="290" stroke="#e5e4df" stroke-width="1"/><text x="367.5" y="308" font-size="12" fill="#6b6a64" text-anchor="middle">25%</text>
+<line x1="485.0" y1="92" x2="485.0" y2="290" stroke="#e5e4df" stroke-width="1"/><text x="485.0" y="308" font-size="12" fill="#6b6a64" text-anchor="middle">50%</text>
+<line x1="602.5" y1="92" x2="602.5" y2="290" stroke="#e5e4df" stroke-width="1"/><text x="602.5" y="308" font-size="12" fill="#6b6a64" text-anchor="middle">75%</text>
+<line x1="720.0" y1="92" x2="720.0" y2="290" stroke="#e5e4df" stroke-width="1"/><text x="720.0" y="308" font-size="12" fill="#6b6a64" text-anchor="middle">100%</text>
+<text x="24" y="116" font-size="13" fill="#33332f">Answers citing nhs.uk</text><text x="24" y="134" font-size="12" fill="#6b6a64">run 1</text>
+<line x1="273.5" y1="110" x2="325.2" y2="110" stroke="#3987e5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="297.0" cy="110" r="5" fill="#3987e5" stroke="#fbfbfa" stroke-width="2"/>
+<text x="333.2" y="114" font-size="12" fill="#33332f" text-anchor="start">10% (10/100)</text>
+<line x1="602.5" y1="128" x2="673.0" y2="128" stroke="#d95926" stroke-width="2" stroke-linecap="round"/>
+<rect x="635.1" y="123" width="10" height="10" rx="1.5" fill="#d95926" stroke="#fbfbfa" stroke-width="2"/>
+<text x="594.5" y="132" font-size="12" fill="#33332f" text-anchor="end">83% (83/100)</text>
+<text x="24" y="182" font-size="13" fill="#33332f">Answers citing nhs.uk</text><text x="24" y="200" font-size="12" fill="#6b6a64">run 2</text>
+<line x1="282.9" y1="176" x2="344.0" y2="176" stroke="#3987e5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="311.1" cy="176" r="5" fill="#3987e5" stroke="#fbfbfa" stroke-width="2"/>
+<text x="352.0" y="180" font-size="12" fill="#33332f" text-anchor="start">13% (13/100)</text>
+<line x1="611.9" y1="194" x2="677.7" y2="194" stroke="#d95926" stroke-width="2" stroke-linecap="round"/>
+<rect x="639.8" y="189" width="10" height="10" rx="1.5" fill="#d95926" stroke="#fbfbfa" stroke-width="2"/>
+<text x="603.9" y="198" font-size="12" fill="#33332f" text-anchor="end">84% (84/100)</text>
+<text x="24" y="248" font-size="13" fill="#33332f">Time-sensitive answers with no</text><text x="24" y="266" font-size="12" fill="#6b6a64">dated source under a year old (both runs)</text>
+<line x1="277.4" y1="242" x2="344.0" y2="242" stroke="#3987e5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="307.7" cy="242" r="5" fill="#3987e5" stroke="#fbfbfa" stroke-width="2"/>
+<text x="352.0" y="246" font-size="12" fill="#33332f" text-anchor="start">12% (14/114)</text>
+<line x1="395.3" y1="260" x2="509.7" y2="260" stroke="#d95926" stroke-width="2" stroke-linecap="round"/>
+<rect x="447.0" y="255" width="10" height="10" rx="1.5" fill="#d95926" stroke="#fbfbfa" stroke-width="2"/>
+<text x="517.7" y="264" font-size="12" fill="#33332f" text-anchor="start">43% (49/114)</text>
+<text x="24" y="330" font-size="11" fill="#6b6a64">Source: citewatch, studies/uk-health/results/summary.json. Measures sourcing, not medical accuracy.</text>
+</svg>

@@ -173,6 +173,21 @@ tool for gaming AI answers ([`docs/responsible-use.md`](https://github.com/biplo
 
 `scripts/check_links.py --online` checks every link in the README and docs.
 
+## What's next
+
+Candidates, not commitments:
+
+- **citewatch 0.1.2**: support judging as an extra (`citewatch[support]`) on EvalKit 0.4, once it
+  reproduces the study's verdicts (OWNER D-66, D-84).
+- **A larger held-out date check**: 25 fresh pages per date source before changing which source
+  wins (D-82).
+- **A second study** in another country or with more models, to test whether the nhs.uk gap is
+  specific to UK health.
+- **Run the demo's Claude path** on a live question; it is checked only offline so far (OWNER D-88).
+
+Measured before-and-after changes from the build are in
+[`docs/improvements.md`](https://github.com/biplob819/ai-visibility/blob/main/docs/improvements.md).
+
 ## Licence
 
 MIT ([`LICENSE`](https://github.com/biplob819/ai-visibility/blob/main/LICENSE)). Contributions: [`CONTRIBUTING.md`](https://github.com/biplob819/ai-visibility/blob/main/CONTRIBUTING.md); security
