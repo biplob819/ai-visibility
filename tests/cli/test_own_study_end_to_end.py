@@ -89,12 +89,15 @@ _WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC
 _watch: dict[str, Any] = {"root": None, "outside": []}
 
 
+_NULLS = {os.devnull, os.path.realpath(os.devnull), "\\\\.\\NUL"}  # Windows: NUL, \\.\NUL
+
+
 def _note(path: Any) -> None:
     root = _watch["root"]
     if root is None or isinstance(path, int) or path is None:
         return
     p = os.path.realpath(os.fsdecode(path)).removeprefix("\\\\?\\")  # Windows long-path form
-    if "__pycache__" in p or p.startswith(root + os.sep) or p == root or p == os.devnull:
+    if "__pycache__" in p or p.startswith(root + os.sep) or p == root or p in _NULLS:
         return
     _watch["outside"].append(p)
 
