@@ -57,10 +57,12 @@ def online_problem(src: str, url: str) -> str | None:
         try:
             # a fresh cookie jar per link: some hosts (Streamlit Community Cloud) redirect
             # through a cookie-setting page and loop forever for a client without cookies
-            opener = urllib.request.build_opener(
-                urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+            urllib.request.install_opener(
+                urllib.request.build_opener(
+                    urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+                )
             )
-            with opener.open(req, timeout=20) as r:
+            with urllib.request.urlopen(req, timeout=20) as r:
                 if r.status < 400:
                     return None
         except Exception as exc:
