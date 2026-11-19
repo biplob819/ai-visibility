@@ -1,6 +1,6 @@
 # B4.5 run state
 
-**Now:** released (v0.1.0 on PyPI); final verifier pass on OSS-01, 02, 08, 09.
+**Now:** green. All 11 criteria confirmed; no high or medium finding open.
 
 ## Log
 - 2026-11-17 — lane 2 merged (3f1e9a6): thresholds (D-77), responsible use, community files, versioning, public API contract.
@@ -16,3 +16,5 @@
 - A pip-only user cannot write `cost_model.yaml` (the measuring script lives in the repository), and packaged prices go stale seven days after release until a study adds its own `prices.yaml`.
 
 - 2026-11-19 — CI fixed on all three platforms (D-87); main green at 5c6c034. Owner added the PyPI pending publisher and approved the tag. `v0.1.0` pushed: release workflow build + publish succeeded (trusted publishing, no token); PyPI serves `citewatch-0.1.0-py3-none-any.whl` and `citewatch-0.1.0.tar.gz`; published-smoke passed on ubuntu, macos, windows (`uvx citewatch==0.1.0 --version`, `report --example`); a clean local `uvx citewatch==0.1.0` reproduces both. Demo live at https://citewatch.streamlit.app (D5.2): README gains a Demo section, screenshot and link (OSS-09); changelog and install wording restored to released.
+
+- 2026-11-19 — final verifier pass: OSS-01, 02, 08 CONFIRMED (tag v0.1.0 on green 5c6c034, OIDC publish with provenance, wheel metadata clean, 3-OS smoke on the published package; changelog figures match summary.json). OSS-09 confirmed for the README; High: the PyPI page carried the pre-release README (the tagged one). Fixed by v0.1.1 (tag on green 46c082b; PyPI page now has the demo section and screenshot and no "not on PyPI yet"; smoke 3 OS on 0.1.1). Medium (HEAD CI red at ef35bf5) resolved: 46c082b green. Lows kept as known limits: the link checker installs a process-wide cookie opener and treats any status below 400 as alive; Git Bash on Windows reports no terminal, so a code typed there is visible (piped input never reaches stdout or stderr, now tested); the wheel contract test needs the package index.
