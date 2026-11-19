@@ -211,7 +211,9 @@ def test_make_code_hash_cli_uses_getpass_and_rejects_bad_input(monkeypatch):
     assert cli.main.__defaults__ is not None and cli.main.__defaults__[0] is cli._read
     # on a terminal the code is read hidden, through getpass
     seen: list[str] = []
-    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True, raising=False)
+    import sys
+
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
     monkeypatch.setattr(getpass, "getpass", lambda prompt: seen.append(prompt) or "42")
     assert cli._read("code: ") == "42" and seen == ["code: "]
     out: list[str] = []
