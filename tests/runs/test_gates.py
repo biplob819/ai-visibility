@@ -31,7 +31,7 @@ def repo(tmp_path: Path) -> Path:
     (r / "src" / "citewatch" / "runners").mkdir(parents=True)
     (r / "src" / "citewatch" / "runners" / "x.py").write_text("A = 1\n", encoding="utf-8")
     (r / "docs").mkdir()
-    (r / "docs" / "preregistration.md").write_text("# frozen\n", encoding="utf-8")
+    (r / "docs" / "preregistration.md").write_bytes(b"# frozen\n")  # no CRLF on Windows
     q = hashlib.sha256((study / "questions.jsonl").read_bytes()).hexdigest()
     p = hashlib.sha256(b"# frozen\n").hexdigest()
     (r / "docs" / "decisions.md").write_text(f"| D-1 | {q[:16]} {p[:16]} |\n", encoding="utf-8")

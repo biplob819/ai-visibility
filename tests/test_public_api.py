@@ -147,8 +147,9 @@ def test_the_built_wheel_imports_exactly_the_public_api(tmp_path):
     p = _run(["uv", "venv", "-q", "--python", sys.executable, venv], tmp_path)
     assert p.returncode == 0, p.stderr
     py = _bin(venv, "python")
-    # the dependencies come from uv's cache, filled by `uv sync`: no network is needed
-    p = _run(["uv", "pip", "install", "-q", "--offline", "--python", py, wheel], tmp_path)
+    # dependencies come from uv's cache when it has them; a fresh CI cache filled by
+    # `uv sync --locked` holds no index metadata, so resolving may need the index
+    p = _run(["uv", "pip", "install", "-q", "--python", py, wheel], tmp_path)
     assert p.returncode == 0, p.stderr
     card = ROOT / "tests" / "fixtures" / "v1" / "domain_card.json"
     p = _run([py, "-I", "-c", PROBE, card], tmp_path)  # -I: the source tree is not on the path

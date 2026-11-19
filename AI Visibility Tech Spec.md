@@ -992,7 +992,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | Cap | Capability | Trace |
 | --- | --- | --- |
 | PRJ-01 | Case study in the shared template, linking dashboard, post, spec, repo and demo | Deliverables |
-| PRJ-02 | 90-second video | Deliverables |
+| PRJ-02 | Walkthrough GIF of the key screens, replacing the 90-second video (OWNER D-86) | Deliverables |
 | PRJ-03 | How-I-built-it note and one-page PRD | Deliverables |
 
 D5.3 and the prose parts of B4.2 and B4.3 have no code to test. Their proof cells name a checklist file and the verifier's review instead of a test, and gates 4–7 report `n/a` with a reason, never a silent pass.

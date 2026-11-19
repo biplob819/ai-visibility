@@ -15,8 +15,19 @@ from collections.abc import Callable
 from citewatch.demo.passkeys import MAX_CODE_DIGITS, MIN_CODE_DIGITS, make_code_hash, valid_code
 
 
+def _read(prompt: str) -> str:
+    """Hidden input on a terminal; plain stdin otherwise (piped input, or a shell with no
+    terminal, where getpass fails or, on Windows, waits on the console)."""
+    if sys.stdin.isatty():
+        return getpass.getpass(prompt)
+    sys.stderr.write(prompt)
+    line = sys.stdin.readline()
+    sys.stderr.write("\n")
+    return line
+
+
 def main(
-    read: Callable[[str], str] = getpass.getpass,
+    read: Callable[[str], str] = _read,
     write: Callable[[str], object] = print,
 ) -> int:
     code = read(f"Registration code ({MIN_CODE_DIGITS}-{MAX_CODE_DIGITS} digits, not shown): ")

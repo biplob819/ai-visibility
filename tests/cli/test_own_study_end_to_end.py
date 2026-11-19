@@ -93,7 +93,7 @@ def _note(path: Any) -> None:
     root = _watch["root"]
     if root is None or isinstance(path, int) or path is None:
         return
-    p = os.path.realpath(os.fsdecode(path))
+    p = os.path.realpath(os.fsdecode(path)).removeprefix("\\\\?\\")  # Windows long-path form
     if "__pycache__" in p or p.startswith(root + os.sep) or p == root or p == os.devnull:
         return
     _watch["outside"].append(p)
@@ -147,7 +147,7 @@ def sealed(tmp_path, monkeypatch):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("CITEWATCH_BODY_CACHE", str(tmp_path / "body-cache"))
     monkeypatch.chdir(tmp_path)  # no stray .env
-    _watch["root"] = os.path.realpath(tmp_path)
+    _watch["root"] = os.path.realpath(tmp_path).removeprefix("\\\\?\\")
     _watch["outside"] = []
     try:
         yield attempts
