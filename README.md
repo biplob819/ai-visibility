@@ -47,7 +47,8 @@ pip install 'citewatch[anthropic,openai]' # plus the provider SDKs for paid runs
 uvx citewatch report --example            # or try it without installing
 ```
 
-Python 3.11 or newer. See the [quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) (an example report in under
+v0.1.0 is not on PyPI yet; until it is, install from the repository with
+`pip install git+https://github.com/biplob819/ai-visibility`. Python 3.11 or newer. See the [quickstart](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md) (an example report in under
 five minutes, no keys).
 
 [![The citewatch CLI: report, init, doctor and a dry run, with no keys and no spend](https://raw.githubusercontent.com/biplob819/ai-visibility/main/docs/assets/screenshots/cli.png)](https://github.com/biplob819/ai-visibility/blob/main/docs/quickstart.md)
