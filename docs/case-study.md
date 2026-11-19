@@ -1,4 +1,4 @@
-# citewatch: what AI search cites, and how fresh it is
+## Write-up
 
 AI search answers now send readers to sources, but nobody could say which ones, or whether
 those pages are current. I built citewatch, an open-source tool that asks AI models questions

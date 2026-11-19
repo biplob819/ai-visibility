@@ -4,4 +4,4 @@
 - [x] Walkthrough GIF and shot list (OWNER D-86).
 - [x] Demo link and screenshot after D5.2 went live.
 - [x] `tests/test_project_page.py`.
-- [ ] Verifier pass.
+- [x] Verifier passes 1 and 2.

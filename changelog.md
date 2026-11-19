@@ -2,6 +2,7 @@
 
 Format: `[TYPE] [NODE] — summary`. Newest first.
 
+- [GREEN] [D5.3] — verified over two passes: case study, portfolio.yml in the site's schema with every figure recomputed, walkthrough GIF, notes corrected; all 21 nodes green
 - [FEAT] [D5.3] — project page sources: case study with every artefact linked (demo included), walkthrough GIF (OWNER D-86), how-I-built-it note and one-page PRD; tests pin every figure to summary.json
 - [GREEN] [B4.5] — v0.1.0 and v0.1.1 on PyPI by trusted publishing, smoke-tested on 3 OS; verifier: OSS-01, 02, 08 confirmed; OSS-09's one high (stale PyPI page) fixed by v0.1.1
 - [GREEN] [D5.2] — demo live at https://citewatch.streamlit.app; verified over two security passes (D-79) and the live check (OWNER D-88)

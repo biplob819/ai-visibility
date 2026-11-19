@@ -1,6 +1,7 @@
 # Read by the portfolio site's `portfolio add` (biplob819.github.io/projects/ai-visibility/).
 # Field names and allowed values follow its templates/portfolio.yml. Every number comes from
-# studies/uk-health/results/summary.json (tests/test_project_page.py checks the headline ones).
+# studies/uk-health/results/summary.json or the study's set-up; tests/test_project_page.py
+# recomputes every number in this file.
 slug: ai-visibility
 title: AI Visibility Report
 tagline: Which websites Claude and GPT cite when they answer UK health questions with web search,

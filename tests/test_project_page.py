@@ -75,7 +75,7 @@ def _figures() -> dict[str, str]:
 def test_the_case_study_follows_the_template_and_links_every_artefact():
     for heading in ("## My role", "## Key decisions", "**Links:**"):
         assert heading in CASE
-    narrative = CASE.split("## My role")[0].split("\n", 1)[1]
+    narrative = CASE.split("## My role")[0].split("\n", 1)[1]  # after "## Write-up"
     assert len(narrative.split()) <= 200  # the short narrative the template asks for
     assert len(CASE.split()) < 1200
     links = set(re.findall(r"\]\((https?://[^)]+)\)", CASE))
@@ -213,3 +213,72 @@ _WORDS = dict(
         ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     )
 )
+
+
+def _p(x: float) -> str:
+    """A rate as the manifest writes it: one decimal under 10%, else whole percent."""
+    v = x * 100
+    return f"{v:.1f}%" if v < 10 else f"{round(v)}%"
+
+
+def _manifest_text() -> str:
+    data = {k: v for k, v in META.items() if k != "images"}
+    alts = " ".join(f"{im['alt']} {im.get('caption', '')}" for im in META["images"])
+    return json.dumps(data, ensure_ascii=False) + " " + alts
+
+
+def test_every_number_in_the_portfolio_manifest_comes_from_the_records():
+    """Each figure the live page shows is recomputed from summary.json (or is a fixed fact of
+    the study's set-up); a changed or invented number fails here."""
+    s = SUMMARY
+    stale = [_stale(m) for m in ("gpt-6.1-sol", "claude-sonnet-5-5")]
+    nhs = [_share(m) for m in ("gpt-6.1-sol", "claude-sonnet-5-5")]
+    (overlap,) = [
+        o["value"]
+        for o in s["overlap"]
+        if o["kind"] == "cross_model" and o["run"] == 1 and o["intent"] is None
+    ]
+    conc = [c["top10_share"] for c in s["concentration"] if c["run"] == 1]
+    (dates,) = [r["within_7_days"] for r in s["date_accuracy"] if r["source"] == "overall"]
+    cov = s["coverage"]
+    support = [r["support_rate"] for r in s["support"]]
+    answers = (
+        sum(v.get("answers", 0) for k, v in s["error_counts"].items() if isinstance(v, dict)) or 400
+    )
+    rates = [*stale, *nhs, overlap, *conc, dates, cov, *support]
+    allowed = {_p(r[b]) for r in rates for b in ("point", "lo", "hi")}
+    allowed |= {f"{r['k']}/{r['n']}" for r in (*stale, dates) if r["k"] is not None}
+    allowed |= {
+        f"{cov['k']}/{cov['n']}",
+        str(cov["k"]),
+        str(cov["n"]),
+        str(stale[0]["n"]),
+        str(dates["n"]),
+    }
+    allowed |= {str(r["n"]) for r in support} | {f"${s['spend_usd']:.2f}", str(answers)}
+    # set-up facts: model versions, 95% intervals, 100 questions, runs 1 and 2, 0 errors,
+    # the year, the page order, top 10, 365 days, 7 days, the 5% error and $25 run caps,
+    # the owner's $38 (OWNER D-48), Python 3.11, the GIF's 22.5 s, the PRD's 90%, 100% labels
+    allowed |= {"6.1", "5.5", "95%", "100", "1", "2", "0", "2026", str(META["order"]), "10"}
+    allowed |= {"365", "7", "5%", "$25", "$38", "3.11", "22.5", "90%", "100%"}
+    text = _manifest_text()
+    found = re.findall(r"\$\d+(?:\.\d+)?|\d+(?:\.\d+)?%|\d+/\d+|\b\d+(?:\.\d+)?\b", text)
+    assert set(found) <= allowed, sorted(set(found) - allowed)
+    # the headline pairs, the coverage miss and the unsettled support check, said as recorded
+    assert META["headline"]["value"] == f"{_p(stale[0]['point'])} vs {_p(stale[1]['point'])}"
+    assert f"{_p(cov['point'])} ({cov['k']}/{cov['n']})" in text
+    (sup,) = [e for e in META["story"]["evals"] if e["name"].startswith("Does the cited page")]
+    assert sup["status"] == "provisional" and "not settled" in sup["result"]
+    assert "agent-checked" in text and "hand-checked" not in text  # D-63
+    assert "dashboard on GitHub Pages" in text  # OWNER D-70
+
+
+def test_the_case_study_opens_with_the_sites_write_up_heading():
+    """`portfolio add` uses the file as the page body under the page's own title, so it
+    starts with the site's section heading, never a second H1."""
+    assert CASE.startswith("## Write-up\n")
+    assert not re.search(r"^# ", CASE, re.M)
+    questions = (ROOT / "studies" / "uk-health" / "questions.jsonl").read_text("utf-8")
+    n = len([ln for ln in questions.splitlines() if ln.strip()])
+    runs = {1: "once", 2: "twice"}[len(SUMMARY["runs"])]
+    assert f"{n} pre-registered UK health questions, {runs}" in " ".join(CASE.split())
