@@ -1174,4 +1174,4 @@ To confirm against live provider docs before spending, each recorded as a decisi
 - [Claude API pricing, including web search](https://platform.claude.com/docs/en/about-claude/pricing)
 - [OpenAI API pricing, including web search](https://developers.openai.com/api/docs/pricing.md)
 - [schema.org MedicalWebPage `lastReviewed`](https://schema.org/lastReviewed)
-- Kova harness: `~/kova-hrtech/docs/sdd/kova-graph/NODE-RUNBOOK.md`
+- Kova harness (private): its node runbook
