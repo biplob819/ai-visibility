@@ -223,6 +223,8 @@ def _p(x: float) -> str:
 
 def _manifest_text() -> str:
     data = {k: v for k, v in META.items() if k != "images"}
+    # a priority's source is a path or a decision id, checked against its record below
+    data["priorities"] = [{k: v for k, v in p.items() if k != "source"} for p in META["priorities"]]
     # improvements and next steps are checked against their own records below
     data["story"] = {k: v for k, v in data["story"].items() if k not in ("improvements", "next")}
     alts = " ".join(f"{im['alt']} {im.get('caption', '')}" for im in META["images"])
@@ -359,3 +361,21 @@ def test_the_next_steps_are_listed_in_the_readme_and_the_manifest():
         assert " ".join(item.lower().split()[:3]).rstrip(":") in plain, item
     (chart,) = [im for im in META["images"] if im["kind"] == "result"]
     assert chart["src"] == "docs/assets/headline.svg"
+
+
+def test_the_scope_list_is_built_cut_and_later_from_the_records():
+    """`priorities` (the page's "Scope: built, cut and later" toggle): plain items, a call each,
+    and a source that is a committed file or a decision in docs/decisions.md."""
+    decisions = (DOCS / "decisions.md").read_text(encoding="utf-8")
+    counts = {"built": 0, "cut": 0, "later": 0}
+    for p in META["priorities"]:
+        assert set(p) == {"item", "call", "why", "source"}, p
+        counts[p["call"]] += 1
+        assert len(p["item"].split()) <= 15 and p["why"].endswith("."), p
+        assert not re.search(r"\bD-\d+|\b[A-Z]{2,4}-\d+\b", p["item"] + p["why"]), p
+        src = p["source"]
+        if re.fullmatch(r"(OWNER )?D-\d+", src):
+            assert f"| {src} |" in decisions, src
+        else:
+            assert (ROOT / src).is_file(), src
+    assert 4 <= counts["built"] <= 7 and 2 <= counts["cut"] <= 5 and 2 <= counts["later"] <= 5
